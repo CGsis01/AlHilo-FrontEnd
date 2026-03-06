@@ -1,0 +1,48 @@
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { UserRepository } from '../../data/repositories/user.repository';
+import { User, UserRole } from '../../core/models/user.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+
+export class UserUseCases {
+  constructor(private userRepository: UserRepository) {}
+
+  getAllUsers(): Observable<User[]> {
+    return this.userRepository.getAll();
+  }
+
+  getUserById(id: string): Observable<User> {
+    return this.userRepository.getById(id);
+  }
+
+  createUser(user: Partial<User>): Observable<User> {
+    return this.userRepository.create(user);
+  }
+
+  updateUser(id: string, user: Partial<User>): Observable<User> {
+    return this.userRepository.update(id, user);
+  }
+
+  deleteUser(id: string): Observable<boolean> {
+    return this.userRepository.delete(id);
+  }
+
+  getUsersByRole(role: UserRole): Observable<User[]> {
+    return this.userRepository.getByRole(role);
+  }
+
+  changePassword(userId: string, oldPassword: string, newPassword: string): Observable<boolean> {
+    return this.userRepository.updatePassword(userId, oldPassword, newPassword);
+  }
+
+  activateUser(id: string): Observable<boolean> {
+    return this.userRepository.activate(id);
+  }
+
+  deactivateUser(id: string): Observable<boolean> {
+    return this.userRepository.deactivate(id);
+  }
+}

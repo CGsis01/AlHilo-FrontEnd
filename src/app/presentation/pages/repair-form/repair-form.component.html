@@ -1,0 +1,205 @@
+<div class="form-container">
+  <div class="form-header">
+    <h1>Nueva Orden de Reparación</h1>
+    <p class="subtitle">Crear una nueva orden de reparación para un cliente</p>
+  </div>
+
+  <form [formGroup]="repairForm" (ngSubmit)="onSubmit()" class="repair-form">
+    <div class="form-section">
+      <h2>Información del Cliente</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="customerPhone">Teléfono *</label>
+          <div class="phone-input-wrapper">
+            <input id="customerPhone" 
+              type="tel" 
+              formControlName="customerPhone" 
+              placeholder="Ingrese 10 dígitos para buscar"
+              maxlength="10"
+              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+              [class.found]="selectedClient !== null">
+            <span class="search-status" *ngIf="isSearching">🔍</span>
+            <span class="search-status success" *ngIf="selectedClient && !isSearching">✓</span>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="customerName">Nombre del Cliente *</label>
+          <input id="customerName" 
+            type="text" 
+            formControlName="customerName" 
+            placeholder="Se llenará automáticamente"
+            [readonly]="true"
+            [style.cursor]="'default'"
+            [style.user-select]="'none'"
+            [style.pointer-events]="'none'">
+        </div>
+
+        <div class="form-group full-width">
+          <label for="customerEmail">Email</label>
+          <input id="customerEmail" 
+            type="email" 
+            formControlName="customerEmail" 
+            placeholder="Email del cliente (opcional)"
+            [readonly]="true"
+            [style.cursor]="'default'"
+            [style.user-select]="'none'"
+            [style.pointer-events]="'none'">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Detalles de la Reparación</h2>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <app-repair-items-editor
+            [repairTypes]="repairTypes"
+            [items]="repairItems"
+            (itemsChange)="repairItems = $event">
+          </app-repair-items-editor>
+        </div>
+
+        <div class="form-group align-center justify-center">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="isExpress">
+            <span class="checkbox-text">⚡ Servicio Express</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label for="estimatedDeliveryDate">Fecha Estimada de Entrega *</label>
+          <input appDateFormat id="estimatedDeliveryDate" formControlName="estimatedDeliveryDate">
+        </div>
+
+        <div class="form-group">
+          <label for="advancePayment">Anticipo (Pago Adelantado)</label>
+          <input id="advancePayment" type="text" formControlName="advancePayment" placeholder="0.00" min="0" pattern="^\d*\.?\d*$" inputmode="decimal" (input)="onAdvancePaymentInput($event)">
+        </div>
+
+        <div class="form-group" *ngIf="hasAdvancePayment">
+          <label>Tipo de Pago del Anticipo</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" formControlName="advancePaymentType" value="cash">
+              <span>Efectivo</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" formControlName="advancePaymentType" value="card">
+              <span>Tarjeta</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="hasAdvancePayment && repairForm.get('advancePaymentType')?.value === 'card'">
+          <label>Tipo de Tarjeta</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" formControlName="advanceCardType" value="debit">
+              <span>Débito</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" formControlName="advanceCardType" value="credit">
+              <span>Crédito</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="hasAdvancePayment && repairForm.get('advancePaymentType')?.value === 'card'">
+          <label for="advanceVoucherId">ID del Voucher</label>
+          <input id="advanceVoucherId"
+            type="text"
+            formControlName="advanceVoucherId"
+            placeholder="Ingresa el ID del voucher">
+        </div>       
+
+        <div class="form-group full-width">
+          <label for="notes">Notas Adicionales</label>
+          <textarea id="notes" formControlName="notes" rows="3" placeholder="Cualquier información adicional"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="error-alert" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="onCancel()" [disabled]="isLoading">
+        Cancel
+      </button>
+      <button type="submit" class="btn-primary" [disabled]="isLoading || repairForm.invalid || !selectedClient || !itemsValid">
+        <span *ngIf="!isLoading">Crear Reparación</span>
+        <span *ngIf="isLoading">Creando...</span>
+      </button>
+    </div>
+  </form>
+
+  <!-- Client Modal -->
+  <app-client-modal
+    [isOpen]="showClientModal"
+    [phoneNumber]="repairForm.get('customerPhone')?.value || ''"
+    (close)="closeClientModal()"
+    (clientCreated)="onClientCreated($event)">
+  </app-client-modal>
+</div>
+
+<!-- Ticket Modal -->
+<div class="modal-overlay ticket-modal" *ngIf="showTicket" (click)="closeTicket()">
+  <div class="ticket-container" (click)="$event.stopPropagation()">
+    <div class="ticket-content">
+      <div class="ticket-title">
+        <h3>Al Hilo - Taller de Costura</h3>
+        <p class="ticket-subtitle">Orden de Trabajo</p>
+      </div>
+
+      <div class="ticket-qr">
+        <img [src]="qrCodeDataUrl" alt="QR Code" class="qr-code" />
+      </div>
+
+      <div class="ticket-info">
+        <div class="ticket-row">
+          <span class="ticket-label">Cliente:</span>
+          <span class="ticket-value">{{ repair?.customerName }}</span>
+        </div>
+        <!-- Multi-garment: show items table -->
+        <ng-container *ngIf="repair?.items && repair!.items!.length > 0;">
+          <div class="ticket-block" *ngFor="let item of repair?.items; let i = index">
+            <span class="ticket-block-label">Prenda {{ i + 1 }}</span>
+            <div class="ticket-row">
+              <span class="ticket-label">Tipo de prenda:</span>
+              <span class="ticket-value">{{ item.garmentType }}</span>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-label">Tipo de reparación:</span>
+              <span class="ticket-value">{{ item.repairType.name }}</span>
+            </div>
+            <div class="ticket-block">
+              <span class="ticket-block-label">Descripción:</span>
+              <div class="ticket-block-value">{{ item.description }}</div>
+            </div>
+          </div>
+        </ng-container>
+        <div class="ticket-block" *ngIf="repair?.notes">
+          <span class="ticket-block-label">Notas</span>
+          <div class="ticket-block-value">{{ repair?.notes }}</div>
+        </div>
+        <div class="ticket-row">
+          <span class="ticket-label">Fecha de Recepción:</span>
+          <span class="ticket-value">{{ repair?.receivedDate | date:'short' }}</span>
+        </div>
+        <div class="ticket-row">
+          <span class="ticket-label">Entrega Estimada:</span>
+          <span class="ticket-value">{{ repair?.estimatedDeliveryDate | date:'short' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ticket-actions no-print">
+      <button class="btn-secondary" (click)="closeTicket()">Cerrar</button>
+      <button class="btn-primary" (click)="printTicket()">
+        🖨️ Imprimir Ticket
+      </button>
+    </div>
+  </div>
+</div>

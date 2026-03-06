@@ -1,0 +1,167 @@
+<div class="customers-container">
+  <div class="customers-header">
+    <div class="header-content">
+      <h1>Clientes</h1>
+      <p class="subtitle">Gestiona la información de los clientes del taller</p>
+    </div>
+    <button type="button" class="btn-primary" (click)="openAddModal()">
+      <span>➕</span> Agregar Cliente
+    </button>
+  </div>
+
+  <!-- Search bar -->
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text"
+      class="search-input"
+      placeholder="Buscar por nombre, teléfono o email..."
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="onSearchChange()" />
+  </div>
+
+  <!-- Table -->
+  <div class="customers-table-wrapper" *ngIf="!isLoading && filteredClients.length > 0">
+    <table class="customers-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Teléfono Personal</th>
+          <th>Teléfono Contacto</th>
+          <th>Email</th>
+          <th>Dirección</th>
+          <th>Cumpleaños</th>
+          <th>Creado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let client of filteredClients">
+          <td class="client-name">{{ client.fullName }}</td>
+          <td>{{ client.personalPhone }}</td>
+          <td>{{ client.contactPhone }}</td>
+          <td class="client-email">{{ client.email || '—' }}</td>
+          <td class="client-address">{{ client.address }}</td>
+          <td>{{ client.birthDate ? (client.birthDate | date:'dd/MM/yyyy') : '—' }}</td>
+          <td class="date-cell">{{ client.createdAt | date:'shortDate' }}</td>
+          <td class="actions-cell">
+            <button class="btn-icon" (click)="openEditModal(client)" title="Editar">✏️</button>
+            <button class="btn-icon btn-icon-danger" (click)="deleteClient(client)" title="Eliminar">🗑️</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="!isLoading && filteredClients.length === 0">
+    <div class="empty-icon">👤</div>
+    <h3>{{ searchQuery ? 'Sin resultados' : 'No hay clientes registrados' }}</h3>
+    <p>{{ searchQuery ? 'Intenta con otro término de búsqueda.' : 'Comienza agregando tu primer cliente.' }}</p>
+  </div>
+
+  <!-- Loading state -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando clientes...</p>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar Cliente' : 'Agregar Cliente' }}</h2>
+      <button class="btn-close" (click)="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label for="fullName">Nombre Completo *</label>
+          <input id="fullName"
+            type="text"
+            [(ngModel)]="editingClient.fullName"
+            placeholder="Ej: María García López"
+            class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label for="personalPhone">Teléfono Personal *</label>
+          <input id="personalPhone"
+            type="tel"
+            [value]="editingClient.personalPhone || ''"
+            (input)="onPhoneInput($event, 'personalPhone')"
+            placeholder="10 dígitos"
+            maxlength="10"
+            class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label for="contactPhone">Teléfono de Contacto *</label>
+          <input id="contactPhone"
+            type="tel"
+            [value]="editingClient.contactPhone || ''"
+            (input)="onPhoneInput($event, 'contactPhone')"
+            placeholder="10 dígitos"
+            maxlength="10"
+            class="form-input" />
+        </div>
+
+        <div class="form-group full-width">
+          <label for="address">Dirección *</label>
+          <input id="address"
+            type="text"
+            [(ngModel)]="editingClient.address"
+            placeholder="Ej: Calle Principal 123, Col. Centro"
+            class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input id="email"
+            type="email"
+            [(ngModel)]="editingClient.email"
+            placeholder="correo@ejemplo.com"
+            class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label for="birthDate">Fecha de Nacimiento</label>
+          <input appDateFormat
+            id="birthDate"
+            [(ngModel)]="birthDateStr"
+            class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label for="facebook">Facebook</label>
+          <input id="facebook"
+            type="text"
+            [(ngModel)]="editingClient.facebook"
+            placeholder="usuario.facebook"
+            class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label for="instagram">Instagram</label>
+          <input id="instagram"
+            type="text"
+            [(ngModel)]="editingClient.instagram"
+            placeholder="@usuario"
+            class="form-input" />
+        </div>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveClient()">
+        {{ isEditing ? 'Actualizar' : 'Crear' }}
+      </button>
+    </div>
+  </div>
+</div>

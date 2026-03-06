@@ -1,0 +1,9 @@
+<div class="toast toast-top toast-end z-50" *ngIf="toasts.length > 0">
+  <div *ngFor="let toast of toasts"
+    class="alert shadow-lg cursor-pointer"
+    [ngClass]="alertClass(toast.type)"
+    (click)="dismiss(toast.id)"
+    role="alert">
+    <span>{{ toast.message }}</span>
+  </div>
+</div>

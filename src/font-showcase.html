@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Al Hilo - Font Showcase</title>
+    <style>
+        @font-face {
+            font-family: 'Glacial Indifference';
+            src: url('./assets/fonts/glacial-indifference/GlacialIndifference-Regular.otf') format('opentype');
+            font-weight: 400;
+        }
+
+        @font-face {
+            font-family: 'Glacial Indifference';
+            src: url('./assets/fonts/glacial-indifference/GlacialIndifference-Bold.otf') format('opentype');
+            font-weight: 700;
+        }
+
+        @font-face {
+            font-family: 'Higuen Serif';
+            src: url('./assets/fonts/higuen/Higuen Serif.otf') format('opentype');
+            font-weight: 400;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px;
+            font-family: 'Glacial Indifference', sans-serif;
+            background: linear-gradient(135deg, #faf5ef 0%, #f4ecd8 100%);
+            color: #1a1a1a;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 60px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        h1, h2, h3 {
+            font-family: 'Higuen Serif', serif;
+            color: #d4af37;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin: 0 0 1rem 0;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #71717a;
+            margin-bottom: 3rem;
+        }
+
+        .section {
+            margin: 3rem 0;
+            padding: 2rem;
+            background: #faf5ef;
+            border-radius: 12px;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin: 0 0 1rem 0;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem 0;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .bold {
+            font-weight: 700;
+        }
+
+        .sample-text {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .alphabet {
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            margin: 1rem 0;
+        }
+        
+        .numbers {
+            font-size: 2rem;
+            margin: 1rem 0;
+        }
+        
+        .higuen-demo {
+            font-family: 'Higuen Serif', serif;
+        }
+        
+        .glacial-demo {
+            font-family: 'Glacial Indifference', sans-serif;
+        }
+        
+        .color-gold {
+            color: #d4af37;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .card {
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="higuen-demo">Al Hilo</h1>
+        <p class="subtitle glacial-demo">Clothing Repair Service</p>
+        
+        <div class="section">
+            <h2>Higuen Serif - Heading Font</h2>
+            <p class="glacial-demo">Used for headings, logo, and titles. Elegant serif typeface with distinctive character.</p>
+            
+            <h3 class="higuen-demo">Heading Examples</h3>
+            <div class="higuen-demo">
+                <p style="font-size: 3rem; margin: 1rem 0;">Heading Level 1</p>
+                <p style="font-size: 2.5rem; margin: 1rem 0;">Heading Level 2</p>
+                <p style="font-size: 2rem; margin: 1rem 0;">Heading Level 3</p>
+                <p style="font-size: 1.5rem; margin: 1rem 0;">Heading Level 4</p>
+            </div>
+            
+            <h3 class="higuen-demo">Character Set</h3>
+            <div class="higuen-demo">
+                <p class="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
+                <p class="alphabet">abcdefghijklmnopqrstuvwxyz</p>
+                <p class="numbers">0123456789 !@#$%&*()</p>
+            </div>
+            
+            <h3 class="higuen-demo">Sample Text</h3>
+            <p class="higuen-demo sample-text">
+                The quick brown fox jumps over the lazy dog. Welcome to Al Hilo, 
+                your trusted clothing repair service. We specialize in professional 
+                alterations and repairs.
+            </p>
+        </div>
+        
+        <div class="section">
+            <h2>Glacial Indifference - Body Font</h2>
+            <p class="glacial-demo">Used for body text, UI elements, and forms. Clean sans-serif with excellent readability.</p>
+            
+            <h3 class="higuen-demo">Weight Variations</h3>
+            <div class="glacial-demo">
+                <p style="font-size: 1.5rem;">Regular Weight (400)</p>
+                <p style="font-size: 1.5rem; font-weight: 700;">Bold Weight (700)</p>
+            </div>
+            
+            <h3 class="higuen-demo">Character Set</h3>
+            <div class="glacial-demo">
+                <p class="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
+                <p class="alphabet">abcdefghijklmnopqrstuvwxyz</p>
+                <p class="numbers">0123456789 !@#$%&*()</p>
+            </div>
+            
+            <h3 class="higuen-demo">Sample Text</h3>
+            <p class="glacial-demo sample-text">
+                The quick brown fox jumps over the lazy dog. This font provides excellent 
+                readability for body text, form labels, buttons, and all UI elements. 
+                It pairs perfectly with Higuen Serif for a modern, professional look.
+            </p>
+            
+            <p class="glacial-demo sample-text bold">
+                <strong>Bold version:</strong> Used for emphasis, important information, 
+                labels, and to create visual hierarchy within body text.
+            </p>
+        </div>
+        
+        <div class="section">
+            <h2>Font Pairing Examples</h2>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3 class="higuen-demo color-gold">Repair Order #1234</h3>
+                    <p class="glacial-demo"><strong>Customer:</strong> John Doe</p>
+                    <p class="glacial-demo"><strong>Type:</strong> Zipper Replacement</p>
+                    <p class="glacial-demo"><strong>Status:</strong> In Progress</p>
+                    <p class="glacial-demo"><strong>Price:</strong> $25.00</p>
+                </div>
+                
+                <div class="card">
+                    <h3 class="higuen-demo color-gold">Dashboard</h3>
+                    <p class="glacial-demo">Total Repairs: <strong>124</strong></p>
+                    <p class="glacial-demo">Pending: <strong>15</strong></p>
+                    <p class="glacial-demo">In Progress: <strong>8</strong></p>
+                    <p class="glacial-demo">Completed: <strong>101</strong></p>
+                </div>
+                
+                <div class="card">
+                    <h3 class="higuen-demo color-gold">Contact Info</h3>
+                    <p class="glacial-demo"><strong>Email:</strong> info@alhilo.com</p>
+                    <p class="glacial-demo"><strong>Phone:</strong> +34 600 000 000</p>
+                    <p class="glacial-demo"><strong>Address:</strong> Madrid, Spain</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Typography in Action</h2>
+            
+            <h3 class="higuen-demo">Welcome to Al Hilo</h3>
+            <p class="glacial-demo">
+                At Al Hilo, we understand that your clothes are more than just fabric—they're 
+                part of your identity. Whether it's a cherished garment that needs mending or 
+                a perfect fit that requires expert tailoring, our skilled seamstresses are here 
+                to help.
+            </p>
+            
+            <h3 class="higuen-demo">Our Services</h3>
+            <p class="glacial-demo">
+                We offer a comprehensive range of clothing repair and alteration services. 
+                From simple hem adjustments to complex zipper replacements, button replacements, 
+                seam repairs, and custom alterations—we handle it all with precision and care.
+            </p>
+            
+            <h3 class="higuen-demo">Quality Craftsmanship</h3>
+            <p class="glacial-demo">
+                With years of experience and a commitment to excellence, our team delivers 
+                professional results that exceed expectations. Every repair is treated with 
+                the attention to detail it deserves, ensuring your garments look and feel 
+                their best.
+            </p>
+        </div>
+        
+        <div class="section" style="text-align: center;">
+            <h2 class="higuen-demo" style="font-size: 3rem; margin-bottom: 2rem;">
+                Al Hilo
+            </h2>
+            <p class="glacial-demo" style="font-size: 1.3rem;">
+                Clothing Repair Service
+            </p>
+            <p class="glacial-demo" style="color: #71717a; margin-top: 2rem;">
+                Professional repairs • Expert alterations • Quality craftsmanship
+            </p>
+        </div>
+    </div>
+</body>
+</html>

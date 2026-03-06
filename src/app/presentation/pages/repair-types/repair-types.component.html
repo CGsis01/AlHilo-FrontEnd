@@ -1,0 +1,131 @@
+<div class="repair-types-container">
+  <div class="repair-types-header">
+    <div class="header-content">
+      <h1>Tipos de Compostura</h1>
+      <p class="subtitle">Gestiona el catálogo de tipos de compostura con precios y tiempos estimados</p>
+    </div>
+    <button class="btn-primary" (click)="openAddModal()">
+      <span>➕</span> Agregar Tipo
+    </button>
+  </div>
+
+  <div class="repair-types-table-wrapper" *ngIf="!isLoading && repairTypes.length > 0">
+    <table class="repair-types-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Código</th>
+          <th>Precio Estimado</th>
+          <th>Tiempo Estimado</th>
+          <th>Estado</th>
+          <th>Creado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let repairType of repairTypes">
+          <td class="repair-type-name">{{ repairType.name }}</td>
+          <td class="repair-type-code">
+            <code>{{ repairType.code }}</code>
+          </td>
+          <td class="price-cell">
+            <span class="price">${{ repairType.estimatedPrice | number:'1.2-2' }}</span>
+          </td>
+          <td class="time-cell">
+            {{ repairType.estimatedTime }}h
+          </td>
+          <td>
+            <span class="status-badge" [class.active]="repairType.isActive" [class.inactive]="!repairType.isActive">
+              {{ repairType.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="date-cell">{{ repairType.createdAt | date:'shortDate' }}</td>
+          <td class="actions-cell">
+            <button class="btn-icon" (click)="openEditModal(repairType)" title="Editar">✏️</button>
+            <button class="btn-icon" (click)="toggleStatus(repairType)" [title]="repairType.isActive ? 'Desactivar' : 'Activar'">
+              {{ repairType.isActive ? '🔒' : '🔓' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && repairTypes.length === 0">
+    <div class="empty-icon">🧵</div>
+    <h3>No se encontraron tipos de compostura</h3>
+    <p>Comienza agregando tu primer tipo de compostura al catálogo.</p>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando tipos de compostura...</p>
+  </div>
+</div>
+
+<!-- Modal for Add/Edit -->
+<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar Tipo de Compostura' : 'Agregar Tipo de Compostura' }}</h2>
+      <button class="btn-close" (click)="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="repairTypeName">Nombre *</label>
+        <input id="repairTypeName"
+          type="text" 
+          [(ngModel)]="editingRepairType.name" 
+          placeholder="Ej: Dobladillo de pantalón" 
+          class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label for="repairTypeCode">Código *</label>
+        <input id="repairTypeCode"
+          type="text" 
+          [(ngModel)]="editingRepairType.code" 
+          placeholder="Ej: DOBLADILLO_PANT" 
+          class="form-input"/>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="estimatedPrice">Precio Estimado ($) *</label>
+          <input id="estimatedPrice"
+            type="text" 
+            [(ngModel)]="editingRepairType.estimatedPrice" 
+            placeholder="0.00" 
+            step="0.01"
+            min="0"
+            pattern="^\d*\.?\d*$" inputmode="decimal" (input)="onEstimatedPriceInput($event)"
+            class="form-input"/>
+        </div>
+
+        <div class="form-group">
+          <label for="estimatedTime">Tiempo Estimado (horas) *</label>
+          <input id="estimatedTime"
+            type="text" 
+            [(ngModel)]="editingRepairType.estimatedTime" 
+            placeholder="0" 
+            step="0.5"
+            min="0"
+            pattern="^\d*\.?\d*$" inputmode="decimal" (input)="onEstimatedTimeInput($event)"
+            class="form-input"/>
+        </div>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveRepairType()">
+        {{ isEditing ? 'Actualizar' : 'Crear' }}
+      </button>
+    </div>
+  </div>
+</div>

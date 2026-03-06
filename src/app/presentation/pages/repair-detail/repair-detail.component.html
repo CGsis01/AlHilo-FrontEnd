@@ -1,0 +1,581 @@
+<div class="detail-container">
+  <div class="detail-header">
+    <button class="btn-back" (click)="goBack()">
+      <span>←</span> Volver a reparaciones
+    </button>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando detalles de la reparación...</p>
+  </div>
+
+  <div class="error-state" *ngIf="errorMessage && !isLoading">
+    <div class="error-icon">⚠️</div>
+    <h3>Error</h3>
+    <p>{{ errorMessage }}</p>
+    <button class="btn-primary" (click)="goBack()">Volver</button>
+  </div>
+
+  <div class="repair-detail" *ngIf="repair && !isLoading">
+    <div class="detail-title">
+      <div class="title-content">
+        <h1>Orden de Reparación</h1>
+      </div>
+      <div class="title-badges">
+        <span class="express-badge" *ngIf="repair.isExpress">⚡ Express</span>
+        <span class="status-badge" [ngClass]="getStatusClass(repair.repairStatus.name)">
+          {{ repair.repairStatus.name }}
+        </span>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-card" *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
+        <h2>Información del Cliente</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="label">Nombre</span>
+            <span class="value">{{ repair.customerName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Teléfono</span>
+            <span class="value">{{ repair.customerPhone }}</span>
+          </div>
+          <div class="info-item" *ngIf="repair.customerEmail">
+            <span class="label">Email</span>
+            <span class="value">{{ repair.customerEmail }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card full-width">
+        <h2>Detalles de la(s) Prenda(s)</h2>
+
+        <!-- Multiple items view -->
+        <ng-container *ngIf="repair.items && repair.items.length > 0;">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Prenda</th>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <th class="text-right" *ngIf="repair.finalPrice && userRole?.code !== UserRole.SEAMSTRESS">Precio Final</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of repair.items">
+                <td>{{ item.garmentType }}</td>
+                <td>{{ item.repairType.name }}</td>
+                <td>{{ item.description }}</td>
+                <td class="text-right price-cell" *ngIf="repair.finalPrice && userRole?.code !== UserRole.SEAMSTRESS">
+                  {{ item.finalPrice != null ? '$' + (item.finalPrice | number:'1.2-2':'en-US') : '$' + (item.estimatedPrice | number:'1.2-2':'en-US') }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
+      </div>
+
+      <div class="detail-card" *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
+        <h2>Precios</h2>
+        <div class="info-list">
+          <div class="info-item" *ngIf="repair.finalPrice">
+            <span class="label">Precio Final</span>
+            <span class="value price">${{ (repair.finalPrice | number:'1.2-2':'en-US') }}</span>
+          </div>
+
+          <!-- Advance payment row — display mode -->
+          <div class="info-item"> <!-- *ngIf="!editingAdvance"> -->
+            <span class="label">Anticipo Pagado</span>
+            <div class="value price advance-value">
+              <span>{{ repair.advancePayment && repair.advancePayment > 0 ? '$' + repair.advancePayment : '—' }}</span>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="repair.advancePayment && repair.advancePayment > 0">
+            <span class="label">Saldo Pendiente</span>
+            <span class="value price">${{ getRemainingBalance() | number:'1.2-2':'en-US' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h2>Fechas</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="label">Fecha de Recepción</span>
+            <span class="value">{{ repair.receivedDate | date:'longDate' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Entrega Estimada</span>
+            <span class="value">{{ repair.estimatedDeliveryDate | date:'longDate' }}</span>
+          </div>
+          <div class="info-item" *ngIf="repair.actualDeliveryDate">
+            <span class="label">Fecha de Entrega</span>
+            <span class="value">{{ repair.actualDeliveryDate | date:'longDate' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card" *ngIf="repair.assignedTo">
+        <h2>Asignación</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="label">Asignado a</span>
+            <span class="value">{{ repair.assignedTo.name }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Creado por</span>
+            <span class="value">{{ repair.createdBy.name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card" *ngIf="repair.notes">
+        <h2>Notas</h2>
+        <div class="info-list">
+          <div class="info-item full-width">
+            <span class="value notes">{{ repair.notes }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card" *ngIf="userRole?.code === UserRole.ADMIN || userRole?.code === UserRole.RECEPTIONIST">
+        <h2>Acciones</h2>
+        <div class="action-buttons">
+          <!-- When status is PENDING, show only In Progress button -->
+          <ng-container *ngIf="repair.repairStatus?.name === RepairStatus.PENDING">
+            <button class="btn-action btn-in-progress"
+              (click)="openAssignModal()">
+              En Progreso
+            </button>
+          </ng-container>
+
+          <!-- When status is IN_PROGRESS, show Pending and Completed buttons -->
+          <ng-container *ngIf="repair.repairStatus?.name === RepairStatus.IN_PROGRESS">
+            <button class="btn-action btn-pending"
+              (click)="updateStatus(getRepairStatus(RepairStatus.PENDING))">
+              Marcar Pendiente
+            </button>
+            <button class="btn-action btn-in-validation"
+              (click)="updateStatus(getRepairStatus(RepairStatus.IN_VALIDATION))">
+              Por Validar
+            </button>
+          </ng-container>
+
+          <!-- When status is IN_VALIDATION, show In Progres and Validated buttons -->
+          <ng-container *ngIf="repair.repairStatus?.name === RepairStatus.IN_VALIDATION">
+            <button class="btn-action btn-in-progress"
+              (click)="updateStatus(getRepairStatus(RepairStatus.IN_PROGRESS))">
+              Marcar en Progreso
+            </button>
+            <button class="btn-action btn-validated"
+              (click)="updateStatus(getRepairStatus(RepairStatus.VALIDATED))">
+              Validada
+            </button>
+          </ng-container>
+
+          <!-- When status is VALIDATED, show only Delivered button -->
+          <ng-container *ngIf="repair.repairStatus?.name === RepairStatus.VALIDATED">
+            <button class="btn-action btn-delivered"
+              (click)="openPaymentModal()">
+              Entregada
+            </button>
+          </ng-container>
+
+          <!-- When status is DELIVERED show no action buttons -->
+          <ng-container *ngIf="repair.repairStatus?.name === RepairStatus.DELIVERED">
+            <p class="no-actions">No hay acciones disponibles para este estado</p>
+          </ng-container>
+        </div>
+
+        <!-- Re-print Ticket Button - Show for in-progress, completed, or delivered repairs with assigned seamstress -->
+        <div class="ticket-reprint-section" *ngIf="(repair.repairStatus?.name === RepairStatus.PENDING || repair.repairStatus?.name === RepairStatus.IN_PROGRESS)">
+          <button class="btn-reprint-ticket" (click)="generateTicket()">
+            🖨️ Reimprimir Ticket
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-card" *ngIf="userRole?.code === UserRole.SEAMSTRESS && repair.repairStatus?.name === RepairStatus.IN_PROGRESS">
+        <h2>Acciones</h2>
+        <div class="action-buttons">
+          <button class="btn-action btn-in-validation" (click)="updateStatus(getRepairStatus(RepairStatus.IN_VALIDATION))">
+            Marcar como Por Validar
+          </button>
+        </div>
+
+        <!-- Re-print Ticket Button for Seamstresses - Show for in-progress repairs -->
+        <div class="ticket-reprint-section" *ngIf="repair.assignedTo">
+          <button class="btn-reprint-ticket" (click)="generateTicket()">
+            🖨️ Reimprimir Ticket
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="meta-info">
+      <span>Creado: {{ repair.createdAt | date:'medium' }}</span>
+      <span>Actualizado: {{ repair.updatedAt | date:'medium' }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Asignación de Costurera -->
+<div class="modal-overlay" *ngIf="showAssignModal" (click)="closeAssignModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Asignar Costurera</h2>
+      <button class="modal-close" (click)="closeAssignModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="modal-description">Selecciona una costurera para asignar a esta reparación:</p>
+
+      <div class="loading-seamstresses" *ngIf="isLoadingSeamstresses">
+        <div class="spinner-small"></div>
+        <span>Cargando costureras...</span>
+      </div>
+
+      <div class="seamstress-list" *ngIf="!isLoadingSeamstresses">
+        <div class="seamstress-item" *ngFor="let seamstress of seamstresses"
+          [class.selected]="selectedSeamstress?.id === seamstress.id"
+          (click)="selectSeamstress(seamstress)">
+          <div class="seamstress-avatar">{{ seamstress.name.charAt(0) }}</div>
+          <div class="seamstress-info">
+            <span class="seamstress-name">{{ seamstress.name }}</span>
+            <span class="seamstress-email">{{ seamstress.email }}</span>
+          </div>
+          <div class="seamstress-check" *ngIf="selectedSeamstress?.id === seamstress.id">✓</div>
+        </div>
+
+        <div class="no-seamstresses" *ngIf="seamstresses.length === 0">
+          <p>No hay costureras disponibles</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeAssignModal()">Cancelar</button>
+      <button class="btn-primary" (click)="confirmAssignment()" [disabled]="!selectedSeamstress">
+        Asignar y Comenzar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Repair Reprint Ticket -->
+<div class="modal-overlay ticket-modal" *ngIf="showTicket" (click)="closeTicket()">
+  <div class="ticket-container" (click)="$event.stopPropagation()">    
+    <div class="ticket-content">
+      <div class="ticket-title">
+        <h3>Al Hilo - Taller de Costura</h3>
+        <p class="ticket-subtitle">Orden de Trabajo</p>
+      </div>
+
+      <div class="ticket-qr">
+        <img [src]="qrCodeDataUrl" alt="QR Code" class="qr-code" />
+      </div>
+
+      <div class="ticket-info">
+        <div class="ticket-row">
+          <span class="ticket-label">Cliente:</span>
+          <span class="ticket-value">{{ repair?.customerName }}</span>
+        </div>
+        <ng-container *ngIf="repair?.items?.length; else noRepairItems">
+          <div class="ticket-block" *ngFor="let item of repair?.items; let i = index">
+            <span class="ticket-block-label">Prenda {{ i + 1 }}</span>
+            <div class="ticket-row">
+              <span class="ticket-label">Tipo de prenda:</span>
+              <span class="ticket-value">{{ item.garmentType }}</span>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-label">Tipo de reparación:</span>
+              <span class="ticket-value">{{ item.repairType.name }}</span>
+            </div>
+            <div class="ticket-block">
+              <span class="ticket-block-label">Descripción:</span>
+              <div class="ticket-block-value">{{ item.description }}</div>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #noRepairItems>
+          <div class="ticket-block">
+            <span class="ticket-block-label">Prenda</span>
+            <div class="ticket-block-value">Sin detalles de prendas</div>
+          </div>
+        </ng-template>
+        <div class="ticket-block" *ngIf="repair?.notes">
+          <span class="ticket-block-label">Notas</span>
+          <div class="ticket-block-value">{{ repair?.notes }}</div>
+        </div>
+        <div class="ticket-row">
+          <span class="ticket-label">Fecha de Recepción:</span>
+          <span class="ticket-value">{{ repair?.receivedDate | date:'short' }}</span>
+        </div>
+        <div class="ticket-row">
+          <span class="ticket-label">Entrega Estimada:</span>
+          <span class="ticket-value">{{ repair?.estimatedDeliveryDate | date:'short' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ticket-actions no-print">
+      <button class="btn-secondary" (click)="closeTicket()">Cerrar</button>
+      <button class="btn-primary" (click)="printTicket()">
+        🖨️ Imprimir Ticket
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Pago (POS) -->
+<div class="modal-overlay payment-modal-overlay" *ngIf="showPaymentModal" (click)="closePaymentModal()">
+  <div class="modal-content payment-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>💳 Cobro de Reparación</h2>
+      <button class="modal-close" (click)="closePaymentModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Repair Summary -->
+      <div class="payment-summary">
+        <h3>Resumen de la Orden</h3>
+        <div class="summary-row">
+          <span class="summary-label">Cliente</span>
+          <span class="summary-value">{{ repair?.customerName }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Teléfono</span>
+          <span class="summary-value">{{ repair?.customerPhone }}</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-row" *ngIf="repair?.advancePayment && repair!.advancePayment! > 0">
+          <span class="summary-label">Anticipo Pagado</span>
+          <span class="summary-value">- ${{ repair?.advancePayment }}</span>
+        </div>
+        <div class="summary-row summary-total">
+          <span class="summary-label">Total a Cobrar</span>
+          <span class="summary-value price">${{ getRemainingBalance() | number:'1.2-2':'en-US' }}</span>
+        </div>
+      </div>
+
+      <!-- Payment Type -->
+      <div class="payment-type-section">
+        <h3>Tipo de Pago</h3>
+        <div class="payment-options">
+          <label class="payment-option" [class.selected]="paymentType === 'cash'">
+            <input type="radio" name="paymentType" value="cash" [(ngModel)]="paymentType" (ngModelChange)="onPaymentTypeChange($event)" />
+            <span class="payment-option-icon">💵</span>
+            <span class="payment-option-label">Efectivo</span>
+          </label>
+          <label class="payment-option" [class.selected]="paymentType === 'card'">
+            <input type="radio" name="paymentType" value="card" [(ngModel)]="paymentType" (ngModelChange)="onPaymentTypeChange($event)" />
+            <span class="payment-option-icon">💳</span>
+            <span class="payment-option-label">Tarjeta (Crédito / Débito)</span>
+          </label>
+        </div>
+
+        <div class="cash-field" *ngIf="paymentType === 'cash'">
+          <label class="cash-label" for="cashQuantity">Pago</label>
+          <input id="cashQuantity"
+            type="text"
+            class="cash-input"
+            placeholder="Ingresa el monto recibido"
+            [(ngModel)]="cashAmount"
+            pattern="^\d*\.?\d*$" inputmode="decimal" (input)="onCashAmountInput($event)"
+            autocomplete="off"/>
+        </div>
+
+        <div class="card-type-field" *ngIf="paymentType === 'card'">
+          <label class="card-type-label">Tipo de Tarjeta</label>
+          <div class="card-type-options">
+            <label class="card-type-option" [class.selected]="cardType === 'debit'">
+              <input type="radio" name="cardType" value="debit" [(ngModel)]="cardType" />
+              <span>Débito</span>
+            </label>
+            <label class="card-type-option" [class.selected]="cardType === 'credit'">
+              <input type="radio" name="cardType" value="credit" [(ngModel)]="cardType" />
+              <span>Crédito</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="voucher-field" *ngIf="paymentType === 'card'">
+          <label class="voucher-label" for="voucherId">Número de Voucher</label>
+          <input id="voucherId"
+            type="text"
+            class="voucher-input"
+            placeholder="Ingresa el ID del voucher"
+            [(ngModel)]="voucherId"
+            autocomplete="off"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closePaymentModal()">Cancelar</button>
+      <button class="btn-primary btn-confirm-payment"
+        (click)="confirmPayment()"
+        [disabled]="isEnabledConfirmPayment()">
+        ✓ Confirmar Pago y Entregar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Receipt Ticket -->
+<div class="receipt-overlay" *ngIf="showPaymentTicket" (click)="closePaymentTicket()">
+  <div class="receipt-wrapper" (click)="$event.stopPropagation()">
+
+    <!-- Screen-only actions bar -->
+    <div class="receipt-topbar no-print">
+      <span class="receipt-topbar-title">Comprobante de Pago</span>
+      <div class="receipt-topbar-actions">
+        <button class="btn-primary" (click)="printPaymentTicket()">🖨️ Imprimir</button>
+        <button class="btn-secondary" (click)="closePaymentTicket()">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- Receipt document -->
+    <div class="receipt-doc">
+      <!-- Header -->
+      <div class="receipt-brand">
+        <div class="receipt-brand-headline">
+          <span class="receipt-brand-logo">🧵</span>
+          <h1 class="receipt-brand-name">Al Hilo</h1>
+        </div>
+        <p class="receipt-brand-sub">Taller de Costura Profesional</p>
+      </div>
+
+      <div class="receipt-divider-thick"></div>
+
+      <div class="receipt-title-block">
+        <h2 class="receipt-title">COMPROBANTE DE PAGO</h2>
+        <p class="receipt-subtitle">Orden de Entrega</p>
+      </div>
+
+      <!-- Meta row -->
+      <div class="receipt-meta">
+        <div class="receipt-meta-item">
+          <span class="receipt-meta-label">N° de Orden</span>
+          <span class="receipt-meta-value">#{{ repair?.id | slice:0:8 | uppercase }}</span>
+        </div>
+        <div class="receipt-meta-item">
+          <span class="receipt-meta-label">Fecha</span>
+          <span class="receipt-meta-value">{{ paymentDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="receipt-meta-item">
+          <span class="receipt-meta-label">Hora</span>
+          <span class="receipt-meta-value">{{ paymentDate | date:'HH:mm' }}</span>
+        </div>
+        <div class="receipt-meta-item">
+          <span class="receipt-meta-label">Atendido por</span>
+          <span class="receipt-meta-value">{{ repair?.createdBy?.name }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Customer -->
+      <div class="receipt-section">
+        <h3 class="receipt-section-title">CLIENTE</h3>
+        <div class="receipt-row">
+          <span class="receipt-row-label">Nombre</span>
+          <span class="receipt-row-value">{{ repair?.customerName }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-row-label">Teléfono</span>
+          <span class="receipt-row-value">{{ repair?.customerPhone }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="repair?.customerEmail">
+          <span class="receipt-row-label">Email</span>
+          <span class="receipt-row-value">{{ repair?.customerEmail }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Service -->
+      <div class="receipt-section">
+        <h3 class="receipt-section-title">SERVICIO REALIZADO</h3>
+        <div class="receipt-service-table">
+          <div class="receipt-service-header">
+            <span>Descripción</span>
+            <span>Importe</span>
+          </div>
+          <ng-container *ngIf="repair?.items?.length; else legacyReceiptService">
+            <div class="receipt-service-row" *ngFor="let item of repair?.items">
+              <div class="receipt-service-detail">
+                <span class="receipt-service-name">{{ item.repairType.name }}</span>
+                <span class="receipt-service-desc">{{ item.garmentType }} — {{ item.description }}</span>
+              </div>
+              <span class="receipt-service-price">${{ (item.finalPrice ?? item.estimatedPrice) | number:'1.2-2':'en-US' }}</span>
+            </div>
+          </ng-container>
+          <ng-template #legacyReceiptService>
+            <div class="receipt-service-row">
+              <span class="receipt-service-price">${{ (repair?.finalPrice ?? repair?.estimatedPrice) | number:'1.2-2':'en-US' }}</span>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Totals -->
+      <div class="receipt-totals">
+        <div class="receipt-total-row" *ngIf="repair?.finalPrice && repair?.finalPrice !== repair?.estimatedPrice">
+          <span class="receipt-total-label">Precio estimado</span>
+          <span class="receipt-total-value">${{ repair?.estimatedPrice }}</span>
+        </div>
+        <div class="receipt-total-row" *ngIf="repair?.advancePayment && repair!.advancePayment! > 0">
+          <span class="receipt-total-label">Anticipo Pagado</span>
+          <span class="receipt-total-value">- ${{ repair?.advancePayment }}</span>
+        </div>
+        <div class="receipt-total-final">
+          <div class="receipt-total-final-row main-total">
+            <span class="receipt-total-final-label">TOTAL COBRADO</span>
+            <span class="receipt-total-final-value">${{ getRemainingBalance() | number:'1.2-2':'en-US' }}</span>
+          </div>
+          <div class="receipt-total-final-row" *ngIf="paidPaymentType === 'cash'">
+            <span class="receipt-total-sub-label">Recibido</span>
+            <span class="receipt-total-sub-value">${{ paidCashAmount }}</span>
+          </div>
+          <div class="receipt-total-final-row" *ngIf="paidPaymentType === 'cash'">
+            <span class="receipt-total-sub-label">Cambio</span>
+            <span class="receipt-total-sub-value">${{ getPaidChange() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Payment method -->
+      <div class="receipt-section">
+        <h3 class="receipt-section-title">FORMA DE PAGO</h3>
+        <div class="receipt-payment-method">
+          <span class="receipt-payment-icon">{{ paidPaymentType === 'cash' ? '💵' : '💳' }}</span>
+          <div class="receipt-payment-info">
+            <span class="receipt-payment-name">
+              {{ paidPaymentType === 'cash' ? 'Efectivo' : (paidCardType === 'debit' ? 'Tarjeta (Débito)' : 'Tarjeta (Crédito)') }}
+            </span>
+            <span class="receipt-payment-voucher" *ngIf="paidPaymentType === 'card'">
+              Voucher: {{ paidVoucherId }}
+            </span>
+          </div>
+          <span class="receipt-payment-status">✓ PAGADO</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="receipt-footer">
+        <div class="receipt-divider-thick"></div>
+        <p class="receipt-footer-thanks">¡Gracias por su preferencia!</p>
+        <p class="receipt-footer-slogan">Tu ropa en manos expertas.</p>
+        <p class="receipt-footer-note">Este comprobante es válido como recibo de pago.</p>
+      </div>
+    </div>
+  </div>
+</div>

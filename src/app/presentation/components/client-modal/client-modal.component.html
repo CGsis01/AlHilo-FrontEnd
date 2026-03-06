@@ -1,0 +1,136 @@
+<div class="modal-backdrop" *ngIf="isOpen" (click)="onBackdropClick($event)">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Crear Nuevo Cliente</h2>
+      <button type="button" class="close-btn" (click)="onClose()" aria-label="Cerrar">
+        <span>×</span>
+      </button>
+    </div>
+
+    <form [formGroup]="clientForm" (ngSubmit)="onSubmit()">
+      <div class="modal-body">
+        <div class="form-section">
+          <h3>Información Personal</h3>
+          
+          <div class="form-group">
+            <label for="fullName">Nombre Completo *</label>
+            <input id="fullName" 
+              type="text" 
+              formControlName="fullName" 
+              placeholder="Ingrese el nombre completo"
+              class="form-control">
+            <div class="error-message" *ngIf="clientForm.get('fullName')?.invalid && clientForm.get('fullName')?.touched">
+              El nombre es requerido
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="address">Dirección *</label>
+            <input id="address" 
+              type="text" 
+              formControlName="address" 
+              placeholder="Calle, número, colonia"
+              class="form-control">
+            <div class="error-message" *ngIf="clientForm.get('address')?.invalid && clientForm.get('address')?.touched">
+              La dirección es requerida
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="birthDate">Fecha de Nacimiento</label>
+            <input appDateFormat
+              id="birthDate"              
+              formControlName="birthDate"
+              class="form-control">
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Contacto</h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="personalPhone">Teléfono Personal *</label>
+              <input id="personalPhone" 
+                type="text" 
+                formControlName="personalPhone" 
+                placeholder="10 dígitos"
+                maxlength="10"
+                pattern="\d{10}"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                class="form-control">
+              <div class="error-message" *ngIf="clientForm.get('personalPhone')?.invalid && clientForm.get('personalPhone')?.touched">
+                Ingrese 10 dígitos
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="contactPhone">Teléfono de Contacto *</label>
+              <input id="contactPhone" 
+                type="text" 
+                formControlName="contactPhone" 
+                placeholder="10 dígitos"
+                maxlength="10"
+                pattern="\d{10}"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                class="form-control">
+              <div class="error-message" *ngIf="clientForm.get('contactPhone')?.invalid && clientForm.get('contactPhone')?.touched">
+                Ingrese 10 dígitos
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" 
+              type="email" 
+              formControlName="email" 
+              placeholder="correo@ejemplo.com"
+              class="form-control">
+            <div class="error-message" *ngIf="clientForm.get('email')?.invalid && clientForm.get('email')?.touched">
+              Ingrese un email válido
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Redes Sociales</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="facebook">Facebook</label>
+              <input id="facebook" 
+                type="text" 
+                formControlName="facebook" 
+                placeholder="Usuario de Facebook"
+                class="form-control">
+            </div>
+
+            <div class="form-group">
+              <label for="instagram">Instagram</label>
+              <input id="instagram" 
+                type="text" 
+                formControlName="instagram" 
+                placeholder="@usuario"
+                class="form-control">
+            </div>
+          </div>
+        </div>
+
+        <div class="error-alert" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="onClose()" [disabled]="isLoading">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="clientForm.invalid || isLoading">
+          <span *ngIf="!isLoading">Crear Cliente</span>
+          <span *ngIf="isLoading">Creando...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

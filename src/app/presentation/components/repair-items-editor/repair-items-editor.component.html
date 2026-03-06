@@ -1,0 +1,68 @@
+<div class="items-editor">
+  <div class="items-header">
+    <span class="items-label">Prendas</span>
+    <button type="button" class="btn-add-item" (click)="addItem()">+ Agregar prenda</button>
+  </div>
+
+  <div class="items-table">
+    <!-- Column headers -->
+    <div class="item-row item-row-header">
+      <span>Tipo de Prenda *</span>
+      <span>Tipo de Reparación *</span>
+      <span>Descripción *</span>
+      <span>Precio *</span>
+      <span></span>
+    </div>
+
+    <!-- Item rows -->
+    <div class="item-row" *ngFor="let draft of drafts; let i = index">
+      <input type="text"
+        [(ngModel)]="draft.garmentType"
+        (ngModelChange)="onFieldChange()"
+        placeholder="Ej. Pantalón"
+        [name]="'garmentType_' + i"
+        class="item-input" />
+
+      <select [(ngModel)]="draft.repairTypeId"
+        (ngModelChange)="onFieldChange()"
+        [name]="'repairType_' + i"
+        class="item-input">
+        <option value="">-- Reparación --</option>
+        <option *ngFor="let rt of repairTypes" [value]="rt.id">{{ rt.name }}</option>
+      </select>
+
+      <input type="text"
+        [(ngModel)]="draft.description"
+        (ngModelChange)="onFieldChange()"
+        placeholder="Descripción del trabajo"
+        [name]="'description_' + i"
+        class="item-input" />
+
+      <input type="text"
+        [ngModel]="draft.estimatedPrice"
+        (input)="onPriceInput($event, draft)"
+        placeholder="0.00"
+        inputmode="decimal"
+        [name]="'price_' + i"
+        class="item-input item-price" />
+
+      <button type="button"
+        class="btn-remove-item"
+        (click)="removeItem(i)"
+        [disabled]="drafts.length <= 1"
+        title="Eliminar prenda">
+        🗑️
+      </button>
+    </div>
+  </div>
+
+  <!-- Total row -->
+  <div class="items-total" *ngIf="drafts.length > 0">
+    <span>Total estimado:</span>
+    <strong>${{ totalEstimated | number:'1.2-2':'en-US' }}</strong>
+  </div>
+
+  <div class="items-validation-hint" *ngIf="!isValid && drafts.length > 0">
+    Completa todos los campos de cada prenda para continuar.
+  </div>
+</div>

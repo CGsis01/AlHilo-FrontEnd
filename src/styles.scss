@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import 'assets/fonts/fonts.scss';
+@import 'swiper/css';
+@import 'swiper/css/pagination';
+
+/* Swiper pagination theme */
+swiper-container {
+  --swiper-pagination-color: var(--gold);
+  --swiper-pagination-bullet-inactive-color: var(--gray-400);
+  --swiper-pagination-bullet-inactive-opacity: 1;
+}
+
+:root {
+  --white: #ffffff;
+  --nude: #f5e6d3;
+  --nude-light: #faf5ef;
+  --gold: #d4af37;
+  --gold-dark: #b8941f;
+  --gold-light: #f4ecd8;
+  --black: #1a1a1a;
+  --gray-50: #fafafa;
+  --gray-100: #f4f4f5;
+  --gray-200: #e4e4e7;
+  --gray-300: #d4d4d8;
+  --gray-400: #a1a1aa;
+  --gray-500: #71717a;
+  --gray-600: #52525b;
+  --gray-700: #3f3f46;
+  --gray-800: #27272a;
+  --gray-900: #18181b;
+  --error: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
+}
+
+[data-theme="light"] {
+  --background: var(--nude-light);
+  --surface: var(--white);
+  --text: var(--black);
+  --text-secondary: var(--gray-600);
+  --border: var(--gray-200);
+  --hover: var(--gray-100);
+}
+
+[data-theme="dark"] {
+  --background: var(--gray-900);
+  --surface: var(--gray-800);
+  --text: var(--white);
+  --text-secondary: var(--gray-400);
+  --border: var(--gray-700);
+  --hover: var(--gray-700);
+  --nude: #3a3530;
+  --nude-light: #2a2520;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--background);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--gold);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 8mm;
+  }
+
+  app-header,
+  app-header .header,
+  app-header .backdrop {
+    display: none !important;
+  }
+
+  .main-content {
+    min-height: auto !important;
+  }
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  html {
+    font-size: 15px;
+  }
+  
+  h1 {
+    font-size: 1.75rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+}

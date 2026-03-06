@@ -1,0 +1,118 @@
+<div class="users-container">
+  <div class="users-header">
+    <div class="header-content">
+      <h1>Administración de Usuarios</h1>
+      <p class="subtitle">Gestiona los usuarios del sistema y sus roles</p>
+    </div>
+    <button type="button" class="btn-primary" (click)="$event.stopPropagation(); openAddModal()">
+      <span>➕</span> Agregar Usuario
+    </button>
+  </div>
+
+  <div class="users-table-wrapper" *ngIf="!isLoading && users.length > 0">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Creado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td class="user-name">{{ user.name }}</td>
+          <td class="user-email">{{ user.email }}</td>
+          <td>
+            <span class="role-badge" [ngClass]="getRoleClass(user.role.code)">
+              {{ user.role.name }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+              {{ user.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="date-cell">{{ user.createdAt | date:'shortDate' }}</td>
+          <td class="actions-cell">
+            <button class="btn-icon" (click)="openEditModal(user)" title="Editar">✏️</button>
+            <button class="btn-icon" (click)="toggleStatus(user)" [title]="user.isActive ? 'Desactivar' : 'Activar'">
+              {{ user.isActive ? '🔒' : '🔓' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && users.length === 0">
+    <div class="empty-icon">👥</div>
+    <h3>No se encontraron usuarios</h3>
+    <p>Comienza agregando tu primer usuario al sistema.</p>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando usuarios...</p>
+  </div>
+</div>
+
+<!-- Modal for Add/Edit -->
+<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar Usuario' : 'Agregar Usuario' }}</h2>
+      <button class="btn-close" (click)="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="userName">Nombre *</label>
+        <input id="userName"
+          type="text" 
+          [(ngModel)]="editingUser.name" 
+          placeholder="Ej: Juan Pérez" 
+          class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label for="userEmail">Email *</label>
+        <input id="userEmail"
+          type="email" 
+          [(ngModel)]="editingUser.email" 
+          placeholder="Ej: juan.perez@example.com" 
+          class="form-input"/>
+      </div>
+
+      <div class="form-group" *ngIf="!isEditing">
+        <label for="userPassword">Contraseña *</label>
+        <input id="userPassword"
+          type="password" 
+          [(ngModel)]="editingUser.password" 
+          placeholder="Ingresa una contraseña segura" 
+          class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label for="userRole">Rol *</label>
+        <select id="userRole" [(ngModel)]="editingUser.role.id" (ngModelChange)="onRoleChange($event)">
+          <option value="">Seleccione el rol</option>
+          <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
+        </select>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveUser()">
+        {{ isEditing ? 'Actualizar' : 'Crear' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,123 @@
+<div class="repairs-container">
+  <div class="repairs-header">
+    <div class="header-content">
+      <h1>Órdenes de reparación</h1>
+      <p class="subtitle">Gestiona y realiza un seguimiento de todas las órdenes de reparación</p>
+    </div>
+    <a routerLink="/repairs/new" 
+      class="btn-primary"
+      *ngIf="userRole?.code === UserRole.ADMIN || userRole?.code === UserRole.RECEPTIONIST">
+      <span>➕</span> Nueva compostura
+    </a>
+  </div>
+
+  <div class="filters" *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
+    <button *ngFor="let option of statusOptions"
+      class="filter-btn"
+      [class.active]="selectedStatus === option.value"
+      (click)="onStatusChange(option.value)">
+      {{ option.label }}
+    </button>
+  </div>
+
+  <!-- Desktop grid -->
+  <div class="repairs-grid desktop-only" *ngIf="!isLoading && filteredRepairs.length > 0">
+    <div class="repair-card" *ngFor="let repair of filteredRepairs">
+      <div class="card-header">
+        <h3>{{ repair.customerName }}</h3>
+        <div class="card-badges">
+          <span class="express-badge" *ngIf="repair.isExpress">⚡ Express</span>
+          <span class="status-badge" [ngClass]="getStatusClass(repair.repairStatus.name)">
+            {{ repair.repairStatus.name }}
+          </span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="info-row">
+          <span class="label">Teléfono:</span>
+          <span class="value">{{ repair.customerPhone }}</span>
+        </div>
+        <div class="info-row" *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
+          <span class="label">Precio:</span>
+          <span class="value price">${{ repair.estimatedPrice }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Entrega:</span>
+          <span class="value">{{ repair.estimatedDeliveryDate | date:'shortDate' }}</span>
+        </div>
+        <div class="info-row" *ngIf="repair.assignedTo">
+          <span class="label">Asignada a:</span>
+          <span class="value">{{ repair.assignedTo.name }}</span>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <a [routerLink]="isCardBlocked(repair) ? null : ['/repairs', repair.id]"
+           class="btn-view"
+           [class.btn-view-disabled]="isCardBlocked(repair)"
+           [title]="isCardBlocked(repair) ? 'Hay un servicio express pendiente de asignar' : ''">
+          Ver detalles
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile swiper -->
+  <div class="mobile-only" *ngIf="!isLoading && filteredRepairs.length > 0">
+    <swiper-container slides-per-view="1.15" space-between="16" centered-slides="true" pagination="true">
+      <swiper-slide *ngFor="let repair of filteredRepairs">
+        <div class="repair-card">
+          <div class="card-header">
+            <h3>{{ repair.customerName }}</h3>
+            <div class="card-badges">
+              <span class="express-badge" *ngIf="repair.isExpress">⚡ Express</span>
+              <span class="status-badge" [ngClass]="getStatusClass(repair.repairStatus.name)">
+                {{ repair.repairStatus.name }}
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="info-row">
+              <span class="label">Teléfono:</span>
+              <span class="value">{{ repair.customerPhone }}</span>
+            </div>
+            <div class="info-row" *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
+              <span class="label">Precio:</span>
+              <span class="value price">${{ repair.estimatedPrice }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Entrega:</span>
+              <span class="value">{{ repair.estimatedDeliveryDate | date:'shortDate' }}</span>
+            </div>
+            <div class="info-row" *ngIf="repair.assignedTo">
+              <span class="label">Asignada a:</span>
+              <span class="value">{{ repair.assignedTo.name }}</span>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <a [routerLink]="isCardBlocked(repair) ? null : ['/repairs', repair.id]"
+               class="btn-view"
+               [class.btn-view-disabled]="isCardBlocked(repair)"
+               [title]="isCardBlocked(repair) ? 'Hay un servicio express pendiente de asignar' : ''">
+              Ver detalles
+            </a>
+          </div>
+        </div>
+      </swiper-slide>
+    </swiper-container>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && filteredRepairs.length === 0">
+    <div class="empty-icon">📭</div>
+    <h3>No se encontraron reparaciones</h3>
+    <p>No hay reparaciones que coincidan con el filtro seleccionado.</p>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando reparaciones...</p>
+  </div>
+</div>

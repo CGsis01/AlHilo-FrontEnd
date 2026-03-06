@@ -1,0 +1,12 @@
+<app-header 
+  [currentUser]="(currentUser$ | async)!"
+  [isDarkMode]="isDarkMode"
+  (toggleTheme)="toggleTheme()"
+  (logout)="logout()">
+</app-header>
+
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>
+
+<app-toast></app-toast>

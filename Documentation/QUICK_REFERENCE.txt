@@ -1,0 +1,142 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                   AL HILO - QUICK REFERENCE                        ║
+║                     Clothing Repair System                         ║
+╚════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────┐
+│  🔐 TEST CREDENTIALS                                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  👤 Administrator (Full Access)                                │
+│     Email:    admin@alhilo.com                                 │
+│     Password: admin123                                         │
+│     Name:     María García                                     │
+│                                                                 │
+│  👤 Receptionist (Customer Service)                            │
+│     Email:    receptionist@alhilo.com                          │
+│     Password: receptionist123                                  │
+│     Name:     Carlos Rodríguez                                 │
+│                                                                 │
+│  👤 Seamstress (Workshop)                                      │
+│     Email:    seamstress@alhilo.com                            │
+│     Password: seamstress123                                    │
+│     Name:     Ana Martínez                                     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  🚀 QUICK START                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. npm install        # Install dependencies                  │
+│  2. npm start          # Start dev server                      │
+│  3. Open: http://localhost:4200                                │
+│  4. Login with any test account                                │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  📊 MOCK DATA INCLUDED                                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  • 8 Repair Orders (various statuses)                          │
+│  • 5 User Accounts (3 roles)                                   │
+│  • Full CRUD operations                                        │
+│  • Realistic network delays                                    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  🎨 FEATURES                                                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ✅ Role-based authentication                                  │
+│  ✅ Dashboard with statistics                                  │
+│  ✅ Repair management (CRUD)                                   │
+│  ✅ User management (Admin only)                               │
+│  ✅ Dark/Light theme toggle                                    │
+│  ✅ Responsive design                                          │
+│  ✅ Collapsible mobile menu                                    │
+│  ✅ Form validation                                            │
+│  ✅ Status filtering                                           │
+│  ✅ Loading states                                             │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  🎯 ROLE PERMISSIONS                                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Administrator                                                  │
+│    • All features                                              │
+│    • User management                                           │
+│    • Create/edit repairs                                       │
+│    • View reports                                              │
+│                                                                 │
+│  Receptionist                                                   │
+│    • Create/view repairs                                       │
+│    • Customer service                                          │
+│    • View reports                                              │
+│    • No user management                                        │
+│                                                                 │
+│  Seamstress                                                     │
+│    • View repairs                                              │
+│    • Update status                                             │
+│    • Limited access                                            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  📚 DOCUMENTATION FILES                                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  • README.md            - Project overview                     │
+│  • PROJECT_SUMMARY.md   - Complete feature list                │
+│  • DEVELOPER_GUIDE.md   - Development guide                    │
+│  • FEATURES.md          - Feature showcase                     │
+│  • MOCK_DATA_GUIDE.md   - Mock data reference                  │
+│  • GETTING_STARTED.md   - Quick start guide                    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  🛠️ BUILD COMMANDS                                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  npm start             # Development server                    │
+│  npm run build         # Production build                      │
+│  npm test              # Run unit tests                        │
+│  node start.js         # Quick start script                    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  🎨 DESIGN COLORS                                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Primary:   Gold (#d4af37)                                     │
+│  Secondary: Nude (#f5e6d3)                                     │
+│  Light BG:  White (#ffffff)                                    │
+│  Dark BG:   Dark Gray (#18181b)                                │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  ⚡ TECH STACK                                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  • Angular 18 (Standalone Components)                          │
+│  • TypeScript 5.4                                              │
+│  • SCSS with CSS Variables                                     │
+│  • RxJS for Reactive Programming                               │
+│  • Clean Architecture                                          │
+│  • Mock Services (Development)                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════╗
+║  🎉 APPLICATION IS READY TO USE!                                  ║
+║  Just run 'npm start' and open http://localhost:4200             ║
+╚════════════════════════════════════════════════════════════════════╝
+
+                   Built with ❤️ using Angular 18
