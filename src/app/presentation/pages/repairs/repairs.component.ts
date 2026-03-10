@@ -54,15 +54,23 @@ export class RepairsComponent implements OnInit {
     this.isLoading = true;
 
     const isSeamstress = this.userRole?.code === UserRoleCode.SEAMSTRESS;
+    const isHeadSewing = this.userRole?.code === UserRoleCode.HEADSEWING;
     const currentUserId = this.authService.currentUser?.id;
 
-    const repairs$ = isSeamstress && currentUserId
+    const excludedHeadSewingStatuses = new Set<string>([
+      RepairStatusEnum.VALIDATED,
+      RepairStatusEnum.DELIVERED
+    ]);
+    
+    const repairs$ = (isSeamstress) && currentUserId 
       ? this.repairUseCases.getRepairsByAssignedUser(currentUserId)
       : this.repairUseCases.getAllRepairs();
-
+  
     repairs$.subscribe({
       next: (repairs) => {
-        this.repairs = repairs;
+        this.repairs = isHeadSewing
+          ? repairs.filter(repair => !excludedHeadSewingStatuses.has(repair.repairStatus.name))
+          : repairs;
         this.filterRepairs();
         this.isLoading = false;},
       error: () => {

@@ -28,8 +28,8 @@ export class HeaderComponent {
 
   menuItems: MenuItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: '📊', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
-    { label: 'Composturas', route: '/repairs', icon: '🧵', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST, UserRoleCode.SEAMSTRESS] },
-    { label: 'Nueva compostura', route: '/repairs/new', icon: '➕', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
+    { label: 'Composturas', route: '/repairs', icon: '🧵', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST, UserRoleCode.SEAMSTRESS, UserRoleCode.HEADSEWING] },
+    { label: 'Nuevo Servicio', route: '/repairs/new', icon: '➕', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
     { label: 'Usuarios', route: '/users', icon: '👥', roles: [UserRoleCode.ADMIN] },
     { label: 'Clientes', route: '/customers', icon: '👤', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
     { label: 'Roles', route: '/roles', icon: '🎭', roles: [UserRoleCode.ADMIN] },

@@ -164,7 +164,7 @@ export class RepairDetailComponent implements OnInit {
 
   loadSeamstresses(): void {
     this.isLoadingSeamstresses = true;
-    this.userUseCases.getUsersByRole({ code: UserRoleCode.SEAMSTRESS } as UserRole).subscribe({
+    this.userUseCases.getUsersByRole([{ code: UserRoleCode.SEAMSTRESS }, { code: UserRoleCode.HEADSEWING }] as UserRole[]).subscribe({
       next: (users) => {
         this.seamstresses = users.filter(u => u.isActive);
         this.isLoadingSeamstresses = false;},

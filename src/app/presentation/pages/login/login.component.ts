@@ -47,7 +47,7 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(email, password).subscribe({
       next: (response) => {
-        if (response.user.role.code === UserRoleCode.SEAMSTRESS) {
+        if (response.user.role.code === UserRoleCode.SEAMSTRESS || response.user.role.code === UserRoleCode.HEADSEWING) {
           this.router.navigate(['/repairs']);
         } else {
           this.router.navigate(['/dashboard']);

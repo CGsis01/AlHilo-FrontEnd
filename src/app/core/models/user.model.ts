@@ -1,7 +1,8 @@
 export enum UserRoleCode {
   ADMIN = 'Administrator',
-  SEAMSTRESS = 'Seamstress',
-  RECEPTIONIST = 'Receptionist'
+  RECEPTIONIST = 'Receptionist',
+  HEADSEWING = 'HeadSewing',
+  SEAMSTRESS = 'Seamstress'
 }
 
 export interface UserRole {

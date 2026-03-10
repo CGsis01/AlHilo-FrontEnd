@@ -31,7 +31,7 @@
     </div>
 
     <div class="detail-grid">
-      <div class="detail-card" *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
+      <div class="detail-card" *ngIf="userRole?.code !== UserRole.SEAMSTRESS && userRole?.code !== UserRole.HEADSEWING">
         <h2>Información del Cliente</h2>
         <div class="info-list">
           <div class="info-item">
@@ -68,7 +68,7 @@
                 <td>{{ item.garmentType }}</td>
                 <td>{{ item.repairType.name }}</td>
                 <td>{{ item.description }}</td>
-                <td class="text-right price-cell" *ngIf="repair.finalPrice && userRole?.code !== UserRole.SEAMSTRESS">
+                <td class="text-right price-cell" *ngIf="repair.finalPrice && userRole?.code !== UserRole.SEAMSTRESS && userRole?.code !== UserRole.HEADSEWING">
                   {{ item.finalPrice != null ? '$' + (item.finalPrice | number:'1.2-2':'en-US') : '$' + (item.estimatedPrice | number:'1.2-2':'en-US') }}
                 </td>
               </tr>
@@ -77,7 +77,7 @@
         </ng-container>
       </div>
 
-      <div class="detail-card" *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
+      <div class="detail-card" *ngIf="userRole?.code !== UserRole.SEAMSTRESS && userRole?.code !== UserRole.HEADSEWING">
         <h2>Precios</h2>
         <div class="info-list">
           <div class="info-item" *ngIf="repair.finalPrice">
@@ -141,7 +141,7 @@
         </div>
       </div>
 
-      <div class="detail-card" *ngIf="userRole?.code === UserRole.ADMIN || userRole?.code === UserRole.RECEPTIONIST">
+      <div class="detail-card" *ngIf="userRole?.code !== UserRole.SEAMSTRESS && (userRole?.code !== UserRole.HEADSEWING || repair.repairStatus?.name !== RepairStatus.VALIDATED)">
         <h2>Acciones</h2>
         <div class="action-buttons">
           <!-- When status is PENDING, show only In Progress button -->
@@ -303,7 +303,7 @@
         <ng-template #noRepairItems>
           <div class="ticket-block">
             <span class="ticket-block-label">Prenda</span>
-            <div class="ticket-block-value">Sin detalles de prendas</div>
+            <div class="ticket-block-value">Sin detalles de servicios</div>
           </div>
         </ng-template>
         <div class="ticket-block" *ngIf="repair?.notes">

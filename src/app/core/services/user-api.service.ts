@@ -34,6 +34,7 @@ export interface DeactivateUserRequest {
 export interface UserFilters {
   role_id?: string;
   role_code?: string;
+  role_codes?: string[];
   is_active?: boolean;
   search?: string;  // Name or email search
 }
@@ -63,8 +64,15 @@ export class UserApiService {
           : `search=${filters.search}`;
       if (filters.role_code) 
         params = params 
-          ? `${params}&role_code=${filters.role_code}` 
-          : `role_code=${filters.role_code}`;}
+          ? `${params}&role_code=${filters.role_code}`
+          : `role_code=${filters.role_code}`;
+      if (filters.role_codes) {
+        const roleCodesParam = filters.role_codes.map(code => `role_codes=${code}`).join('&');
+        
+        params = params 
+          ? `${params}&${roleCodesParam}` 
+          : roleCodesParam;
+      }}
 
     return this.apiService.get<User[]>(`${this.endpoint}?${params}`)
     .pipe(map(response => response.map(u => this.mapUser(u))));
@@ -88,8 +96,9 @@ export class UserApiService {
     return this.apiService.get<User>(`${this.endpoint}/${id}`);
   }
 
-  getByRole(role: UserRole): Observable<User[]> {
-    return this.getAll({ role_code: role.code });
+  getByRole(roles: UserRole[]): Observable<User[]> {
+    const roleCodes = roles.map(role => role.code);
+    return this.getAll({ role_codes: roleCodes });
   }
 
   create(userData: CreateUserRequest): Observable<User> {

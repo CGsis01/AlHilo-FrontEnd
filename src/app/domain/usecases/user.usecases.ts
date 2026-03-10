@@ -30,8 +30,8 @@ export class UserUseCases {
     return this.userRepository.delete(id);
   }
 
-  getUsersByRole(role: UserRole): Observable<User[]> {
-    return this.userRepository.getByRole(role);
+  getUsersByRole(roles: UserRole[]): Observable<User[]> {
+    return this.userRepository.getByRole(roles);
   }
 
   changePassword(userId: string, oldPassword: string, newPassword: string): Observable<boolean> {

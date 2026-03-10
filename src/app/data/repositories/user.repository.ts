@@ -55,8 +55,8 @@ export class UserRepository implements Repository<User> {
           observer.error(error);}});});
   }
 
-  getByRole(role: UserRole): Observable<User[]> {
-    return this.userApiService.getByRole(role);
+  getByRole(roles: UserRole[]): Observable<User[]> {
+    return this.userApiService.getByRole(roles);
   }
 
   updatePassword(userId: string, oldPassword: string, newPassword: string): Observable<boolean> {
