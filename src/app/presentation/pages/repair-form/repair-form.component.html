@@ -56,7 +56,7 @@
           <app-repair-items-editor
             [repairTypes]="repairTypes"
             [items]="repairItems"
-            (itemsChange)="repairItems = $event">
+            (itemsChange)="onItemsChange($event)">
           </app-repair-items-editor>
         </div>
 
@@ -74,7 +74,17 @@
 
         <div class="form-group">
           <label for="advancePayment">Anticipo (Pago Adelantado)</label>
-          <input id="advancePayment" type="text" formControlName="advancePayment" placeholder="0.00" min="0" pattern="^\d*\.?\d*$" inputmode="decimal" (input)="onAdvancePaymentInput($event)">
+          <input id="advancePayment"
+            type="text"
+            formControlName="advancePayment"
+            placeholder="0.00"
+            min="0"
+            pattern="^\d*\.?\d*$"
+            inputmode="decimal"
+            [readonly]="true"
+            [style.user-select]="'none'"
+            [style.pointer-events]="'none'"
+            [style.caret-color]="'transparent'">
         </div>
 
         <div class="form-group" *ngIf="hasAdvancePayment">
@@ -200,6 +210,157 @@
       <button class="btn-primary" (click)="printTicket()">
         🖨️ Imprimir Ticket
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Advance Payment Receipt Ticket -->
+<div class="receipt-overlay" *ngIf="showAdvancePaymentTicket" (click)="closeAdvancePaymentTicket()">
+  <div class="receipt-wrapper" (click)="$event.stopPropagation()">
+
+    <!-- Screen-only actions bar -->
+    <div class="receipt-topbar no-print">
+      <span class="receipt-topbar-title">Comprobante de Anticipo</span>
+      <div class="receipt-topbar-actions">
+        <button class="btn-primary" (click)="printAdvancePaymentTicket()">🖨️ Imprimir</button>
+        <button class="btn-secondary" (click)="closeAdvancePaymentTicket()">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- Receipt document -->
+    <div class="receipt-doc">
+      <!-- Header -->
+      <div class="receipt-brand">
+        <div class="receipt-brand-headline">
+          <span class="receipt-brand-logo">🧵</span>
+          <h1 class="receipt-brand-name">Al Hilo</h1>
+        </div>
+        <p class="receipt-brand-sub">Taller de Costura Profesional</p>
+      </div>
+
+      <div class="receipt-divider-thick"></div>
+
+      <div class="receipt-title-block">
+        <h2 class="receipt-title">COMPROBANTE DE PAGO</h2>
+        <p class="receipt-subtitle">Anticipo de Reparación</p>
+      </div>
+
+      <!-- Meta row -->
+      <div class="receipt-meta">
+        <div class="receipt-meta-item">
+          <span class="receipt-meta-label">N° de Orden</span>
+          <span class="receipt-meta-value">#{{ repair?.id | slice:0:8 | uppercase }}</span>
+        </div>
+        <div class="receipt-meta-item">
+          <span class="receipt-meta-label">Fecha</span>
+          <span class="receipt-meta-value">{{ advancePaymentDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="receipt-meta-item">
+          <span class="receipt-meta-label">Hora</span>
+          <span class="receipt-meta-value">{{ advancePaymentDate | date:'HH:mm' }}</span>
+        </div>
+        <div class="receipt-meta-item">
+          <span class="receipt-meta-label">Atendido por</span>
+          <span class="receipt-meta-value">{{ repair?.createdBy?.name }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Customer -->
+      <div class="receipt-section">
+        <h3 class="receipt-section-title">CLIENTE</h3>
+        <div class="receipt-row">
+          <span class="receipt-row-label">Nombre</span>
+          <span class="receipt-row-value">{{ repair?.customerName }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-row-label">Teléfono</span>
+          <span class="receipt-row-value">{{ repair?.customerPhone }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="repair?.customerEmail">
+          <span class="receipt-row-label">Email</span>
+          <span class="receipt-row-value">{{ repair?.customerEmail }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Service -->
+      <div class="receipt-section">
+        <h3 class="receipt-section-title">SERVICIO REGISTRADO</h3>
+        <div class="receipt-service-table">
+          <div class="receipt-service-header">
+            <span>Descripción</span>
+            <span>Importe</span>
+          </div>
+          <ng-container *ngIf="repair?.items?.length; else legacyAdvanceService">
+            <div class="receipt-service-row" *ngFor="let item of repair?.items">
+              <div class="receipt-service-detail">
+                <span class="receipt-service-name">{{ item.repairType.name }}</span>
+                <span class="receipt-service-desc">{{ item.garmentType }} — {{ item.description }}</span>
+              </div>
+              <span class="receipt-service-price">${{ item.estimatedPrice | number:'1.2-2':'en-US' }}</span>
+            </div>
+          </ng-container>
+          <ng-template #legacyAdvanceService>
+            <div class="receipt-service-row">
+              <span class="receipt-service-price">${{ repair?.estimatedPrice | number:'1.2-2':'en-US' }}</span>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Totals -->
+      <div class="receipt-totals">
+        <div class="receipt-total-row">
+          <span class="receipt-total-label">Total estimado</span>
+          <span class="receipt-total-value">${{ repair?.estimatedPrice | number:'1.2-2':'en-US' }}</span>
+        </div>
+        <div class="receipt-total-row">
+          <span class="receipt-total-label">Anticipo pagado</span>
+          <span class="receipt-total-value">${{ advancePaymentAmount | number:'1.2-2':'en-US' }}</span>
+        </div>
+        <div class="receipt-total-final">
+          <div class="receipt-total-final-row main-total">
+            <span class="receipt-total-final-label">TOTAL COBRADO</span>
+            <span class="receipt-total-final-value">${{ advancePaymentAmount | number:'1.2-2':'en-US' }}</span>
+          </div>
+          <div class="receipt-total-final-row">
+            <span class="receipt-total-sub-label">Saldo pendiente</span>
+            <span class="receipt-total-sub-value">${{ getAdvanceRemainingBalance() | number:'1.2-2':'en-US' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Payment method -->
+      <div class="receipt-section">
+        <h3 class="receipt-section-title">FORMA DE PAGO</h3>
+        <div class="receipt-payment-method">
+          <span class="receipt-payment-icon">{{ advancePaymentType === 'cash' ? '💵' : '💳' }}</span>
+          <div class="receipt-payment-info">
+            <span class="receipt-payment-name">
+              {{ advancePaymentType === 'cash' ? 'Efectivo' : (advanceCardType === 'debit' ? 'Tarjeta (Débito)' : 'Tarjeta (Crédito)') }}
+            </span>
+            <span class="receipt-payment-voucher" *ngIf="advancePaymentType === 'card' && advanceVoucherId">
+              Voucher: {{ advanceVoucherId }}
+            </span>
+          </div>
+          <span class="receipt-payment-status">✓ PAGADO</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="receipt-footer">
+        <div class="receipt-divider-thick"></div>
+        <p class="receipt-footer-thanks">¡Gracias por su preferencia!</p>
+        <p class="receipt-footer-slogan">Tu ropa en manos expertas.</p>
+        <p class="receipt-footer-note">Este comprobante es válido como recibo de pago.</p>
+      </div>
     </div>
   </div>
 </div>

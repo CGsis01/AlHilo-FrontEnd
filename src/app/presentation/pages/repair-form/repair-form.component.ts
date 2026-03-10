@@ -42,6 +42,13 @@ export class RepairFormComponent implements OnInit {
   
   showTicket = false;
   qrCodeDataUrl = '';
+  showAdvancePaymentTicket = false;
+  advancePaymentDate: Date = new Date();
+  advancePaymentType: 'cash' | 'card' = 'cash';
+  advanceCardType: 'debit' | 'credit' = 'debit';
+  advanceVoucherId = '';
+  advancePaymentAmount = 0;
+  pendingAdvancePaymentTicket = false;
   repair: Repair | null = null;
   repairTypes: RepairType[] = [];
   repairStatuses: RepairStatus[] = [];
@@ -162,10 +169,25 @@ export class RepairFormComponent implements OnInit {
     return Number.isFinite(amount) && amount > 0;
   }
 
+  getAdvanceRemainingBalance(): number {
+    const total = this.repair?.estimatedPrice ?? 0;
+    const advance = this.advancePaymentAmount > 0
+      ? this.advancePaymentAmount
+      : (this.repair?.advancePayment ?? 0);
+    return Math.max(0, Math.round((total - advance) * 100) / 100);
+  }
+
+  onItemsChange(items: RepairItem[]): void {
+    this.repairItems = items;
+    const totalEstimated = items.reduce((sum, i) => sum + (i.estimatedPrice || 0), 0);
+    const formattedAdvance = this.formatToTwoDecimals(totalEstimated / 2);
+    this.repairForm.get('advancePayment')?.setValue(formattedAdvance, { emitEvent: false });
+  }
+
   onAdvancePaymentInput(event: Event): void {
     const sanitizedValue = this.onDecimalInput(event);
-
-    this.repairForm.get('advancePayment')?.setValue(sanitizedValue, { emitEvent: false });
+    const formattedAdvance = this.formatToTwoDecimals(sanitizedValue);
+    this.repairForm.get('advancePayment')?.setValue(formattedAdvance);
   }
 
   onDecimalInput(event: Event): string {
@@ -180,6 +202,19 @@ export class RepairFormComponent implements OnInit {
     }
 
     return sanitizedValue;
+  }
+
+  private formatToTwoDecimals(value: unknown): string {
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
+
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) {
+      return '';
+    }
+
+    return numericValue.toFixed(2);
   }
 
   onClientCreated(client: Client): void {
@@ -253,6 +288,7 @@ export class RepairFormComponent implements OnInit {
 
           this.paymentUseCases.createPayment(paymentData).subscribe({
             next: () => {
+              this.prepareAdvancePaymentTicket(repair, rawAdvance, selectedAdvancePaymentType, selectedAdvanceCardType, advanceVoucherId);
               this.handleRepairCreated(repair);
             },
             error: () => {
@@ -317,7 +353,7 @@ export class RepairFormComponent implements OnInit {
       this.showTicket = true;
 
       setTimeout(() => {
-        this.ticketPrintService.printTicket('/repairs');
+        this.triggerWorkOrderPrint();
       }, 100);
     } catch (error) {
       console.error('Error generating ticket:', error);
@@ -326,9 +362,60 @@ export class RepairFormComponent implements OnInit {
 
   closeTicket(): void {
     this.showTicket = false;
+    if (this.pendingAdvancePaymentTicket) {
+      this.openAdvancePaymentTicket();
+    }
   }
 
   printTicket(): void {
+    this.triggerWorkOrderPrint();
+  }
+
+  closeAdvancePaymentTicket(): void {
+    this.showAdvancePaymentTicket = false;
+    this.pendingAdvancePaymentTicket = false;
+    this.router.navigate(['/repairs']);
+  }
+
+  printAdvancePaymentTicket(): void {
+    this.ticketPrintService.simplePrint();
+  }
+
+  private openAdvancePaymentTicket(): void {
+    this.pendingAdvancePaymentTicket = false;
+    this.showAdvancePaymentTicket = true;
+  }
+
+  private triggerWorkOrderPrint(): void {
+    if (this.pendingAdvancePaymentTicket) {
+      this.ticketPrintService.simplePrint();
+
+      setTimeout(() => {
+        this.showTicket = false;
+        this.openAdvancePaymentTicket();
+      }, 100);
+
+      return;
+    }
+
     this.ticketPrintService.printTicket('/repairs');
+  }
+
+  private prepareAdvancePaymentTicket(
+    repair: Repair,
+    amount: number,
+    paymentType: 'cash' | 'card',
+    cardType: 'debit' | 'credit',
+    voucherId: string
+  ): void {
+    this.advancePaymentAmount = repair.advancePayment ?? amount;
+    this.advancePaymentType = paymentType;
+    this.advanceCardType = cardType;
+    this.advanceVoucherId = voucherId;
+
+    const createdAt = repair.createdAt ? new Date(repair.createdAt) : new Date();
+    this.advancePaymentDate = Number.isFinite(createdAt.getTime()) ? createdAt : new Date();
+
+    this.pendingAdvancePaymentTicket = true;
   }
 }
