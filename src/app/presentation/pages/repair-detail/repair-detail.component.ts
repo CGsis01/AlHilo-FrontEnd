@@ -21,7 +21,7 @@ import { ToastService } from '../../../core/services/toast.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './repair-detail.component.html',
-  styleUrls: ['./repair-detail.component.scss']
+  styleUrls: ['./repair-detail.component.scss', './repair-detail.receipt.scss']
 })
 
 export class RepairDetailComponent implements OnInit {

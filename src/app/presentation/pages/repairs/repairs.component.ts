@@ -39,6 +39,7 @@ export class RepairsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    void this.ensureSwiper();
     this.userRole = this.authService.currentUser?.role;
     this.route.queryParams.subscribe(params => {
       const status = params['status'];
@@ -48,6 +49,19 @@ export class RepairsComponent implements OnInit {
       }
       
       this.loadRepairs();});
+  }
+
+  private async ensureSwiper(): Promise<void> {
+    if (typeof customElements === 'undefined') {
+      return;
+    }
+
+    if (customElements.get('swiper-container')) {
+      return;
+    }
+
+    const { register } = await import('swiper/element/bundle');
+    register();
   }
 
   loadRepairs(): void {
