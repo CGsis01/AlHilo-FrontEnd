@@ -1,6 +1,6 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "outputDirectory": "dist/al-hilo-frontend",
+  "outputDirectory": "dist/al-hilo-frontend/browser",
   "routes": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
