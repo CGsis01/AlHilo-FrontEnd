@@ -164,6 +164,11 @@
   }
 }
 
+.field-error {
+  color: var(--error);
+  font-size: 0.8rem;
+}
+
 .radio-group {
   display: flex;
   align-items: stretch;

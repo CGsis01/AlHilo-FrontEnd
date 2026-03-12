@@ -42,7 +42,7 @@ export class RepairRepository implements Repository<Repair> {
       is_express: repair.isExpress ?? false,
       assigned_to_id: repair.assignedTo?.id,
       received_date: this.toIsoString(repair.receivedDate) || nowIso,
-      estimated_delivery_date: this.toIsoString(repair.estimatedDeliveryDate) || nowIso,
+      estimated_delivery_date: this.toIsoString(repair.estimatedDeliveryDate, true) || nowIso,
       actual_delivery_date: this.toIsoString(repair.actualDeliveryDate),
       notes: repair.notes,
       created_by: this.getStoredUserId(),
@@ -70,7 +70,7 @@ export class RepairRepository implements Repository<Repair> {
       is_express: repair.isExpress,
       assigned_to_id: repair.assignedTo?.id,
       received_date: this.toIsoString(repair.receivedDate),
-      estimated_delivery_date: this.toIsoString(repair.estimatedDeliveryDate),
+      estimated_delivery_date: this.toIsoString(repair.estimatedDeliveryDate, true),
       actual_delivery_date: this.toIsoString(repair.actualDeliveryDate),
       notes: repair.notes,
       updated_by: this.getStoredUserId(),
@@ -164,9 +164,28 @@ export class RepairRepository implements Repository<Repair> {
     return this.repairApiService.getStats();
   }
 
-  private toIsoString(value: unknown): string | undefined {
+  private toIsoString(value: unknown, includeTimeIfMissing = false): string | undefined {
     if (value === null || value === undefined || value === '') {
       return undefined;
+    }
+
+    if (includeTimeIfMissing && typeof value === 'string') {
+      const trimmed = value.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        const [year, month, day] = trimmed.split('-').map(Number);
+        const now = new Date();
+        const withTime = new Date(
+          year,
+          month - 1,
+          day,
+          now.getHours(),
+          now.getMinutes(),
+          now.getSeconds(),
+          now.getMilliseconds()
+        );
+
+        return Number.isNaN(withTime.getTime()) ? undefined : withTime.toISOString();
+      }
     }
 
     const date = value instanceof Date ? value : new Date(value as string);

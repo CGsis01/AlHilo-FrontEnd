@@ -375,6 +375,11 @@
             <span class="payment-option-icon">💳</span>
             <span class="payment-option-label">Tarjeta (Crédito / Débito)</span>
           </label>
+          <label class="payment-option" [class.selected]="paymentType === 'mixed'">
+            <input type="radio" name="paymentType" value="mixed" [(ngModel)]="paymentType" (ngModelChange)="onPaymentTypeChange($event)" />
+            <span class="payment-option-icon">💵💳</span>
+            <span class="payment-option-label">Pago Mixto</span>
+          </label>
         </div>
 
         <div class="cash-field" *ngIf="paymentType === 'cash'">
@@ -388,7 +393,29 @@
             autocomplete="off"/>
         </div>
 
-        <div class="card-type-field" *ngIf="paymentType === 'card'">
+        <div class="cash-field" *ngIf="paymentType === 'mixed'">
+          <label class="cash-label" for="mixedCashQuantity">Pago en efectivo</label>
+          <input id="mixedCashQuantity"
+            type="text"
+            class="cash-input"
+            placeholder="Monto en efectivo"
+            [(ngModel)]="mixedCashAmount"
+            pattern="^\d*\.?\d*$" inputmode="decimal" (input)="onMixedCashAmountInput($event)"
+            autocomplete="off"/>
+        </div>
+
+        <div class="cash-field" *ngIf="paymentType === 'mixed'">
+          <label class="cash-label" for="mixedCardQuantity">Pago con tarjeta</label>
+          <input id="mixedCardQuantity"
+            type="text"
+            class="cash-input"
+            placeholder="Monto con tarjeta"
+            [(ngModel)]="mixedCardAmount"
+            pattern="^\d*\.?\d*$" inputmode="decimal" (input)="onMixedCardAmountInput($event)"
+            autocomplete="off"/>
+        </div>
+
+        <div class="card-type-field" *ngIf="paymentType === 'card' || hasMixedCardPayment">
           <label class="card-type-label">Tipo de Tarjeta</label>
           <div class="card-type-options">
             <label class="card-type-option" [class.selected]="cardType === 'debit'">
@@ -402,7 +429,7 @@
           </div>
         </div>
 
-        <div class="voucher-field" *ngIf="paymentType === 'card'">
+        <div class="voucher-field" *ngIf="paymentType === 'card' || hasMixedCardPayment">
           <label class="voucher-label" for="voucherId">Número de Voucher</label>
           <input id="voucherId"
             type="text"
@@ -547,6 +574,18 @@
             <span class="receipt-total-sub-label">Cambio</span>
             <span class="receipt-total-sub-value">${{ getPaidChange() }}</span>
           </div>
+          <div class="receipt-total-final-row" *ngIf="paidPaymentType === 'mixed'">
+            <span class="receipt-total-sub-label">Recibido efectivo</span>
+            <span class="receipt-total-sub-value">${{ paidMixedCashAmount }}</span>
+          </div>
+          <div class="receipt-total-final-row" *ngIf="paidPaymentType === 'mixed'">
+            <span class="receipt-total-sub-label">Recibido tarjeta</span>
+            <span class="receipt-total-sub-value">${{ paidMixedCardAmount }}</span>
+          </div>
+          <div class="receipt-total-final-row" *ngIf="paidPaymentType === 'mixed'">
+            <span class="receipt-total-sub-label">Cambio</span>
+            <span class="receipt-total-sub-value">${{ getPaidChange() }}</span>
+          </div>
         </div>
       </div>
 
@@ -556,11 +595,28 @@
       <div class="receipt-section">
         <h3 class="receipt-section-title">FORMA DE PAGO</h3>
         <div class="receipt-payment-method">
-          <span class="receipt-payment-icon">{{ paidPaymentType === 'cash' ? '💵' : '💳' }}</span>
+          <span class="receipt-payment-icon">
+            {{ paidPaymentType === 'cash' ? '💵' : (paidPaymentType === 'card' ? '💳' : '💵💳') }}
+          </span>
           <div class="receipt-payment-info">
             <span class="receipt-payment-name">
-              {{ paidPaymentType === 'cash' ? 'Efectivo' : (paidCardType === 'debit' ? 'Tarjeta (Débito)' : 'Tarjeta (Crédito)') }}
+              {{ paidPaymentType === 'cash'
+                ? 'Efectivo'
+                : (paidPaymentType === 'card'
+                  ? (paidCardType === 'debit' ? 'Tarjeta (Débito)' : 'Tarjeta (Crédito)')
+                  : 'Pago mixto') }}
             </span>
+            <ng-container *ngIf="paidPaymentType === 'mixed'">
+              <span class="receipt-payment-voucher">
+                Efectivo: ${{ paidMixedCashAmount }}
+              </span>
+              <span class="receipt-payment-voucher">
+                Tarjeta ({{ paidCardType === 'debit' ? 'Débito' : 'Crédito' }}): ${{ paidMixedCardAmount }}
+              </span>
+              <span class="receipt-payment-voucher" *ngIf="hasPaidMixedCardPayment && paidVoucherId">
+                Voucher: {{ paidVoucherId }}
+              </span>
+            </ng-container>
             <span class="receipt-payment-voucher" *ngIf="paidPaymentType === 'card'">
               Voucher: {{ paidVoucherId }}
             </span>

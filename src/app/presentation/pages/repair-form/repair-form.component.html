@@ -81,13 +81,20 @@
             min="0"
             pattern="^\d*\.?\d*$"
             inputmode="decimal"
-            [readonly]="true"
-            [style.user-select]="'none'"
-            [style.pointer-events]="'none'"
-            [style.caret-color]="'transparent'">
+            [readonly]="repairForm.get('advancePaymentType')?.value === 'mixed'"
+            (input)="onAdvancePaymentInput($event)"
+            (blur)="onAdvancePaymentBlur('advancePayment')">
+          <div class="field-error"
+            *ngIf="repairForm.get('advancePayment')?.hasError('minAdvance') && (repairForm.get('advancePayment')?.dirty || repairForm.get('advancePayment')?.touched)">
+            El anticipo debe ser al menos ${{ advancePaymentMinimum | number:'1.2-2':'en-US' }} (50% del total estimado).
+          </div>
+          <div class="field-error"
+            *ngIf="repairForm.get('advancePayment')?.hasError('maxAdvance') && (repairForm.get('advancePayment')?.dirty || repairForm.get('advancePayment')?.touched)">
+            El anticipo no puede ser mayor al total estimado (${{ advancePaymentMaximum | number:'1.2-2':'en-US' }}).
+          </div>
         </div>
 
-        <div class="form-group" *ngIf="hasAdvancePayment">
+        <div class="form-group" *ngIf="hasAdvancePayment || repairForm.get('advancePaymentType')?.value === 'mixed'">
           <label>Tipo de Pago del Anticipo</label>
           <div class="radio-group">
             <label class="radio-option">
@@ -98,10 +105,40 @@
               <input type="radio" formControlName="advancePaymentType" value="card">
               <span>Tarjeta</span>
             </label>
+            <label class="radio-option">
+              <input type="radio" formControlName="advancePaymentType" value="mixed">
+              <span>Mixto</span>
+            </label>
           </div>
         </div>
 
-        <div class="form-group" *ngIf="hasAdvancePayment && repairForm.get('advancePaymentType')?.value === 'card'">
+        <div class="form-group" *ngIf="repairForm.get('advancePaymentType')?.value === 'mixed'">
+          <label for="advancePaymentCash">Anticipo en efectivo</label>
+          <input id="advancePaymentCash"
+            type="text"
+            formControlName="advancePaymentCash"
+            placeholder="0.00"
+            min="0"
+            pattern="^\d*\.?\d*$"
+            inputmode="decimal"
+            (input)="onAdvancePaymentCashInput($event)"
+            (blur)="onAdvancePaymentBlur('advancePaymentCash')">
+        </div>
+
+        <div class="form-group" *ngIf="repairForm.get('advancePaymentType')?.value === 'mixed'">
+          <label for="advancePaymentCardAmount">Anticipo con tarjeta</label>
+          <input id="advancePaymentCardAmount"
+            type="text"
+            formControlName="advancePaymentCard"
+            placeholder="0.00"
+            min="0"
+            pattern="^\d*\.?\d*$"
+            inputmode="decimal"
+            (input)="onAdvancePaymentCardInput($event)"
+            (blur)="onAdvancePaymentBlur('advancePaymentCard')">
+        </div>
+
+        <div class="form-group" *ngIf="hasCardAdvancePayment">
           <label>Tipo de Tarjeta</label>
           <div class="radio-group">
             <label class="radio-option">
@@ -115,7 +152,7 @@
           </div>
         </div>
 
-        <div class="form-group" *ngIf="hasAdvancePayment && repairForm.get('advancePaymentType')?.value === 'card'">
+        <div class="form-group" *ngIf="hasCardAdvancePayment">
           <label for="advanceVoucherId">ID del Voucher</label>
           <input id="advanceVoucherId"
             type="text"
@@ -154,7 +191,7 @@
   </app-client-modal>
 </div>
 
-<!-- Ticket Modal -->
+<!-- Repair Order Ticket Modal -->
 <div class="modal-overlay ticket-modal" *ngIf="showTicket" (click)="closeTicket()">
   <div class="ticket-container" (click)="$event.stopPropagation()">
     <div class="ticket-content">
@@ -260,6 +297,10 @@
           <span class="receipt-meta-value">{{ advancePaymentDate | date:'HH:mm' }}</span>
         </div>
         <div class="receipt-meta-item">
+          <span class="receipt-meta-label">Entrega estimada</span>
+          <span class="receipt-meta-value">{{ repair?.estimatedDeliveryDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="receipt-meta-item">
           <span class="receipt-meta-label">Atendido por</span>
           <span class="receipt-meta-value">{{ repair?.createdBy?.name }}</span>
         </div>
@@ -281,6 +322,17 @@
         <div class="receipt-row" *ngIf="repair?.customerEmail">
           <span class="receipt-row-label">Email</span>
           <span class="receipt-row-value">{{ repair?.customerEmail }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Garments quantity -->
+      <div class="receipt-section">
+        <h3 class="receipt-section-title">PRENDAS EN ORDEN</h3>
+        <div class="receipt-row">
+          <span class="receipt-row-label">Cantidad de prendas</span>
+          <span class="receipt-row-value">{{ repair?.items?.length ?? 1 }}</span>
         </div>
       </div>
 
@@ -341,11 +393,29 @@
       <div class="receipt-section">
         <h3 class="receipt-section-title">FORMA DE PAGO</h3>
         <div class="receipt-payment-method">
-          <span class="receipt-payment-icon">{{ advancePaymentType === 'cash' ? '💵' : '💳' }}</span>
+          <span class="receipt-payment-icon">
+            {{ advancePaymentType === 'cash' ? '💵' : (advancePaymentType === 'card' ? '💳' : '💵💳') }}
+          </span>
           <div class="receipt-payment-info">
             <span class="receipt-payment-name">
-              {{ advancePaymentType === 'cash' ? 'Efectivo' : (advanceCardType === 'debit' ? 'Tarjeta (Débito)' : 'Tarjeta (Crédito)') }}
+              {{ advancePaymentType === 'cash'
+                ? 'Efectivo'
+                : (advancePaymentType === 'card'
+                  ? (advanceCardType === 'debit' ? 'Tarjeta (Débito)' : 'Tarjeta (Crédito)')
+                  : 'Pago mixto') }}
             </span>
+            <ng-container *ngIf="advancePaymentType === 'mixed'">
+              <span class="receipt-payment-voucher">
+                Efectivo: ${{ advancePaymentCashAmount | number:'1.2-2':'en-US' }}
+              </span>
+              <span class="receipt-payment-voucher">
+                Tarjeta ({{ advanceCardType === 'debit' ? 'Débito' : 'Crédito' }}):
+                ${{ advancePaymentCardAmount | number:'1.2-2':'en-US' }}
+              </span>
+              <span class="receipt-payment-voucher" *ngIf="advancePaymentCardAmount > 0 && advanceVoucherId">
+                Voucher: {{ advanceVoucherId }}
+              </span>
+            </ng-container>
             <span class="receipt-payment-voucher" *ngIf="advancePaymentType === 'card' && advanceVoucherId">
               Voucher: {{ advanceVoucherId }}
             </span>

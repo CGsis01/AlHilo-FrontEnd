@@ -15,6 +15,7 @@ import { User, UserRole, UserRoleCode } from '../../../core/models/user.model';
 import { TicketPrintService } from '../../../core/services/ticket-print.service';
 import { WhatsappApiService } from '../../../core/services/whatsapp-api.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-repair-detail',
@@ -43,16 +44,20 @@ export class RepairDetailComponent implements OnInit {
   qrCodeDataUrl = '';
 
   showPaymentModal = false;
-  paymentType: 'cash' | 'card' = 'cash';
+  paymentType: 'cash' | 'card' | 'mixed' = 'cash';
   cardType: 'debit' | 'credit' = 'debit';
   voucherId = '';
   cashAmount: string | null = null;
+  mixedCashAmount: string | null = null;
+  mixedCardAmount: string | null = null;
 
   showPaymentTicket = false;
   paymentDate: Date = new Date();
-  paidPaymentType: 'cash' | 'card' = 'cash';
+  paidPaymentType: 'cash' | 'card' | 'mixed' = 'cash';
   paidCardType: 'debit' | 'credit' = 'debit';
   paidCashAmount: string | null = null;
+  paidMixedCashAmount: string | null = null;
+  paidMixedCardAmount: string | null = null;
   paidVoucherId = '';
 
   constructor(
@@ -208,6 +213,8 @@ export class RepairDetailComponent implements OnInit {
     this.cardType = 'debit';
     this.voucherId = '';
     this.cashAmount = null;
+    this.mixedCashAmount = null;
+    this.mixedCardAmount = null;
     this.showPaymentModal = true;
   }
 
@@ -216,43 +223,130 @@ export class RepairDetailComponent implements OnInit {
     this.cardType = 'debit';
     this.voucherId = '';
     this.cashAmount = null;
+    this.mixedCashAmount = null;
+    this.mixedCardAmount = null;
   }
 
   confirmPayment(): void {
     if (!this.repair) 
       return;
 
+    if (this.isEnabledConfirmPayment()) {
+      return;
+    }
+
     const deliveredStatus = this.getRepairStatus(RepairStatusEnum.DELIVERED);
     
     this.repairUseCases.updateRepairStatus(this.repair.id, deliveredStatus).subscribe({
       next: (updatedRepair) => {
+        const remaining = this.getRemainingBalance();
+        const cashPaid = this.getNumericAmount(this.cashAmount);
+        const mixedCashPaid = this.getNumericAmount(this.mixedCashAmount);
+        const mixedCardPaid = this.getNumericAmount(this.mixedCardAmount);
+        const mixedTotal = this.roundToTwo(mixedCashPaid + mixedCardPaid);
+
         this.paidPaymentType = this.paymentType;
         this.paidCardType = this.cardType;
         this.paidVoucherId = this.voucherId;
         this.paidCashAmount = this.cashAmount;
+        this.paidMixedCashAmount = this.mixedCashAmount;
+        this.paidMixedCardAmount = this.mixedCardAmount;
         this.paymentDate = new Date();
 
-        const paymentType = this.resolveSelectedAdvancePaymentType(this.paidPaymentType);
-          
-        if (!paymentType) {
-          this.toastService.show('La reparación se actualizó, pero no se pudo mapear el tipo de pago de la reparación.', 'error');
+        if (this.paymentType === 'mixed') {
+          if (mixedTotal < remaining) {
+            this.toastService.show('El pago mixto debe cubrir el saldo restante.', 'error');
+            this.handleRepairUpdated(updatedRepair);
+            return;
+          }
+
+          if (mixedTotal > remaining) {
+            this.toastService.show('El pago mixto no puede ser mayor al saldo restante.', 'error');
+            this.handleRepairUpdated(updatedRepair);
+            return;
+          }
+
+          if (mixedCardPaid > remaining) {
+            this.toastService.show('El pago con tarjeta no puede ser mayor al saldo restante.', 'error');
+            this.handleRepairUpdated(updatedRepair);
+            return;
+          }
+
+          if (mixedCardPaid > 0 && !this.voucherId.trim()) {
+            this.toastService.show('Ingresa el ID del voucher para registrar el pago con tarjeta.', 'error');
+            this.handleRepairUpdated(updatedRepair);
+            return;
+          }
+        }
+
+        if (this.paymentType === 'cash' && cashPaid > remaining) {
+          this.toastService.show('El pago no puede ser mayor al saldo restante.', 'error');
           this.handleRepairUpdated(updatedRepair);
           return;
         }
 
-        const paymentData = {
-          repair: updatedRepair,
-          paymentType: paymentType,
-          amount: this.cashAmount ? parseFloat(this.cashAmount) : this.getRemainingBalance(),
-          isDebit: this.paidPaymentType === 'card'
-            ? this.paidCardType === 'debit'
-            : false,
-          voucherId: this.paidPaymentType === 'card' ? this.paidVoucherId : undefined,
-          isAdvance: false,
-          createdBy: this.authService.currentUser!,
-          paymentDate: new Date()};
+        const cashPaymentAmount = this.paymentType === 'mixed'
+          ? mixedCashPaid
+          : this.paymentType === 'cash'
+            ? (cashPaid > 0 ? cashPaid : remaining)
+            : 0;
+        const cardPaymentAmount = this.paymentType === 'mixed'
+          ? mixedCardPaid
+          : this.paymentType === 'card'
+            ? remaining
+            : 0;
+        const needsCash = cashPaymentAmount > 0;
+        const needsCard = cardPaymentAmount > 0;
+        const paymentTypeCash = needsCash ? this.resolveSelectedAdvancePaymentType('cash') : undefined;
+        const paymentTypeCard = needsCard ? this.resolveSelectedAdvancePaymentType('card') : undefined;
 
-        this.paymentUseCases.createPayment(paymentData).subscribe({
+        if ((needsCash && !paymentTypeCash) || (needsCard && !paymentTypeCard)) {
+          if (needsCash && !paymentTypeCash && needsCard && !paymentTypeCard) {
+            this.toastService.show('La reparación se actualizó, pero no se pudieron mapear los tipos de pago de la reparación.', 'error');
+          } else if (needsCash && !paymentTypeCash) {
+            this.toastService.show('La reparación se actualizó, pero no se pudo mapear el tipo de pago en efectivo.', 'error');
+          } else {
+            this.toastService.show('La reparación se actualizó, pero no se pudo mapear el tipo de pago con tarjeta.', 'error');
+          }
+          this.handleRepairUpdated(updatedRepair);
+          return;
+        }
+
+        const paymentRequests = [];
+
+        if (needsCash && paymentTypeCash) {
+          paymentRequests.push(this.paymentUseCases.createPayment({
+            repair: updatedRepair,
+            paymentType: paymentTypeCash,
+            amount: cashPaymentAmount,
+            isDebit: false,
+            isAdvance: false,
+            createdBy: this.authService.currentUser!,
+            paymentDate: new Date()
+          }));
+        }
+
+        if (needsCard && paymentTypeCard) {
+          paymentRequests.push(this.paymentUseCases.createPayment({
+            repair: updatedRepair,
+            paymentType: paymentTypeCard,
+            amount: cardPaymentAmount,
+            isDebit: this.paidCardType === 'debit',
+            voucherId: this.voucherId || undefined,
+            isAdvance: false,
+            createdBy: this.authService.currentUser!,
+            paymentDate: new Date()
+          }));
+        }
+
+        if (paymentRequests.length === 0) {
+          this.handleRepairUpdated(updatedRepair);
+          this.closePaymentModal();
+          this.showPaymentTicket = true;
+          return;
+        }
+
+        forkJoin(paymentRequests).subscribe({
           next: () => {
             this.handleRepairUpdated(updatedRepair);},
           error: () => {
@@ -265,16 +359,64 @@ export class RepairDetailComponent implements OnInit {
         this.errorMessage = error.message || 'Error al actualizar el estado';}});
   }
 
-  onPaymentTypeChange(selectedType: 'cash' | 'card'): void {
+  onPaymentTypeChange(selectedType: 'cash' | 'card' | 'mixed'): void {
     if (selectedType === 'card') {
       this.cashAmount = null;
+      this.mixedCashAmount = null;
+      this.mixedCardAmount = null;
+      return;
     }
+
+    if (selectedType === 'cash') {
+      this.mixedCashAmount = null;
+      this.mixedCardAmount = null;
+      return;
+    }
+
+    this.cashAmount = null;
   }
 
   isEnabledConfirmPayment(): boolean {
-    return this.paymentType === 'cash' && !this.cashAmount?.trim() 
-    || this.paymentType === 'card' && !this.voucherId.trim()
-    || (this.paymentType === 'cash' && Number(this.cashAmount) < this.getRemainingBalance());
+    const remaining = this.getRemainingBalance();
+
+    if (this.paymentType === 'cash') {
+      const cashPaid = this.getNumericAmount(this.cashAmount);
+      return !this.cashAmount?.trim() || cashPaid < remaining || cashPaid > remaining;
+    }
+
+    if (this.paymentType === 'card') {
+      return !this.voucherId.trim();
+    }
+
+    const mixedCash = this.getNumericAmount(this.mixedCashAmount);
+    const mixedCard = this.getNumericAmount(this.mixedCardAmount);
+    const mixedTotal = this.roundToTwo(mixedCash + mixedCard);
+
+    if (mixedCard > remaining) {
+      return true;
+    }
+
+    if (mixedTotal < remaining) {
+      return true;
+    }
+
+    if (mixedTotal > remaining) {
+      return true;
+    }
+
+    if (mixedCard > 0 && !this.voucherId.trim()) {
+      return true;
+    }
+
+    return false;
+  }
+
+  get hasMixedCardPayment(): boolean {
+    return this.paymentType === 'mixed' && this.getNumericAmount(this.mixedCardAmount) > 0;
+  }
+
+  get hasPaidMixedCardPayment(): boolean {
+    return this.paidPaymentType === 'mixed' && this.getNumericAmount(this.paidMixedCardAmount) > 0;
   }
 
   closePaymentTicket(): void {
@@ -319,16 +461,15 @@ export class RepairDetailComponent implements OnInit {
   }
 
   onCashAmountInput(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const sanitizedValue = input.value
-      .replace(/[^0-9.]/g, '')
-      .replace(/(\..*)\./g, '$1');
-    
-    if (input.value !== sanitizedValue) {
-      input.value = sanitizedValue;
-    }
+    this.cashAmount = this.sanitizeDecimalInput(event);
+  }
 
-    this.cashAmount = sanitizedValue;
+  onMixedCashAmountInput(event: Event): void {
+    this.mixedCashAmount = this.sanitizeDecimalInput(event);
+  }
+
+  onMixedCardAmountInput(event: Event): void {
+    this.mixedCardAmount = this.sanitizeDecimalInput(event);
   }
 
   getRemainingBalance(): number {
@@ -338,9 +479,43 @@ export class RepairDetailComponent implements OnInit {
   }
 
   getPaidChange(): number {
-    const paid = Number(this.paidCashAmount ?? 0);
-    const safePaid = Number.isFinite(paid) ? paid : 0;
-    return safePaid - this.getRemainingBalance();
+    const remaining = this.getRemainingBalance();
+
+    if (this.paidPaymentType === 'mixed') {
+      const cashPaid = this.getNumericAmount(this.paidMixedCashAmount);
+      const cardPaid = this.getNumericAmount(this.paidMixedCardAmount);
+      const change = cashPaid - Math.max(0, remaining - cardPaid);
+      return this.roundToTwo(Math.max(0, change));
+    }
+
+    if (this.paidPaymentType === 'cash') {
+      const paid = this.getNumericAmount(this.paidCashAmount);
+      return this.roundToTwo(paid - remaining);
+    }
+
+    return 0;
+  }
+
+  private sanitizeDecimalInput(event: Event): string {
+    const input = event.target as HTMLInputElement;
+    const sanitizedValue = input.value
+      .replace(/[^0-9.]/g, '')
+      .replace(/(\..*)\./g, '$1');
+
+    if (input.value !== sanitizedValue) {
+      input.value = sanitizedValue;
+    }
+
+    return sanitizedValue;
+  }
+
+  private getNumericAmount(value: string | null | undefined): number {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : 0;
+  }
+
+  private roundToTwo(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 
   private resolveSelectedAdvancePaymentType(paymentType: 'cash' | 'card'): PaymentType | undefined {
