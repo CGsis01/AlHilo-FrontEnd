@@ -105,8 +105,9 @@ export class AuthService {
     localStorage.setItem(environment.tokenKey, response.token.accessToken);
     localStorage.setItem(environment.refreshTokenKey, response.token.refreshToken);
     localStorage.setItem(environment.userKey, JSON.stringify(response.user));
-    
+
     this.currentUserSubject.next(response.user);
+    
     this.scheduleTokenExpiry();
   }
 

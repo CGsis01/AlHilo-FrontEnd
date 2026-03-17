@@ -140,8 +140,21 @@ export class UserApiService {
       name: user.name,
       email: user.email,
       role: { id: user.role.id, name: user.role.name, code: user.role.code } as UserRole,
+      store: user.store ? {
+        id: user.store.id,
+        name: user.store.name,
+        address: user.store.address,
+        phone: user.store.phone,
+        email: user.store.email,
+        rfc: user.store.rfc,
+        url: user.store.url,
+        logo: user.store.logo,
+        isActive: user.store.is_active,
+        createdAt: new Date(user.store.created_at),
+        updatedAt: new Date(user.store.updated_at)
+      } : null,
       isActive: user.is_active,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at};
+      createdAt: new Date(user.created_at),
+      updatedAt: new Date(user.updated_at)};
     }
 }

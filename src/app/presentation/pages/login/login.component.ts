@@ -51,13 +51,10 @@ export class LoginComponent implements OnInit {
           this.router.navigate(['/repairs']);
         } else {
           this.router.navigate(['/dashboard']);
-        }
-      },
+        }},
       error: (error) => {
         this.errorMessage = error.message || 'Login failed. Please try again.';
-        this.isLoading = false;
-      }
-    });
+        this.isLoading = false;}});
   }
 
   get email() {

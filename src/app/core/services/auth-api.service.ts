@@ -36,11 +36,26 @@ interface ApiRoleResponse {
   updated_at: string;
 }
 
+interface ApiStoreResponse {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  rfc: string;
+  url: string;
+  logo: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 interface ApiUserResponse {
   id: string;
   name: string;
   email: string;
   role: ApiRoleResponse;
+  store: ApiStoreResponse;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -69,6 +84,7 @@ export class AuthApiService {
 
   login(email: string, password: string): Observable<AuthResponse> {
     const loginData: LoginRequest = { email, password };
+
     return this.apiService
       .post<ApiAuthResponse>(`${this.endpoint}/login`, loginData)
       .pipe(map(response => this.mapAuthResponse(response)));
@@ -134,6 +150,7 @@ export class AuthApiService {
       name: user.name,
       email: user.email,
       role: this.mapRole(user.role),
+      store: user.store ? this.mapStore(user.store) : null,
       isActive: user.is_active,
       createdAt: new Date(user.created_at),
       updatedAt: new Date(user.updated_at)};
@@ -144,6 +161,21 @@ export class AuthApiService {
       id: role.id,
       name: role.name,
       code: role.code};
+  }
+
+  private mapStore(store: ApiStoreResponse) {
+    return {
+      id: store.id,
+      name: store.name,
+      address: store.address,
+      phone: store.phone,
+      email: store.email,
+      rfc: store.rfc,
+      url: store.url,
+      logo: store.logo,
+      isActive: store.is_active,
+      createdAt: new Date(store.created_at),
+      updatedAt: new Date(store.updated_at)};
   }
 
   private mapToken(token: ApiTokenResponse): AuthToken {
