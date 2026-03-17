@@ -485,12 +485,9 @@ export class RepairFormComponent implements OnInit {
       repairStatus: this.repairStatuses.find(status => status.name === RepairStatusEnum.PENDING),
       advancePayment: rawAdvance > 0 ? rawAdvance : undefined,
       items: this.repairItems};
-    
-    console.log('Submitting repair with data:', repairData);
 
     this.repairUseCases.createRepair(repairData).subscribe({
       next: (repair) => {
-        console.log('Repair created successfully:', repair);
         if (rawAdvance > 0) {
           const advanceCashAmount = selectedAdvancePaymentType === 'mixed'
             ? cashAdvance
