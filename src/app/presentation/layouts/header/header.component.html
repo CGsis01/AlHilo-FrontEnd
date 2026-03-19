@@ -15,14 +15,39 @@
     </div>
 
     <nav class="nav-menu" [class.open]="isMenuOpen">
-      <a *ngFor="let item of filteredMenuItems" 
-        [routerLink]="item.route" 
-        routerLinkActive="active"
-        class="nav-link"
-        (click)="isMenuOpen = false">
-        <span class="nav-icon">{{ item.icon }}</span>
-        <span class="nav-label">{{ item.label }}</span>
-      </a>
+      <ng-container *ngFor="let item of filteredMenuItems">
+        <!-- Regular menu item without children -->
+        <a *ngIf="!item.children" 
+          [routerLink]="item.route" 
+          routerLinkActive="active"
+          class="nav-link"
+          (click)="isMenuOpen = false">
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+
+        <!-- Dropdown menu item with children -->
+        <div *ngIf="item.children" class="nav-dropdown">
+          <button 
+            class="nav-link dropdown-trigger" 
+            [class.open]="isDropdownOpen(item.label)"
+            (click)="toggleDropdown(item.label)">
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          <div class="dropdown-content" [class.open]="isDropdownOpen(item.label)">
+            <a *ngFor="let child of item.children" 
+              [routerLink]="child.route" 
+              routerLinkActive="active"
+              class="dropdown-link"
+              (click)="isMenuOpen = false; toggleDropdown(item.label)">
+              <span class="nav-icon">{{ child.icon }}</span>
+              <span class="nav-label">{{ child.label }}</span>
+            </a>
+          </div>
+        </div>
+      </ng-container>
     </nav>
 
     <div class="header-actions">

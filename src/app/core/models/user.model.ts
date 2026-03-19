@@ -1,4 +1,5 @@
 export enum UserRoleCode {
+  SUPERADMIN = 'SuperAdmin',
   ADMIN = 'Administrator',
   RECEPTIONIST = 'Receptionist',
   HEADSEWING = 'HeadSewing',
