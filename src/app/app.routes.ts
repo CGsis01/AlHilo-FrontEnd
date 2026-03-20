@@ -46,7 +46,7 @@ export const routes: Routes = [
   {
     path: 'stores',
     loadComponent: () => import('./presentation/pages/stores/stores.component').then(m => m.StoresComponent),
-    canActivate: [authGuard, roleGuard([UserRoleCode.SUPERADMIN])]
+    canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN])]
   },
   {
     path: 'materials',
