@@ -54,6 +54,11 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN])]
   },
   {
+    path: 'repair-complexities',
+    loadComponent: () => import('./presentation/pages/repair-complexities/repair-complexities.component').then(m => m.RepairComplexitiesComponent),
+    canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN])]
+  },
+  {
     path: 'repair-types',
     loadComponent: () => import('./presentation/pages/repair-types/repair-types.component').then(m => m.RepairTypesComponent),
     canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN])]
