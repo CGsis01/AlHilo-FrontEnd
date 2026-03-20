@@ -26,7 +26,7 @@ export class HeaderComponent implements OnChanges {
   @Output() logout = new EventEmitter<void>();
 
   isMenuOpen = false;
-  openDropdown: string | null = null;
+  openDropdowns: Set<string> = new Set();
   filteredMenuItems: MenuItem[] = [];
 
   menuItems: MenuItem[] = [
@@ -36,11 +36,32 @@ export class HeaderComponent implements OnChanges {
       icon: '📚', 
       roles: [UserRoleCode.SUPERADMIN, UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST],
       children: [
-        { label: 'Usuarios', route: '/users', icon: '👥', roles: [UserRoleCode.ADMIN] },
-        { label: 'Clientes', route: '/customers', icon: '👤', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
-        { label: 'Roles', route: '/roles', icon: '🎭', roles: [UserRoleCode.ADMIN] },
-        { label: 'Tipos de compostura', route: '/repair-types', icon: '📋', roles: [UserRoleCode.ADMIN] },
-        { label: 'Sucursales', route: '/stores', icon: '🏪', roles: [UserRoleCode.SUPERADMIN] }
+        { 
+          label: 'Sistema', 
+          icon: '📚', 
+          roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST],
+          children: [
+            { label: 'Usuarios', route: '/users', icon: '👥', roles: [UserRoleCode.ADMIN] },
+            { label: 'Roles', route: '/roles', icon: '🎭', roles: [UserRoleCode.ADMIN] }
+          ]
+        },
+        { 
+          label: 'Reparaciones', 
+          icon: '📚', 
+          roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST],
+          children: [
+            { label: 'Clientes', route: '/customers', icon: '👤', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
+            { label: 'Tipos de compostura', route: '/repair-types', icon: '📋', roles: [UserRoleCode.ADMIN] }
+          ]
+        },
+        { 
+          label: 'SuperAdmin', 
+          icon: '📚', 
+          roles: [UserRoleCode.SUPERADMIN],
+          children: [
+            { label: 'Sucursales', route: '/stores', icon: '🏪', roles: [UserRoleCode.SUPERADMIN] }
+          ]
+        }
       ]
     },
     { label: 'Composturas', route: '/repairs', icon: '🧵', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST, UserRoleCode.SEAMSTRESS, UserRoleCode.HEADSEWING] },
@@ -59,29 +80,35 @@ export class HeaderComponent implements OnChanges {
       this.filteredMenuItems = [];
       return;
     }
+
+    this.isMenuOpen = false;
+    this.openDropdowns.clear();
     
-    this.filteredMenuItems = this.menuItems.filter(item => {
-      // Check if user has access to the parent item
+    this.filteredMenuItems = this.filterMenuItemsRecursively(this.menuItems);
+  }
+
+  private filterMenuItemsRecursively(items: MenuItem[]): MenuItem[] {
+    return items.filter(item => {
+      // Check if user has access to the item
       const hasAccess = item.roles.includes(this.currentUser!.role.code as UserRoleCode);
       
-      // If item has children, filter them too
+      // If item has children, recursively filter them
       if (hasAccess && item.children) {
-        const filteredChildren = item.children.filter(child => 
-          child.roles.includes(this.currentUser!.role.code as UserRoleCode)
-        );
-        // Only show parent if it has accessible children
-        return filteredChildren.length > 0;
+        const filteredChildren = this.filterMenuItemsRecursively(item.children);
+
+        // Only show parent if it has accessible children or its own route
+        return filteredChildren.length > 0 || item.route;
       }
       
       return hasAccess;
     }).map(item => {
-      // Filter children based on user role
+      // Recursively filter children based on user role
       if (item.children) {
+        const filteredChildren = this.filterMenuItemsRecursively(item.children);
+
         return {
           ...item,
-          children: item.children.filter(child => 
-            child.roles.includes(this.currentUser!.role.code as UserRoleCode)
-          )
+          children: filteredChildren.length > 0 ? filteredChildren : undefined
         };
       }
 
@@ -93,12 +120,33 @@ export class HeaderComponent implements OnChanges {
     this.isMenuOpen = !this.isMenuOpen;
   }
 
-  toggleDropdown(label: string): void {
-    this.openDropdown = this.openDropdown === label ? null : label;
+  toggleDropdown(path: string, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    if (this.openDropdowns.has(path)) {
+      this.openDropdowns.delete(path);
+      
+      // Close all child dropdowns when parent closes
+      const childPaths = Array.from(this.openDropdowns).filter(p => p.startsWith(path + '.'));
+      
+      childPaths.forEach(p => this.openDropdowns.delete(p));
+    } else {
+      this.openDropdowns.add(path);
+    }
   }
 
-  isDropdownOpen(label: string): boolean {
-    return this.openDropdown === label;
+  isDropdownOpen(path: string): boolean {
+    return this.openDropdowns.has(path);
+  }
+
+  getMenuItemPath(parentPath: string, label: string): string {
+    return parentPath ? `${parentPath}.${label}` : label;
+  }
+
+  hasChildren(item: MenuItem): boolean {
+    return !!item.children && item.children.length > 0;
   }
 
   onToggleTheme(): void {
