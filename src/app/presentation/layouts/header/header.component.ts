@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Output, Input, OnChanges, SimpleChanges, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { User, UserRoleCode } from '../../../core/models/user.model';
@@ -29,6 +29,18 @@ export class HeaderComponent implements OnChanges {
   openDropdowns: Set<string> = new Set();
   filteredMenuItems: MenuItem[] = [];
 
+  constructor(private elementRef: ElementRef) {}
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const clickedInside = this.elementRef.nativeElement.contains(event.target);
+    
+    // Close dropdowns if clicked outside the header component
+    if (!clickedInside && this.openDropdowns.size > 0) {
+      this.openDropdowns.clear();
+    }
+  }
+
   menuItems: MenuItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: '📊', roles: [UserRoleCode.SUPERADMIN, UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
     { 
@@ -42,7 +54,8 @@ export class HeaderComponent implements OnChanges {
           roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST],
           children: [
             { label: 'Usuarios', route: '/users', icon: '👥', roles: [UserRoleCode.ADMIN] },
-            { label: 'Roles', route: '/roles', icon: '🎭', roles: [UserRoleCode.ADMIN] }
+            { label: 'Roles', route: '/roles', icon: '🎭', roles: [UserRoleCode.ADMIN] },
+            { label: 'Sucursales', route: '/stores', icon: '🏪', roles: [UserRoleCode.ADMIN] }
           ]
         },
         { 
@@ -51,7 +64,8 @@ export class HeaderComponent implements OnChanges {
           roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST],
           children: [
             { label: 'Clientes', route: '/customers', icon: '👤', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
-            { label: 'Tipos de compostura', route: '/repair-types', icon: '📋', roles: [UserRoleCode.ADMIN] }
+            { label: 'Tipos de compostura', route: '/repair-types', icon: '📋', roles: [UserRoleCode.ADMIN] },
+            { label: 'Materiales', route: '/materials', icon: '📦', roles: [UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN] }
           ]
         },
         { 
@@ -120,6 +134,11 @@ export class HeaderComponent implements OnChanges {
     this.isMenuOpen = !this.isMenuOpen;
   }
 
+  closeMenu(): void {
+    this.isMenuOpen = false;
+    this.openDropdowns.clear();
+  }
+
   toggleDropdown(path: string, event?: Event): void {
     if (event) {
       event.stopPropagation();
@@ -133,6 +152,26 @@ export class HeaderComponent implements OnChanges {
       
       childPaths.forEach(p => this.openDropdowns.delete(p));
     } else {
+      // Close sibling dropdowns at the same level
+      const pathParts = path.split('.');
+      const parentPath = pathParts.slice(0, -1).join('.');
+      const currentLevel = pathParts.length;
+      
+      // Find and close all siblings (same level, same parent)
+      Array.from(this.openDropdowns).forEach(openPath => {
+        const openPathParts = openPath.split('.');
+        const openParentPath = openPathParts.slice(0, -1).join('.');
+        
+        // If it's at the same level and has the same parent, close it
+        if (openPathParts.length === currentLevel && openParentPath === parentPath && openPath !== path) {
+          this.openDropdowns.delete(openPath);
+          
+          // Also close all children of the sibling
+          const childPaths = Array.from(this.openDropdowns).filter(p => p.startsWith(openPath + '.'));
+          childPaths.forEach(p => this.openDropdowns.delete(p));
+        }
+      });
+      
       this.openDropdowns.add(path);
     }
   }
