@@ -113,8 +113,7 @@ export class MaterialApiService {
     if (storeId) {
       filters.store_id = storeId;
     }
-    return this.getAll(filters)
-    .pipe(map(response => response.map(m => this.mapMaterial(m))));
+    return this.getAll(filters);
   }
 
   getByStore(storeId: string): Observable<Material[]> {
