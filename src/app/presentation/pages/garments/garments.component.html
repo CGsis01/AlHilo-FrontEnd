@@ -1,0 +1,271 @@
+<div class="garments-container">
+  <div class="garments-header">
+    <div class="header-content">
+      <h1>Administración de Prendas</h1>
+      <p class="subtitle">Gestiona las prendas del sistema</p>
+    </div>
+    <div class="header-actions">
+      <div class="filter-group" *ngIf="stores.length > 0">
+        <label for="storeFilter">Sucursal:</label>
+        <select 
+          id="storeFilter" 
+          [(ngModel)]="selectedStoreId" 
+          (change)="onStoreChange()" 
+          class="form-select">
+          <option value="all">Todas las sucursales</option>
+          <option *ngFor="let store of stores" [value]="store.id">
+            {{ store.name }}
+          </option>
+        </select>
+      </div>
+      <button type="button" class="btn-primary" (click)="$event.stopPropagation(); openAddModal()">
+        <span>➕</span> Agregar Prenda
+      </button>
+    </div>
+  </div>
+
+  <div class="garments-table-wrapper" *ngIf="!isLoading && filteredGarments.length > 0">
+    <table class="garments-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Código</th>
+          <th>Categoría</th>
+          <th>Descripción</th>
+          <th>Tipos de Reparación</th>
+          <th>Sucursal</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let garment of filteredGarments">
+          <td class="garment-name">{{ garment.name }}</td>
+          <td class="garment-code">{{ garment.code }}</td>
+          <td class="garment-category">{{ garment.category || '-' }}</td>
+          <td class="garment-description">{{ garment.description || '-' }}</td>
+          <td class="garment-repair-types">
+            <span class="repair-types-badge">{{ getRepairTypeNames(garment) }}</span>
+          </td>
+          <td class="garment-store">{{ getStoreName(garment.storeId) }}</td>
+          <td>
+            <span class="status-badge" [class.active]="garment.isActive" [class.inactive]="!garment.isActive">
+              {{ garment.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="actions-cell">
+            <button class="btn-icon" (click)="openEditModal(garment)" title="Editar">✏️</button>
+            <button class="btn-icon" (click)="openRepairTypesModal(garment)" title="Gestionar Tipos de Reparación">🔧</button>
+            <button class="btn-icon" (click)="toggleStatus(garment)" [title]="garment.isActive ? 'Desactivar' : 'Activar'">
+              {{ garment.isActive ? '🔒' : '🔓' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && filteredGarments.length === 0">
+    <div class="empty-icon">👔</div>
+    <h3>No se encontraron prendas</h3>
+    <p>Comienza agregando tu primera prenda al sistema.</p>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando prendas...</p>
+  </div>
+</div>
+
+<!-- Modal for Add/Edit Garment -->
+<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Editar Prenda' : 'Agregar Prenda' }}</h2>
+      <button class="btn-close" (click)="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="garmentName">Nombre *</label>
+          <input id="garmentName"
+            type="text" 
+            [(ngModel)]="editingGarment.name" 
+            placeholder="Ej: Pantalón" 
+            class="form-input"/>
+        </div>
+
+        <div class="form-group">
+          <label for="garmentCode">Código *</label>
+          <input id="garmentCode"
+            type="text" 
+            [(ngModel)]="editingGarment.code" 
+            placeholder="Ej: pantalon" 
+            class="form-input"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="garmentCategory">Categoría</label>
+          <input id="garmentCategory"
+            type="text" 
+            [(ngModel)]="editingGarment.category" 
+            placeholder="Ej: Superior, Inferior" 
+            class="form-input"/>
+        </div>
+
+        <div class="form-group">
+          <label for="garmentStore">Sucursal *</label>
+          <select 
+            id="garmentStore" 
+            [(ngModel)]="editingGarment.storeId" 
+            class="form-select">
+            <option value="">Seleccionar sucursal</option>
+            <option *ngFor="let store of stores" [value]="store.id">
+              {{ store.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="garmentDescription">Descripción</label>
+        <textarea 
+          id="garmentDescription"
+          [(ngModel)]="editingGarment.description" 
+          placeholder="Ej: Pantalones de vestir y casuales" 
+          class="form-textarea"
+          rows="3"></textarea>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveGarment()">
+        {{ isEditing ? 'Actualizar' : 'Crear' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Managing Repair Types -->
+<div class="modal-backdrop" *ngIf="showRepairTypesModal" (click)="closeRepairTypesModal()">
+  <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Tipos de Reparación - {{ selectedGarmentForRepairTypes?.name }}</h2>
+      <button class="btn-close" (click)="closeRepairTypesModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="repair-types-section">
+        <h3>Tipos de Reparación Asignados</h3>
+        <div class="assigned-repair-types" *ngIf="selectedGarmentForRepairTypes && selectedGarmentForRepairTypes.repairTypes.length > 0">
+          <div class="repair-type-card" *ngFor="let rt of selectedGarmentForRepairTypes.repairTypes">
+            <div class="repair-type-info">
+              <h4>{{ rt.repairTypeName }} <span class="code">({{ rt.repairTypeCode }})</span></h4>
+              <div class="repair-type-details">
+                <span *ngIf="rt.isDefault" class="badge-default">Por defecto</span>
+                <span *ngIf="rt.estimatedPriceOverride" class="detail-item">
+                  Precio: ${{ rt.estimatedPriceOverride.toFixed(2) }}
+                </span>
+                <span *ngIf="rt.estimatedTimeOverride" class="detail-item">
+                  Tiempo: {{ rt.estimatedTimeOverride.toFixed(2) }}h
+                </span>
+                <span *ngIf="rt.sortOrder" class="detail-item">
+                  Orden: {{ rt.sortOrder }}
+                </span>
+              </div>
+            </div>
+            <span class="status-badge" [class.active]="rt.isActive" [class.inactive]="!rt.isActive">
+              {{ rt.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+        </div>
+        <div class="empty-message" *ngIf="selectedGarmentForRepairTypes && selectedGarmentForRepairTypes.repairTypes.length === 0">
+          No hay tipos de reparación asignados a esta prenda.
+        </div>
+      </div>
+
+      <div class="add-repair-type-section" *ngIf="availableRepairTypes.length > 0">
+        <h3>Agregar Tipo de Reparación</h3>
+        <div class="form-group">
+          <label for="repairTypeSelect">Tipo de Reparación</label>
+          <select 
+            id="repairTypeSelect" 
+            [(ngModel)]="selectedRepairTypeId" 
+            class="form-select">
+            <option value="">Seleccionar tipo de reparación</option>
+            <option *ngFor="let rt of availableRepairTypes" [value]="rt.id">
+              {{ rt.name }} ({{ rt.code }})
+            </option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="priceOverride">Precio Estimado (Override)</label>
+            <input 
+              id="priceOverride"
+              type="text" 
+              [(ngModel)]="repairTypeOptions.estimatedPriceOverride" 
+              (input)="onDecimalInput($event, 'estimatedPriceOverride')"
+              (blur)="formatToTwoDecimals($event, 'estimatedPriceOverride')"
+              placeholder="Ej: 150.00" 
+              class="form-input"/>
+          </div>
+
+          <div class="form-group">
+            <label for="timeOverride">Tiempo Estimado (Override) - Horas</label>
+            <input 
+              id="timeOverride"
+              type="text" 
+              [(ngModel)]="repairTypeOptions.estimatedTimeOverride" 
+              (input)="onDecimalInput($event, 'estimatedTimeOverride')"
+              (blur)="formatToTwoDecimals($event, 'estimatedTimeOverride')"
+              placeholder="Ej: 2.00" 
+              class="form-input"/>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sortOrder">Orden de Visualización</label>
+            <input 
+              id="sortOrder"
+              type="number" 
+              [(ngModel)]="repairTypeOptions.sortOrder" 
+              placeholder="Ej: 1" 
+              class="form-input"/>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label>
+              <input 
+                type="checkbox" 
+                [(ngModel)]="repairTypeOptions.isDefault"/>
+              <span>Marcar como por defecto</span>
+            </label>
+          </div>
+        </div>
+
+        <button class="btn-primary" (click)="addRepairTypeToGarment()" [disabled]="!selectedRepairTypeId">
+          <span>➕</span> Agregar Tipo de Reparación
+        </button>
+      </div>
+
+      <div class="no-available-message" *ngIf="availableRepairTypes.length === 0">
+        <p>No hay tipos de reparación disponibles para asignar.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeRepairTypesModal()">Cerrar</button>
+    </div>
+  </div>
+</div>

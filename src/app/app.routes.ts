@@ -64,6 +64,11 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN])]
   },
   {
+    path: 'garments',
+    loadComponent: () => import('./presentation/pages/garments/garments.component').then(m => m.GarmentsComponent),
+    canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN])]
+  },
+  {
     path: 'customers',
     loadComponent: () => import('./presentation/pages/customers/customers.component').then(m => m.CustomersComponent),
     canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST])]
