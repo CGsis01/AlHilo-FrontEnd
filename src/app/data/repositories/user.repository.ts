@@ -29,6 +29,7 @@ export class UserRepository implements Repository<User> {
       email: user.email!,
       password: user.password!, // Should be provided by the form
       role_id: user.role!.id!,
+      store_id: user.store ? user.store.id : undefined,
       created_by: this.getStoredUserId()};
     
     return this.userApiService.create(createRequest);
@@ -40,7 +41,9 @@ export class UserRepository implements Repository<User> {
       name: user.name,
       email: user.email,
       role_id: user.role!.id,
-      is_active: user.isActive};
+      store_id: user.store ? user.store.id : undefined,
+      is_active: user.isActive,
+      updated_by: this.getStoredUserId()};
     
     return this.userApiService.update(id, updateRequest);
   }
@@ -59,6 +62,10 @@ export class UserRepository implements Repository<User> {
     return this.userApiService.getByRole(roles);
   }
 
+  getByStore(storeId: string): Observable<User[]> {    
+    return this.userApiService.getByStore(storeId);
+  }
+
   updatePassword(userId: string, oldPassword: string, newPassword: string): Observable<boolean> {
     // Password update should be done through auth service
     return new Observable(observer => {
@@ -70,17 +77,19 @@ export class UserRepository implements Repository<User> {
     return this.userApiService.getActiveSeamstresses();
   }
 
-  activate(id: string): Observable<boolean> {
+  activate(id: string, storeId?: string): Observable<boolean> {
     const activateRequest = {
       id: id,
+      store_id: storeId,
       updated_by: this.getStoredUserId()}
 
     return this.userApiService.activate(activateRequest);
   }
 
-  deactivate(id: string): Observable<boolean> {
+  deactivate(id: string, storeId?: string): Observable<boolean> {
     const deactivateRequest = {
       id: id,
+      store_id: storeId,
       updated_by: this.getStoredUserId()}
 
     return this.userApiService.deactivate(deactivateRequest);

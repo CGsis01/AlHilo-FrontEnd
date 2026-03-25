@@ -1,3 +1,5 @@
+import { Store } from '../models/store.model';
+
 export enum UserRoleCode {
   SUPERADMIN = 'SuperAdmin',
   ADMIN = 'Administrator',
@@ -10,20 +12,6 @@ export interface UserRole {
   id: string;
   name: string;
   code: string;
-}
-
-export interface Store {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  rfc: string;
-  url: string;
-  logo: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface User {

@@ -34,15 +34,19 @@ export class UserUseCases {
     return this.userRepository.getByRole(roles);
   }
 
+  getUsersByStore(storeId: string): Observable<User[]> {
+    return this.userRepository.getByStore(storeId);
+  }
+
   changePassword(userId: string, oldPassword: string, newPassword: string): Observable<boolean> {
     return this.userRepository.updatePassword(userId, oldPassword, newPassword);
   }
 
-  activateUser(id: string): Observable<boolean> {
-    return this.userRepository.activate(id);
+  activateUser(id: string, storeId?: string): Observable<boolean> {
+    return this.userRepository.activate(id, storeId);
   }
 
-  deactivateUser(id: string): Observable<boolean> {
-    return this.userRepository.deactivate(id);
+  deactivateUser(id: string, storeId?: string): Observable<boolean> {
+    return this.userRepository.deactivate(id, storeId);
   }
 }

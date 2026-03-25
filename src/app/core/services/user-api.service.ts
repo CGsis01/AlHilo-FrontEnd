@@ -35,6 +35,7 @@ export interface UserFilters {
   role_id?: string;
   role_code?: string;
   role_codes?: string[];
+  store_id?: string;
   is_active?: boolean;
   search?: string;  // Name or email search
 }
@@ -52,8 +53,7 @@ export class UserApiService {
     let params = '';
 
     if (filters) {
-      if (filters.role_id) 
-        params = `role_id=${filters.role_id}`;
+      if (filters.role_id) params = `role_id=${filters.role_id}`;
       if (filters.is_active !== undefined) 
         params = params 
           ? `${params}&is_active=${filters.is_active.toString()}` 
@@ -72,7 +72,12 @@ export class UserApiService {
         params = params 
           ? `${params}&${roleCodesParam}` 
           : roleCodesParam;
-      }}
+      }
+      if (filters.store_id) 
+        params = params 
+          ? `${params}&store_id=${filters.store_id}` 
+          : `store_id=${filters.store_id}`;
+    }
 
     return this.apiService.get<User[]>(`${this.endpoint}?${params}`)
     .pipe(map(response => response.map(u => this.mapUser(u))));
@@ -87,7 +92,11 @@ export class UserApiService {
       if (filters.role_id) params = params.set('role_id', filters.role_id);
       if (filters.role_code) params = params.set('role_code', filters.role_code);
       if (filters.is_active !== undefined) params = params.set('is_active', filters.is_active.toString());
-      if (filters.search) params = params.set('search', filters.search);}
+      if (filters.search) params = params.set('search', filters.search);
+      if (filters.store_id) params = params.set('store_id', filters.store_id);
+      if (filters.role_codes) { filters.role_codes.forEach(code => { params = params.append('role_codes', code); }); }
+    }
+
 
     return this.apiService.get<PaginatedResponse<User>>(this.endpoint, params);
   }
@@ -99,6 +108,10 @@ export class UserApiService {
   getByRole(roles: UserRole[]): Observable<User[]> {
     const roleCodes = roles.map(role => role.code);
     return this.getAll({ role_codes: roleCodes });
+  }
+
+  getByStore(storeId: string): Observable<User[]> {
+    return this.getAll({ store_id: storeId });
   }
 
   create(userData: CreateUserRequest): Observable<User> {

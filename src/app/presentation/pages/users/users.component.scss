@@ -26,6 +26,29 @@
       margin: 0;
     }
   }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      label {
+        font-size: 0.9rem;
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      .form-select {
+        min-width: 200px;
+      }
+    }
+  }
 }
 
 .btn-primary {
@@ -115,6 +138,11 @@
         &.user-email {
           color: var(--text-secondary);
         }
+
+        &.user-store {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+        }
         
         &.date-cell {
           color: var(--text-secondary);
@@ -144,6 +172,11 @@
   &.role-receptionist {
     background: rgba(59, 130, 246, 0.15);
     color: #2563eb;
+  }
+
+  &.role-headsewing {
+    background: rgba(214, 223, 132, 0.15);
+    color: #71771c;
   }
   
   &.role-seamstress {
@@ -309,33 +342,8 @@
     font-size: 0.9rem;
   }
 
-  input,
-  select,
-  textarea {
-    padding: 0.875rem 1rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 1rem;
-    background: var(--background);
-    color: var(--text);
-    transition: all 0.2s ease;
-    
-    &:focus {
-      outline: none;
-      border-color: var(--gold);
-      box-shadow: 0 0 0 3px var(--gold-light);
-    }
-    
-    &::placeholder {
-      color: var(--text-secondary);
-    }
-  }
-
-  select {
-    cursor: pointer;
-  }
-  
-  .form-input {
+  .form-input,
+  .form-select {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid var(--border);
@@ -349,6 +357,10 @@
       outline: none;
       border-color: var(--gold);
     }
+  }
+
+  .form-select {
+    cursor: pointer;
   }
   
   .checkbox-label {
@@ -374,6 +386,23 @@
   color: #dc2626;
   font-size: 0.9rem;
   margin-top: 1rem;
+}
+
+.form-select {
+  width: auto;
+  min-width: 200px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
 }
 
 @keyframes spin {
