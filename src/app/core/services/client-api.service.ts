@@ -80,8 +80,14 @@ export class ClientApiService {
     return this.getAll({ store_id: storeId });
   }
 
-  searchByPhone(phone: string): Observable<Client | null> {
-    return this.apiService.get<Client | null>(`${this.endpoint}/by-phone/${phone}`)
+  searchByPhone(phone: string, storeId?: string): Observable<Client | null> {
+    let params = new HttpParams();
+    
+    if (storeId) {
+      params = params.set('store_id', storeId);
+    }
+    
+    return this.apiService.get<Client | null>(`${this.endpoint}/by-phone/${phone}`, params)
     .pipe(map((response: Client | null) => response ? this.mapClient(response) : null));
   }
 

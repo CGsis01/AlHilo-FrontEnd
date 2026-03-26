@@ -39,7 +39,7 @@ export class ClientRepository implements Repository<Client> {
       facebook: client.facebook,
       instagram: client.instagram,
       birth_date: client.birthDate ? client.birthDate.toISOString().split('T')[0] : undefined,
-      store_id: client.store?.id,
+      store_id: this.getStoredStoreId(),
       created_by: this.getStoredUserId() };
     
     return this.clientApiService.create(createRequest);
@@ -73,7 +73,9 @@ export class ClientRepository implements Repository<Client> {
   }
 
   searchByPhone(phone: string): Observable<Client | undefined> {
-    return this.clientApiService.searchByPhone(phone)
+    const storeId = this.getStoredStoreId();
+
+    return this.clientApiService.searchByPhone(phone, storeId)
     .pipe(map(client => client || undefined));
   }
 
@@ -85,5 +87,15 @@ export class ClientRepository implements Repository<Client> {
     }
 
     return (JSON.parse(userJson) as User).id;
+  }
+
+  private getStoredStoreId(): string {
+    const userJson = localStorage.getItem(environment.userKey);
+
+    if (!userJson) {
+      throw new Error('No user found in local storage');
+    }
+
+    return (JSON.parse(userJson) as User).store?.id || '';
   }
 }
