@@ -74,6 +74,7 @@
         <div class="user-info">
           <span class="user-name">{{ currentUser.name }}</span>
           <span class="user-role">{{ currentUser.role.name }}</span>
+          <span class="user-store">{{ currentUser.store ? currentUser.store.name : '' }}</span>
         </div>
         <button class="logout-btn" (click)="onLogout()" aria-label="Logout">
           <span>🚪</span>
