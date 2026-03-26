@@ -18,6 +18,10 @@ export class ClientUseCases {
     return this.clientRepository.getById(id);
   }
 
+  getClientsByStore(storeId: string): Observable<Client[]> {
+    return this.clientRepository.getByStore(storeId);
+  }
+
   createClient(client: Partial<Client>): Observable<Client> {
     return this.clientRepository.create(client);
   }

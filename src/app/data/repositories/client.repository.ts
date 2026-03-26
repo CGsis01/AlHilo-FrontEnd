@@ -3,6 +3,8 @@ import { Observable, map } from 'rxjs';
 import { Client } from '../../core/models/client.model';
 import { Repository } from '../../core/interfaces/repository.interface';
 import { ClientApiService } from '../../core/services/client-api.service';
+import { environment } from '../../../environments/environment';
+import { User } from '../../core/models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -22,6 +24,10 @@ export class ClientRepository implements Repository<Client> {
     return this.clientApiService.getById(id);
   }
 
+  getByStore(storeId: string): Observable<Client[]> {    
+    return this.clientApiService.getByStore(storeId);
+  }
+
   create(client: Partial<Client>): Observable<Client> {
     // Map Client model to CreateClientRequest
     const createRequest = {
@@ -32,7 +38,9 @@ export class ClientRepository implements Repository<Client> {
       email: client.email,
       facebook: client.facebook,
       instagram: client.instagram,
-      birth_date: client.birthDate ? client.birthDate.toISOString().split('T')[0] : undefined};
+      birth_date: client.birthDate ? client.birthDate.toISOString().split('T')[0] : undefined,
+      store_id: client.store?.id,
+      created_by: this.getStoredUserId() };
     
     return this.clientApiService.create(createRequest);
   }
@@ -47,7 +55,9 @@ export class ClientRepository implements Repository<Client> {
       email: client.email,
       facebook: client.facebook,
       instagram: client.instagram,
-      birth_date: client.birthDate ? client.birthDate.toISOString().split('T')[0] : undefined};
+      birth_date: client.birthDate ? client.birthDate.toISOString().split('T')[0] : undefined,
+      store_id: client.store?.id,
+      updated_by: this.getStoredUserId()};
     
     return this.clientApiService.update(id, updateRequest);
   }
@@ -65,5 +75,15 @@ export class ClientRepository implements Repository<Client> {
   searchByPhone(phone: string): Observable<Client | undefined> {
     return this.clientApiService.searchByPhone(phone)
     .pipe(map(client => client || undefined));
+  }
+
+  private getStoredUserId(): string {
+    const userJson = localStorage.getItem(environment.userKey);
+
+    if (!userJson) {
+      throw new Error('No user found in local storage');
+    }
+
+    return (JSON.parse(userJson) as User).id;
   }
 }

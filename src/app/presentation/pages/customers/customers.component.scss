@@ -25,6 +25,29 @@
       margin: 0;
     }
   }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      label {
+        font-size: 0.9rem;
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      .form-select {
+        min-width: 200px;
+      }
+    }
+  }
 }
 
 .search-bar {
@@ -34,11 +57,13 @@
   margin-bottom: 1.5rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 0.625rem 1rem;
   max-width: 420px;
 
-  .search-icon { font-size: 1rem; color: var(--text-secondary); }
+  .search-icon { 
+    font-size: 1rem; color: var(--text-secondary); 
+  }
 
   .search-input {
     flex: 1;
@@ -47,7 +72,15 @@
     color: var(--text);
     font-size: 0.95rem;
     outline: none;
-    &::placeholder { color: var(--text-secondary); }
+
+    &::placeholder { 
+      color: var(--text-secondary); 
+    }
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--gold);
   }
 }
 
@@ -109,17 +142,48 @@
     tr {
       border-bottom: 1px solid var(--border);
       transition: background 0.2s ease;
-      &:hover { background: var(--hover); }
-      &:last-child { border-bottom: none; }
+      
+      &:hover {
+        background: var(--hover); 
+      }
+      
+      &:last-child { 
+        border-bottom: none; 
+      }
+      
       td {
-        padding: 0.875rem 1.25rem;
+        padding: 1rem 1.5rem;
         color: var(--text);
-        font-size: 0.9rem;
-        &.client-name { font-weight: 600; }
-        &.client-email { color: var(--text-secondary); }
-        &.client-address { color: var(--text-secondary); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        &.date-cell { color: var(--text-secondary); white-space: nowrap; }
-        &.actions-cell { white-space: nowrap; }
+        
+        &.client-name { 
+          font-weight: 600; 
+        }
+        
+        &.client-email { 
+          color: var(--text-secondary); 
+        }
+        
+        &.client-address { 
+          color: var(--text-secondary); 
+          max-width: 200px; 
+          overflow: hidden; 
+          text-overflow: ellipsis; 
+          white-space: nowrap; 
+        }
+
+        &.client-store {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+        }
+        
+        &.date-cell { 
+          color: var(--text-secondary); 
+          white-space: nowrap; 
+        }
+
+        &.actions-cell { 
+          white-space: nowrap; 
+        }
       }
     }
   }
@@ -185,15 +249,22 @@
   align-items: center;
   padding: 1.5rem;
   border-bottom: 1px solid var(--border);
+  
   h2 { margin: 0; color: var(--text); font-size: 1.4rem; }
+  
   .btn-close {
     background: none; border: none; font-size: 1.4rem; cursor: pointer;
     color: var(--text-secondary); padding: 0.25rem; line-height: 1;
-    &:hover { color: var(--text); }
+    
+    &:hover { 
+      color: var(--text);
+    }
   }
 }
 
-.modal-body { padding: 1.5rem; }
+.modal-body { 
+  padding: 1.5rem; 
+}
 
 .modal-footer {
   display: flex; justify-content: flex-end; gap: 1rem;
@@ -210,25 +281,38 @@
   display: flex;
   flex-direction: column;
   margin-bottom: 1.25rem;
-  &.full-width { grid-column: 1 / -1; }
 
-  label {
-    font-weight: 600;
-    font-size: 0.875rem;
-    color: var(--text);
-    margin-bottom: 0.4rem;
+  &.full-width { 
+    grid-column: 1 / -1; 
   }
 
-  .form-input {
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .form-input,
+  .form-select {
+    width: 100%;
     padding: 0.75rem;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--background);
     color: var(--text);
-    font-size: 0.95rem;
+    font-size: 1rem;
     transition: border-color 0.2s;
-    &:focus { outline: none; border-color: var(--gold); }
-    &::placeholder { color: var(--text-secondary); }
+    
+    &:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+  }
+
+  .form-select {
+    cursor: pointer;
   }
 }
 
@@ -240,6 +324,23 @@
   color: #dc2626;
   font-size: 0.875rem;
   margin-top: 0.5rem;
+}
+
+.form-select {
+  width: auto;
+  min-width: 200px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }

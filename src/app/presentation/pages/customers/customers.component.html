@@ -4,9 +4,21 @@
       <h1>Clientes</h1>
       <p class="subtitle">Gestiona la información de los clientes del taller</p>
     </div>
-    <button type="button" class="btn-primary" (click)="openAddModal()">
-      <span>➕</span> Agregar Cliente
-    </button>
+    <div class="header-actions">
+      <div class="filter-group">
+        <label for="storeFilter">Filtrar por Sucursal:</label>
+        <select id="storeFilter" 
+          [(ngModel)]="selectedStoreFilter" 
+          (change)="onStoreFilterChange()"
+          class="form-select">
+          <option value="">Todas las sucursales</option>
+          <option *ngFor="let store of stores" [value]="store.id">{{ store.name }}</option>
+        </select>
+      </div>
+      <button type="button" class="btn-primary" (click)="openAddModal()">
+        <span>➕</span> Agregar Cliente
+      </button>
+    </div>
   </div>
 
   <!-- Search bar -->
@@ -30,6 +42,7 @@
           <th>Email</th>
           <th>Dirección</th>
           <th>Cumpleaños</th>
+          <th>Sucursal</th>
           <th>Creado</th>
           <th>Acciones</th>
         </tr>
@@ -42,6 +55,7 @@
           <td class="client-email">{{ client.email || '—' }}</td>
           <td class="client-address">{{ client.address }}</td>
           <td>{{ client.birthDate ? (client.birthDate | date:'dd/MM/yyyy') : '—' }}</td>
+          <td class="client-store">{{ client.store?.name || '—' }}</td>
           <td class="date-cell">{{ client.createdAt | date:'shortDate' }}</td>
           <td class="actions-cell">
             <button class="btn-icon" (click)="openEditModal(client)" title="Editar">✏️</button>
@@ -149,6 +163,14 @@
             [(ngModel)]="editingClient.instagram"
             placeholder="@usuario"
             class="form-input" />
+        </div>
+
+        <div class="form-group full-width">
+          <label for="customerStore">Sucursal *</label>
+          <select id="customerStore" [(ngModel)]="editingClient.store.id" (ngModelChange)="onStoreChange($event)" class="form-select">
+            <option value="">Seleccione la sucursal</option>
+            <option *ngFor="let store of stores" [value]="store.id">{{ store.name }}</option>
+          </select>
         </div>
       </div>
 

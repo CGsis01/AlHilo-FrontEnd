@@ -32,6 +32,7 @@ export interface UpdateClientRequest {
 export interface ClientFilters {
   search?: string;  // Search by name, phone, or email
   phone?: string;   // Specific phone search
+  store_id?: string; // Filter by store
 }
 
 @Injectable({
@@ -49,6 +50,7 @@ export class ClientApiService {
     if (filters) {
       if (filters.search) params = params.set('search', filters.search);
       if (filters.phone) params = params.set('phone', filters.phone);
+      if (filters.store_id) params = params.set('store_id', filters.store_id);
     }
 
     return this.apiService.get<Client[]>(this.endpoint, params)
@@ -63,6 +65,7 @@ export class ClientApiService {
     if (filters) {
       if (filters.search) params = params.set('search', filters.search);
       if (filters.phone) params = params.set('phone', filters.phone);
+      if (filters.store_id) params = params.set('store_id', filters.store_id);
     }
 
     return this.apiService.get<PaginatedResponse<Client>>(this.endpoint, params);
@@ -71,6 +74,10 @@ export class ClientApiService {
   getById(id: string): Observable<Client> {
     return this.apiService.get<Client>(`${this.endpoint}/${id}`)
     .pipe(map((response: Client) => this.mapClient(response)));
+  }
+
+  getByStore(storeId: string): Observable<Client[]> {
+    return this.getAll({ store_id: storeId });
   }
 
   searchByPhone(phone: string): Observable<Client | null> {
@@ -123,6 +130,19 @@ export class ClientApiService {
         facebook: client.facebook,
         instagram: client.instagram,
         birthDate: client.birth_date,
+        store: client.store ? {
+          id: client.store.id,
+          name: client.store.name,
+          address: client.store.address,
+          phone: client.store.phone,
+          email: client.store.email,
+          rfc: client.store.rfc,
+          url: client.store.url,
+          logo: client.store.logo,
+          isActive: client.store.is_active,
+          createdAt: client.store.created_at,
+          updatedAt: client.store.updated_at
+        } : undefined,
         createdAt: client.created_at,
         updatedAt: client.updated_at};
     }
