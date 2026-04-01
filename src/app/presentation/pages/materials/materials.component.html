@@ -12,7 +12,7 @@
           (change)="onStoreFilterChange()"
           class="form-select">
           <option value="">Todas las sucursales</option>
-          <option *ngFor="let store of stores" [value]="store.id">{{ store.name }}</option>
+          <option *ngFor="let store of stores()" [value]="store.id">{{ store.name }}</option>
         </select>
       </div>
       <button type="button" class="btn-primary" (click)="$event.stopPropagation(); openAddModal()">
@@ -21,7 +21,7 @@
     </div>
   </div>
 
-  <div class="materials-table-wrapper" *ngIf="!isLoading && materials.length > 0">
+  <div class="materials-table-wrapper" *ngIf="!isLoading() && materials().length > 0">
     <table class="materials-table">
       <thead>
         <tr>
@@ -34,7 +34,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let material of materials">
+        <tr *ngFor="let material of materials()">
           <td class="material-name">{{ material.name }}</td>
           <td class="material-unit">{{ material.unit }}</td>
           <td class="material-cost">{{ material.unitCost | currency:'MXN':'symbol-narrow':'1.2-2':'en-US' }}</td>
@@ -55,23 +55,23 @@
     </table>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading && materials.length === 0">
+  <div class="empty-state" *ngIf="!isLoading() && materials().length === 0">
     <div class="empty-icon">📦</div>
     <h3>No se encontraron materiales</h3>
     <p>Comienza agregando tu primer material al sistema.</p>
   </div>
 
-  <div class="loading-state" *ngIf="isLoading">
+  <div class="loading-state" *ngIf="isLoading()">
     <div class="spinner"></div>
     <p>Cargando materiales...</p>
   </div>
 </div>
 
 <!-- Modal for Add/Edit -->
-<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+<div class="modal-backdrop" *ngIf="showModal()" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>{{ isEditing ? 'Editar Material' : 'Agregar Material' }}</h2>
+      <h2>{{ modalTitle() }}</h2>
       <button class="btn-close" (click)="closeModal()">✕</button>
     </div>
 
@@ -113,19 +113,19 @@
           [(ngModel)]="editingMaterial.storeId" 
           class="form-select">
           <option value="">Seleccionar sucursal</option>
-          <option *ngFor="let store of stores" [value]="store.id">{{ store.name }}</option>
+          <option *ngFor="let store of stores()" [value]="store.id">{{ store.name }}</option>
         </select>
       </div>
 
-      <div class="error-message" *ngIf="errorMessage">
-        {{ errorMessage }}
+      <div class="error-message" *ngIf="errorMessage()">
+        {{ errorMessage() }}
       </div>
     </div>
 
     <div class="modal-footer">
       <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
       <button class="btn-primary" (click)="saveMaterial()">
-        {{ isEditing ? 'Actualizar' : 'Crear' }}
+        {{ saveButtonLabel() }}
       </button>
     </div>
   </div>

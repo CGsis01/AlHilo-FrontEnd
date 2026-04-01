@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal,computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialUseCases } from '../../../domain/usecases/material.usecases';
@@ -15,14 +17,29 @@ import { Store } from '../../../core/models/store.model';
 })
 
 export class MaterialsComponent implements OnInit {
-  materials: Material[] = [];
-  stores: Store[] = [];
-  isLoading = true;
-  isEditing = false;
+  materials = signal<Material[]>([]);
+  
+  isLoading = signal(true);
+  isEditing = signal(false);
+  showModal = signal(false);
+  errorMessage = signal('');
+
+  stores = toSignal(
+      this.storeUseCases.getActiveStores().pipe(
+        catchError(err => {
+          console.error('Error loading available stores:', err);
+          return of([] as Store[]);
+        })
+      ),
+      { initialValue: [] as Store[] }
+    );
+
   editingMaterial: Partial<Material> = {};
-  showModal = false;
-  errorMessage = '';
   selectedStoreFilter: string = '';
+
+  // Modal to Add/Edit Materials state
+  modalTitle = computed(() => this.isEditing() ? 'Editar Material' : 'Agregar Material');
+  saveButtonLabel = computed(() => this.isEditing() ? 'Actualizar' : 'Crear');
 
   constructor(
     private materialUseCases: MaterialUseCases,
@@ -30,38 +47,21 @@ export class MaterialsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadStores();
     this.loadMaterials();
   }
 
-  loadStores(): void {
-    this.storeUseCases.getActiveStores().subscribe({
-      next: (stores) => {
-        this.stores = stores;
-      },
-      error: (error) => {
-        console.error('Error loading stores:', error);
-      }
-    });
-  }
-
   loadMaterials(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     
     const loadMethod = this.selectedStoreFilter 
       ? this.materialUseCases.getMaterialsByStore(this.selectedStoreFilter)
       : this.materialUseCases.getAllMaterials();
     
     loadMethod.subscribe({
-      next: (materials) => {
-        this.materials = materials;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading materials:', error);
-        this.isLoading = false;
-      }
-    });
+      next: (materials) => { this.materials.set(materials); },
+      error: (error) => { console.error('Error loading materials:', error); }});
+    
+      this.isLoading.set(false);
   }
 
   onStoreFilterChange(): void {
@@ -69,53 +69,57 @@ export class MaterialsComponent implements OnInit {
   }
 
   openAddModal(): void {
-    this.isEditing = false;
+    this.isEditing.set(false);
+    
     this.editingMaterial = { 
       name: '', 
       unit: '', 
       unitCost: 0,
-      storeId: this.selectedStoreFilter || (this.stores.length > 0 ? this.stores[0].id : ''),
+      storeId: '',
       isActive: true 
     };
-    this.showModal = true;
-    this.errorMessage = '';
+    
+    this.showModal.set(true);
+    this.errorMessage.set('');
   }
 
   openEditModal(material: Material): void {
-    this.isEditing = true;
+    this.isEditing.set(true);
+
     this.editingMaterial = { ...material };
-    this.showModal = true;
-    this.errorMessage = '';
+    
+    this.showModal.set(true);
+    this.errorMessage.set('');
   }
 
   closeModal(): void {
-    this.showModal = false;
+    this.showModal.set(false);
     this.editingMaterial = {};
-    this.errorMessage = '';
+    this.errorMessage.set('');
   }
 
   saveMaterial(): void {
     if (!this.editingMaterial.name || this.editingMaterial.name.trim() === '') {
-      this.errorMessage = 'El nombre es requerido';
+      this.errorMessage.set('El nombre es requerido');
       return;
     }
     
     if (!this.editingMaterial.unit || this.editingMaterial.unit.trim() === '') {
-      this.errorMessage = 'La unidad es requerida';
+      this.errorMessage.set('La unidad es requerida');
       return;
     }
     
     if (!this.editingMaterial.unitCost || this.editingMaterial.unitCost <= 0) {
-      this.errorMessage = 'El costo unitario debe ser mayor a 0';
+      this.errorMessage.set('El costo unitario debe ser mayor a 0');
       return;
     }
     
     if (!this.editingMaterial.storeId) {
-      this.errorMessage = 'La sucursal es requerida';
+      this.errorMessage.set('La sucursal es requerida');
       return;
     }
     
-    if (this.isEditing && this.editingMaterial.id) {
+    if (this.isEditing() && this.editingMaterial.id) {
       this.materialUseCases.updateMaterial(this.editingMaterial.id, this.editingMaterial).subscribe({
         next: () => {
           this.loadMaterials();
@@ -123,7 +127,7 @@ export class MaterialsComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error updating material:', error);
-          this.errorMessage = 'Error al actualizar el material';
+          this.errorMessage.set('Error al actualizar el material');
         }
       });
     } else {
@@ -134,7 +138,7 @@ export class MaterialsComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error creating material:', error);
-          this.errorMessage = 'Error al crear el material';
+          this.errorMessage.set('Error al crear el material');
         }
       });
     }
@@ -143,9 +147,7 @@ export class MaterialsComponent implements OnInit {
   deleteMaterial(material: Material): void {
     if (confirm(`¿Estás seguro de que deseas eliminar el material "${material.name}"?`)) {
       this.materialUseCases.deleteMaterial(material.id).subscribe({
-        next: () => {
-          this.loadMaterials();
-        },
+        next: () => { this.loadMaterials(); },
         error: (error) => {
           console.error('Error deleting material:', error);
           alert('Error al eliminar el material');
@@ -160,17 +162,13 @@ export class MaterialsComponent implements OnInit {
       : this.materialUseCases.activateMaterial(material.id);
 
     action.subscribe({
-      next: () => {
-        this.loadMaterials();
-      },
-      error: (error) => {
-        console.error('Error toggling material status:', error);
-      }
-    });
+      next: () => { this.loadMaterials(); },
+      error: (error) => { console.error('Error toggling material status:', error); }});
   }
 
   getStoreName(storeId: string): string {
-    const store = this.stores.find(s => s.id === storeId);
+    const store = this.stores().find(s => s.id === storeId);
+    
     return store ? store.name : 'N/A';
   }
 
@@ -181,6 +179,7 @@ export class MaterialsComponent implements OnInit {
 
   onCostBlur(event: Event): void {
     const input = event.target as HTMLInputElement;
+    
     if (this.editingMaterial.unitCost !== undefined && this.editingMaterial.unitCost !== null) {
       const formatted = this.formatToTwoDecimals(this.editingMaterial.unitCost);
       input.value = formatted;
