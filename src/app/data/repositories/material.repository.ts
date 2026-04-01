@@ -61,17 +61,19 @@ export class MaterialRepository implements Repository<Material> {
     return this.materialApiService.getByStore(storeId);
   }
 
-  activate(id: string): Observable<boolean> {
+  activate(id: string, storeId: string): Observable<boolean> {
     const activateRequest = {
       id: id,
+      store_id: storeId,
       updated_by: this.getStoredUserId()}
 
     return this.materialApiService.activate(activateRequest);
   }
 
-  deactivate(id: string): Observable<boolean> {
+  deactivate(id: string, storeId: string): Observable<boolean> {
     const deactivateRequest = {
       id: id,
+      store_id: storeId,
       updated_by: this.getStoredUserId()}
 
     return this.materialApiService.deactivate(deactivateRequest);
