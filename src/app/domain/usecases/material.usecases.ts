@@ -38,11 +38,11 @@ export class MaterialUseCases {
     return this.materialRepository.getByStore(storeId);
   }
 
-  activateMaterial(id: string): Observable<boolean> {
-    return this.materialRepository.activate(id);
+  activateMaterial(id: string, storeId: string): Observable<boolean> {
+    return this.materialRepository.activate(id, storeId);
   }
 
-  deactivateMaterial(id: string): Observable<boolean> {
-    return this.materialRepository.deactivate(id);
+  deactivateMaterial(id: string, storeId: string): Observable<boolean> {
+    return this.materialRepository.deactivate(id, storeId);
   }
 }

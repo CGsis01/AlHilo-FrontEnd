@@ -158,8 +158,8 @@ export class MaterialsComponent implements OnInit {
 
   toggleStatus(material: Material): void {
     const action = material.isActive 
-      ? this.materialUseCases.deactivateMaterial(material.id) 
-      : this.materialUseCases.activateMaterial(material.id);
+      ? this.materialUseCases.deactivateMaterial(material.id, material.storeId) 
+      : this.materialUseCases.activateMaterial(material.id, material.storeId);
 
     action.subscribe({
       next: () => { this.loadMaterials(); },
