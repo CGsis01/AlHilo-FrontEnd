@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GarmentUseCases } from '../../../domain/usecases/garment.usecases';
 import { RepairTypeUseCases } from '../../../domain/usecases/repair-type.usecases';
 import { StoreUseCases } from '../../../domain/usecases/store.usecases';
-import { Garment, GarmentRepairType } from '../../../core/models/garment.model';
+import { Garment } from '../../../core/models/garment.model';
 import { RepairType } from '../../../core/models/repair-type.model';
 import { Store } from '../../../core/models/store.model';
 
@@ -17,19 +19,19 @@ import { Store } from '../../../core/models/store.model';
 })
 
 export class GarmentsComponent implements OnInit {
-  garments: Garment[] = [];
-  filteredGarments: Garment[] = [];
-  stores: Store[] = [];
-  repairTypes: RepairType[] = [];
-  availableRepairTypes: RepairType[] = [];
-  isLoading = true;
-  isEditing = false;
-  editingGarment: Partial<Garment> = {};
-  showModal = false;
-  showRepairTypesModal = false;
-  errorMessage = '';
-  selectedStoreId = '';
+  garments = signal<Garment[]>([]);
+  filteredGarments = signal<Garment[]>([]);
   
+  isLoading = signal(true);
+  isEditing = signal(false);
+  showModal = signal(false);
+  showRepairTypesModal = signal(false);
+  errorMessage = signal('');
+  selectedStore = 'all';
+  
+  editingGarment: Partial<Garment> = {};
+  availableRepairTypes: RepairType[] = [];
+
   // Repair type management
   selectedGarmentForRepairTypes: Garment | null = null;
   selectedRepairTypeId = '';
@@ -40,6 +42,30 @@ export class GarmentsComponent implements OnInit {
     sortOrder: undefined as number | undefined
   };
 
+  stores = toSignal(
+    this.storeUseCases.getActiveStores().pipe(
+      catchError(err => {
+        console.error('Error loading stores:', err);
+        return of([] as Store[]);
+      })
+    ),
+    { initialValue: [] as Store[] }
+  );
+
+  repairTypes = toSignal(
+    this.repairTypeUseCases.getAllRepairTypes().pipe(
+      catchError(err => {
+        console.error('Error loading repair types:', err);
+        return of([] as RepairType[]);
+      })
+    ),
+    { initialValue: [] as RepairType[] }
+  );
+
+  // Modal to Add/Edit RepairType state
+  modalTitle = computed(() => this.isEditing() ? 'Editar Prenda' : 'Agregar Prenda');
+  saveButtonLabel = computed(() => this.isEditing() ? 'Actualizar' : 'Crear');
+
   constructor(
     private garmentUseCases: GarmentUseCases,
     private repairTypeUseCases: RepairTypeUseCases,
@@ -47,54 +73,23 @@ export class GarmentsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadStores();
-    this.loadRepairTypes();
     this.loadGarments();
   }
 
-  loadStores(): void {
-    this.storeUseCases.getActiveStores().subscribe({
-      next: (stores) => {
-        this.stores = stores;
-        if (this.stores.length > 0 && !this.selectedStoreId) {
-          this.selectedStoreId = 'all';
-        }
-      },
-      error: (error) => {
-        console.error('Error loading stores:', error);
-      }
-    });
-  }
-
-  loadRepairTypes(): void {
-    this.repairTypeUseCases.getAllRepairTypes().subscribe({
-      next: (repairTypes) => {
-        this.repairTypes = repairTypes.filter(rt => rt.isActive);
-      },
-      error: (error) => {
-        console.error('Error loading repair types:', error);
-      }
-    });
-  }
-
   loadGarments(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     
-    const observable = this.selectedStoreId && this.selectedStoreId !== 'all'
-      ? this.garmentUseCases.getGarmentsByStore(this.selectedStoreId)
+    const observable = this.selectedStore && this.selectedStore !== 'all'
+      ? this.garmentUseCases.getGarmentsByStore(this.selectedStore)
       : this.garmentUseCases.getAllGarments();
 
     observable.subscribe({
       next: (garments) => {
-        this.garments = garments;
-        this.filteredGarments = garments;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading garments:', error);
-        this.isLoading = false;
-      }
-    });
+        this.garments.set(garments);
+        this.filteredGarments.set(garments);},
+      error: (error) => { console.error('Error loading garments:', error); }});
+
+    this.isLoading.set(false);
   }
 
   onStoreChange(): void {
@@ -102,90 +97,84 @@ export class GarmentsComponent implements OnInit {
   }
 
   getStoreName(storeId: string): string {
-    const store = this.stores.find(s => s.id === storeId);
+    const store = this.stores().find(s => s.id === storeId);
     return store ? store.name : '-';
   }
 
   openAddModal(): void {
-    this.isEditing = false;
+    this.isEditing.set(false);
+    
     this.editingGarment = { 
       name: '', 
       code: '', 
       description: '', 
       category: '',
-      storeId: this.selectedStoreId !== 'all' ? this.selectedStoreId : this.stores[0]?.id || '',
+      storeId: '',
       isActive: true,
       repairTypes: []
     };
-    this.showModal = true;
-    this.errorMessage = '';
+    
+    this.showModal.set(true);
+    this.errorMessage.set('');
   }
 
   openEditModal(garment: Garment): void {
-    this.isEditing = true;
+    this.isEditing.set(true);
+    
     this.editingGarment = { ...garment };
-    this.showModal = true;
-    this.errorMessage = '';
+    
+    this.showModal.set(true);
+    this.errorMessage.set('');
   }
 
   closeModal(): void {
-    this.showModal = false;
+    this.showModal.set(false);
     this.editingGarment = {};
-    this.errorMessage = '';
+    this.errorMessage.set('');
   }
 
   saveGarment(): void {
     if (!this.editingGarment.name || this.editingGarment.name.trim() === '') {
-      this.errorMessage = 'El nombre es requerido';
+      this.errorMessage.set('El nombre es requerido');
       return;
     }
     
     if (!this.editingGarment.code || this.editingGarment.code.trim() === '') {
-      this.errorMessage = 'El código es requerido';
+      this.errorMessage.set('El código es requerido');
       return;
     }
 
     if (!this.editingGarment.storeId) {
-      this.errorMessage = 'La sucursal es requerida';
+      this.errorMessage.set('La sucursal es requerida');
       return;
     }
     
-    if (this.isEditing && this.editingGarment.id) {
+    if (this.isEditing() && this.editingGarment.id) {
       this.garmentUseCases.updateGarment(this.editingGarment.id, this.editingGarment).subscribe({
         next: () => {
           this.loadGarments();
-          this.closeModal();
-        },
+          this.closeModal();},
         error: (error) => {
           console.error('Error updating garment:', error);
-          this.errorMessage = 'Error al actualizar la prenda';
-        }
-      });
+          this.errorMessage.set('Error al actualizar la prenda');}});
     } else {
       this.garmentUseCases.createGarment(this.editingGarment).subscribe({
         next: () => {
           this.loadGarments();
-          this.closeModal();
-        },
+          this.closeModal();},
         error: (error) => {
           console.error('Error creating garment:', error);
-          this.errorMessage = 'Error al crear la prenda';
-        }
-      });
+          this.errorMessage.set('Error al crear la prenda');}});
     }
   }
 
   deleteGarment(garment: Garment): void {
     if (confirm(`¿Estás seguro de que deseas eliminar la prenda "${garment.name}"?`)) {
       this.garmentUseCases.deleteGarment(garment.id).subscribe({
-        next: () => {
-          this.loadGarments();
-        },
+        next: () => { this.loadGarments(); },
         error: (error) => {
           console.error('Error deleting garment:', error);
-          alert('Error al eliminar la prenda');
-        }
-      });
+          alert('Error al eliminar la prenda'); }});
     }
   }
 
@@ -195,13 +184,8 @@ export class GarmentsComponent implements OnInit {
       : this.garmentUseCases.activateGarment(garment.id);
 
     action.subscribe({
-      next: () => {
-        this.loadGarments();
-      },
-      error: (error) => {
-        console.error('Error toggling garment status:', error);
-      }
-    });
+      next: () => { this.loadGarments(); },
+      error: (error) => { console.error('Error toggling garment status:', error); }});
   }
 
   // Repair Types Management
@@ -209,21 +193,19 @@ export class GarmentsComponent implements OnInit {
     this.selectedGarmentForRepairTypes = garment;
     this.updateAvailableRepairTypes(garment);
     this.resetRepairTypeOptions();
-    this.showRepairTypesModal = true;
+    this.showRepairTypesModal.set(true);
   }
 
   closeRepairTypesModal(): void {
-    this.showRepairTypesModal = false;
+    this.showRepairTypesModal.set(false);
     this.selectedGarmentForRepairTypes = null;
     this.selectedRepairTypeId = '';
     this.resetRepairTypeOptions();
   }
 
   updateAvailableRepairTypes(garment: Garment): void {
-    const assignedRepairTypeIds = garment.repairTypes.map(rt => rt.repairTypeId);
-    this.availableRepairTypes = this.repairTypes.filter(
-      rt => !assignedRepairTypeIds.includes(rt.id)
-    );
+    const repairTypesByStore = this.repairTypes().filter(rt => rt.store.id === garment.storeId);
+    this.availableRepairTypes = repairTypesByStore.filter(rt => !garment.repairTypes.some(grt => grt.repairTypeId === rt.id));
   }
 
   addRepairTypeToGarment(): void {
@@ -246,17 +228,17 @@ export class GarmentsComponent implements OnInit {
     ).subscribe({
       next: () => {
         // Reload garments and then update the modal
-        const observable = this.selectedStoreId && this.selectedStoreId !== 'all'
-          ? this.garmentUseCases.getGarmentsByStore(this.selectedStoreId)
+        const observable = this.selectedStore && this.selectedStore !== 'all'
+          ? this.garmentUseCases.getGarmentsByStore(this.selectedStore)
           : this.garmentUseCases.getAllGarments();
 
         observable.subscribe({
           next: (garments) => {
-            this.garments = garments;
-            this.filteredGarments = garments;
+            this.garments.set(garments);
+            this.filteredGarments.set(garments);
             
             // Now update the modal with the refreshed data
-            const updatedGarment = this.filteredGarments.find(g => g.id === garmentId);
+            const updatedGarment = this.filteredGarments().find(g => g.id === garmentId);
             if (updatedGarment) {
               this.selectedGarmentForRepairTypes = updatedGarment;
               this.updateAvailableRepairTypes(updatedGarment);

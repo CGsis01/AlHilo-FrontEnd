@@ -5,15 +5,14 @@
       <p class="subtitle">Gestiona las prendas del sistema</p>
     </div>
     <div class="header-actions">
-      <div class="filter-group" *ngIf="stores.length > 0">
+      <div class="filter-group" *ngIf="stores().length > 0">
         <label for="storeFilter">Sucursal:</label>
-        <select 
-          id="storeFilter" 
-          [(ngModel)]="selectedStoreId" 
+        <select id="storeFilter" 
+          [(ngModel)]="selectedStore" 
           (change)="onStoreChange()" 
           class="form-select">
           <option value="all">Todas las sucursales</option>
-          <option *ngFor="let store of stores" [value]="store.id">
+          <option *ngFor="let store of stores()" [value]="store.id">
             {{ store.name }}
           </option>
         </select>
@@ -24,7 +23,7 @@
     </div>
   </div>
 
-  <div class="garments-table-wrapper" *ngIf="!isLoading && filteredGarments.length > 0">
+  <div class="garments-table-wrapper" *ngIf="!isLoading() && filteredGarments().length > 0">
     <table class="garments-table">
       <thead>
         <tr>
@@ -39,7 +38,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let garment of filteredGarments">
+        <tr *ngFor="let garment of filteredGarments()">
           <td class="garment-name">{{ garment.name }}</td>
           <td class="garment-code">{{ garment.code }}</td>
           <td class="garment-category">{{ garment.category || '-' }}</td>
@@ -65,23 +64,23 @@
     </table>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading && filteredGarments.length === 0">
+  <div class="empty-state" *ngIf="!isLoading() && filteredGarments().length === 0">
     <div class="empty-icon">👔</div>
     <h3>No se encontraron prendas</h3>
     <p>Comienza agregando tu primera prenda al sistema.</p>
   </div>
 
-  <div class="loading-state" *ngIf="isLoading">
+  <div class="loading-state" *ngIf="isLoading()">
     <div class="spinner"></div>
     <p>Cargando prendas...</p>
   </div>
 </div>
 
 <!-- Modal for Add/Edit Garment -->
-<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+<div class="modal-backdrop" *ngIf="showModal()" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>{{ isEditing ? 'Editar Prenda' : 'Agregar Prenda' }}</h2>
+      <h2>{{ modalTitle() }}</h2>
       <button class="btn-close" (click)="closeModal()">✕</button>
     </div>
 
@@ -123,7 +122,7 @@
             [(ngModel)]="editingGarment.storeId" 
             class="form-select">
             <option value="">Seleccionar sucursal</option>
-            <option *ngFor="let store of stores" [value]="store.id">
+            <option *ngFor="let store of stores()" [value]="store.id">
               {{ store.name }}
             </option>
           </select>
@@ -140,22 +139,22 @@
           rows="3"></textarea>
       </div>
 
-      <div class="error-message" *ngIf="errorMessage">
-        {{ errorMessage }}
+      <div class="error-message" *ngIf="errorMessage()">
+        {{ errorMessage() }}
       </div>
     </div>
 
     <div class="modal-footer">
       <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
       <button class="btn-primary" (click)="saveGarment()">
-        {{ isEditing ? 'Actualizar' : 'Crear' }}
+        {{ saveButtonLabel() }}
       </button>
     </div>
   </div>
 </div>
 
 <!-- Modal for Managing Repair Types -->
-<div class="modal-backdrop" *ngIf="showRepairTypesModal" (click)="closeRepairTypesModal()">
+<div class="modal-backdrop" *ngIf="showRepairTypesModal()" (click)="closeRepairTypesModal()">
   <div class="modal-content modal-large" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>Tipos de Reparación - {{ selectedGarmentForRepairTypes?.name }}</h2>
