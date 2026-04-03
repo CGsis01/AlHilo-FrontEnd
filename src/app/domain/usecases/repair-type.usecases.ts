@@ -14,6 +14,10 @@ export class RepairTypeUseCases {
     return this.repairTypeRepository.getAll();
   }
 
+  getAllRepairTypesByStore(storeId: string): Observable<RepairType[]> {
+    return this.repairTypeRepository.getByStore(storeId);
+  }
+
   getRepairTypeById(id: string): Observable<RepairType> {
     return this.repairTypeRepository.getById(id);
   }
@@ -30,11 +34,11 @@ export class RepairTypeUseCases {
     return this.repairTypeRepository.delete(id);
   }
 
-  activateRepairType(id: string): Observable<boolean> {
-    return this.repairTypeRepository.activate(id);
+  activateRepairType(id: string, storeId: string): Observable<boolean> {
+    return this.repairTypeRepository.activate(id, storeId);
   }
 
-  deactivateRepairType(id: string): Observable<boolean> {
-    return this.repairTypeRepository.deactivate(id);
+  deactivateRepairType(id: string, storeId: string): Observable<boolean> {
+    return this.repairTypeRepository.deactivate(id, storeId);
   }
 }

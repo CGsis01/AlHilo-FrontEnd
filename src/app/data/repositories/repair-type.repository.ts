@@ -17,6 +17,10 @@ export class RepairTypeRepository implements Repository<RepairType> {
     return this.repairTypeApiService.getAll();
   }
 
+  getByStore(storeId: string): Observable<RepairType[]> {
+    return this.repairTypeApiService.getByStore(storeId);
+  }
+
   getById(id: string): Observable<RepairType> {
     return this.repairTypeApiService.getById(id);
   }
@@ -27,6 +31,8 @@ export class RepairTypeRepository implements Repository<RepairType> {
       code: repairType.code!,
       estimated_price: repairType.estimatedPrice!,
       estimated_time: repairType.estimatedTime!,
+      repair_complexity_id: repairType.repairComplexity?.id,
+      store_id: repairType.store?.id,
       created_by: this.getStoredUserId()};
     
     return this.repairTypeApiService.create(createRequest);
@@ -38,6 +44,7 @@ export class RepairTypeRepository implements Repository<RepairType> {
       code: repairType.code,
       estimated_price: repairType.estimatedPrice,
       estimated_time: repairType.estimatedTime,
+      repair_complexity_id: repairType.repairComplexity?.id,
       updated_by: this.getStoredUserId()};
     
     return this.repairTypeApiService.update(id, updateRequest);
@@ -53,17 +60,19 @@ export class RepairTypeRepository implements Repository<RepairType> {
           observer.error(error);}});});
   }
 
-  activate(id: string): Observable<boolean> {
+  activate(id: string, storeId: string): Observable<boolean> {
     const activateRequest = { 
       id: id, 
+      store_id: storeId,
       updated_by: this.getStoredUserId()};
     
     return this.repairTypeApiService.activate(activateRequest);
   }
 
-  deactivate(id: string): Observable<boolean> {
+  deactivate(id: string, storeId: string): Observable<boolean> {
     const deactivateRequest = { 
       id: id, 
+      store_id: storeId,
       updated_by: this.getStoredUserId()};
     
     return this.repairTypeApiService.deactivate(deactivateRequest);

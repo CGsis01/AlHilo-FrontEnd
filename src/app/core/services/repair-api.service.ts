@@ -250,6 +250,24 @@ export class RepairApiService {
             estimatedPrice: item.repair_type.estimated_price,
             estimatedTime: item.repair_type.estimated_time,
             commissionPercentage: item.repair_type.commission_percentage,
+            repairComplexity: {
+              id: item.repair_complexity.id,
+              name: item.repair_complexity.name,
+              code: item.repair_complexity.code,
+              laborMultiplier: item.repair_complexity.labor_multiplier,
+              timeMultiplier: item.repair_complexity.time_multiplier,
+              storeId: item.repair_complexity.store_id,
+              isActive: item.repair_complexity.is_active,
+              createdAt: item.repair_complexity.created_at,
+              updatedAt: item.repair_complexity.updated_at
+            },
+            store: {
+              id: item.store.id,
+              name: item.store.name,
+              isActive: item.store.is_active,
+              createdAt: item.store.created_at,
+              updatedAt: item.store.updated_at
+            },
             isActive: item.repair_type.is_active,
             createdAt: item.repair_type.created_at
           },
@@ -328,6 +346,24 @@ export class RepairApiService {
         estimatedPrice: item.repair_type.estimated_price,
         estimatedTime: item.repair_type.estimated_time,
         commissionPercentage: item.repair_type.commission_percentage,
+        repairComplexity: {
+              id: item.repair_complexity.id,
+              name: item.repair_complexity.name,
+              code: item.repair_complexity.code,
+              laborMultiplier: item.repair_complexity.labor_multiplier,
+              timeMultiplier: item.repair_complexity.time_multiplier,
+              storeId: item.repair_complexity.store_id,
+              isActive: item.repair_complexity.is_active,
+              createdAt: item.repair_complexity.created_at,
+              updatedAt: item.repair_complexity.updated_at
+            },
+            store: {
+              id: item.store.id,
+              name: item.store.name,
+              isActive: item.store.is_active,
+              createdAt: item.store.created_at,
+              updatedAt: item.store.updated_at
+            },
         isActive: item.repair_type.is_active,
         createdAt: item.repair_type.created_at
       },

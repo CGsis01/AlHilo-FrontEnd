@@ -37,6 +37,7 @@ export interface RepairTypeFilters {
   search?: string;
   min_price?: number;
   max_price?: number;
+  store_id?: string;
 }
 
 @Injectable({
@@ -48,9 +49,21 @@ export class RepairTypeApiService {
 
   constructor(private apiService: ApiService) {}
 
-  getAll(): Observable<RepairType[]> {
-    return this.apiService.get<RepairType[]>(this.endpoint)
+  getAll(filters?: RepairTypeFilters): Observable<RepairType[]> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      if (filters.is_active !== undefined) params = params.set('is_active', filters.is_active.toString());
+      if (filters.search) params = params.set('search', filters.search);
+      if (filters.store_id) params = params.set('store_id', filters.store_id);
+    }
+
+    return this.apiService.get<RepairType[]>(this.endpoint, params)
     .pipe(map(response => response.map(rt => this.mapRepairType(rt))));
+  }
+
+  getByStore(storeId: string): Observable<RepairType[]> {
+    return this.getAll({ store_id: storeId });
   }
 
   getPaginated(page: number = 1, pageSize: number = 10, filters?: RepairTypeFilters): Observable<PaginatedResponse<RepairType>> {
@@ -109,6 +122,24 @@ export class RepairTypeApiService {
       estimatedPrice: repairType.estimated_price,
       estimatedTime: repairType.estimated_time,
       commissionPercentage: repairType.commission_percentage,
+      repairComplexity: {
+        id: repairType.repair_complexity.id,
+        name: repairType.repair_complexity.name,
+        code: repairType.repair_complexity.code,
+        laborMultiplier: repairType.repair_complexity.labor_multiplier,
+        timeMultiplier: repairType.repair_complexity.time_multiplier,
+        storeId: repairType.repair_complexity.store_id,
+        isActive: repairType.repair_complexity.is_active,
+        createdAt: repairType.repair_complexity.created_at,
+        updatedAt: repairType.repair_complexity.updated_at
+      },
+      store: {
+        id: repairType.store.id,
+        name: repairType.store.name,
+        isActive: repairType.store.is_active,
+        createdAt: repairType.store.created_at,
+        updatedAt: repairType.store.updated_at
+      },
       isActive: repairType.is_active,
       createdAt: repairType.created_at};
   }
