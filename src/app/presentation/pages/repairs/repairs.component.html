@@ -21,7 +21,7 @@
   </div>
 
   <!-- Desktop grid -->
-  <div class="repairs-grid desktop-only" *ngIf="!isLoading && filteredRepairs.length > 0">
+  <div class="repairs-grid desktop-only" *ngIf="!isLoading() && filteredRepairs.length > 0">
     <div class="repair-card" *ngFor="let repair of filteredRepairs">
       <div class="card-header">
         <h3>{{ repair.customerName }}</h3>
@@ -64,7 +64,7 @@
   </div>
 
   <!-- Mobile swiper -->
-  <div class="mobile-only" *ngIf="!isLoading && filteredRepairs.length > 0">
+  <div class="mobile-only" *ngIf="!isLoading() && filteredRepairs.length > 0">
     <swiper-container slides-per-view="1.15" space-between="16" centered-slides="true" pagination="true">
       <swiper-slide *ngFor="let repair of filteredRepairs">
         <div class="repair-card">
@@ -110,13 +110,13 @@
     </swiper-container>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading && filteredRepairs.length === 0">
+  <div class="empty-state" *ngIf="!isLoading() && filteredRepairs.length === 0">
     <div class="empty-icon">📭</div>
     <h3>No se encontraron reparaciones</h3>
     <p>No hay reparaciones que coincidan con el filtro seleccionado.</p>
   </div>
 
-  <div class="loading-state" *ngIf="isLoading">
+  <div class="loading-state" *ngIf="isLoading()">
     <div class="spinner"></div>
     <p>Cargando reparaciones...</p>
   </div>

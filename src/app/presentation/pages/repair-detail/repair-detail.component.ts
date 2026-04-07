@@ -231,10 +231,6 @@ export class RepairDetailComponent implements OnInit {
     if (!this.repair) 
       return;
 
-    if (this.isEnabledConfirmPayment()) {
-      return;
-    }
-
     const deliveredStatus = this.getRepairStatus(RepairStatusEnum.DELIVERED);
     
     this.repairUseCases.updateRepairStatus(this.repair.id, deliveredStatus).subscribe({
@@ -279,12 +275,6 @@ export class RepairDetailComponent implements OnInit {
           }
         }
 
-        if (this.paymentType === 'cash' && cashPaid > remaining) {
-          this.toastService.show('El pago no puede ser mayor al saldo restante.', 'error');
-          this.handleRepairUpdated(updatedRepair);
-          return;
-        }
-
         const cashPaymentAmount = this.paymentType === 'mixed'
           ? mixedCashPaid
           : this.paymentType === 'cash'
@@ -308,7 +298,9 @@ export class RepairDetailComponent implements OnInit {
           } else {
             this.toastService.show('La reparación se actualizó, pero no se pudo mapear el tipo de pago con tarjeta.', 'error');
           }
+          
           this.handleRepairUpdated(updatedRepair);
+          
           return;
         }
 
@@ -343,12 +335,12 @@ export class RepairDetailComponent implements OnInit {
           this.handleRepairUpdated(updatedRepair);
           this.closePaymentModal();
           this.showPaymentTicket = true;
+          
           return;
         }
 
         forkJoin(paymentRequests).subscribe({
-          next: () => {
-            this.handleRepairUpdated(updatedRepair);},
+          next: () => { this.handleRepairUpdated(updatedRepair); },
           error: () => {
             this.toastService.show('La reparación se actualizó, pero no se pudo registrar el pago.', 'error');
             this.handleRepairUpdated(updatedRepair);}});        
@@ -381,7 +373,7 @@ export class RepairDetailComponent implements OnInit {
 
     if (this.paymentType === 'cash') {
       const cashPaid = this.getNumericAmount(this.cashAmount);
-      return !this.cashAmount?.trim() || cashPaid < remaining || cashPaid > remaining;
+      return !this.cashAmount?.trim() || cashPaid < remaining;
     }
 
     if (this.paymentType === 'card') {

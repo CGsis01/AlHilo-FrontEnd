@@ -1,0 +1,211 @@
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--surface);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 640px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+
+  .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    .modal-icon {
+      display: block;
+      font-size: 1.4rem;
+      line-height: 1.4;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 0 0.25rem;
+    transition: color 0.15s;
+    flex-shrink: 0;
+
+    &:hover { color: var(--text); }
+  }
+}
+
+/* ── Back button (step 2) ── */
+.back-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.1rem 0.5rem;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--gold-light, rgba(212, 175, 55, 0.12));
+    color: var(--gold, #d4af37);
+    border-color: var(--gold, #d4af37);
+  }
+}
+
+/* ── Step 2 title block ── */
+.step2-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+
+  h2 { margin: 0; font-size: 1.1rem; }
+
+  .step2-subtitle {
+    font-size: 0.78rem;
+    color: var(--gold, #d4af37);
+    font-weight: 600;
+  }
+}
+
+/* ── Search ── */
+.modal-search {
+  padding: 0.875rem 1.5rem 0.5rem;
+
+  .search-input {
+    width: 100%;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+
+    &:focus { border-color: var(--gold, #d4af37); }
+  }
+}
+
+/* ── Body / Grid ── */
+.modal-body {
+  padding: 0.75rem 1.5rem 1.25rem;
+  /* Show ~2 rows (8 buttons) then scroll */
+  max-height: calc(2 * 110px + 1.25rem);
+  overflow-y: auto;
+
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+}
+
+/* ── Shared POS grid ── */
+.pos-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+/* ── Shared POS button ── */
+.pos-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.75rem 0.5rem;
+  min-height: 100px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.1s;
+  text-align: center;
+
+  &:hover {
+    border-color: var(--gold, #d4af37);
+    background: var(--gold-light, rgba(212, 175, 55, 0.1));
+    transform: scale(1.03);
+  }
+
+  &:active { transform: scale(0.98); }
+
+  .pos-btn__icon {
+    display: block;
+    font-size: 1.6rem;
+    line-height: 1.4;
+  }
+
+  .pos-btn__name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gold);
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .pos-btn__price {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .pos-btn__meta {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1rem 0.35rem;
+  }
+}
+
+/* ── Repair type button: default highlight ── */
+.repair-type-btn.is-default {
+  border-color: var(--gold, #d4af37);
+  background: var(--gold-light, rgba(212, 175, 55, 0.08));
+}
+
+/* ── Empty state ── */
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}

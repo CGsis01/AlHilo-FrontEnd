@@ -54,7 +54,8 @@
       <div class="form-grid">
         <div class="form-group full-width">
           <app-repair-items-editor
-            [repairTypes]="repairTypes"
+            [repairTypes]="repairTypes()"
+            [garments]="garments()"
             [items]="repairItems"
             (itemsChange)="onItemsChange($event)">
           </app-repair-items-editor>
@@ -172,19 +173,19 @@
     </div>
 
     <div class="form-actions">
-      <button type="button" class="btn-secondary" (click)="onCancel()" [disabled]="isLoading">
+      <button type="button" class="btn-secondary" (click)="onCancel()" [disabled]="isLoading()">
         Cancel
       </button>
-      <button type="submit" class="btn-primary" [disabled]="isLoading || repairForm.invalid || !selectedClient || !itemsValid">
-        <span *ngIf="!isLoading">Crear Reparación</span>
-        <span *ngIf="isLoading">Creando...</span>
+      <button type="submit" class="btn-primary" [disabled]="isLoading() || repairForm.invalid || !selectedClient || !itemsValid">
+        <span *ngIf="!isLoading()">Crear Reparación</span>
+        <span *ngIf="isLoading()">Creando...</span>
       </button>
     </div>
   </form>
 
   <!-- Client Modal -->
   <app-client-modal
-    [isOpen]="showClientModal"
+    [isOpen]="showClientModal()"
     [phoneNumber]="repairForm.get('customerPhone')?.value || ''"
     (close)="closeClientModal()"
     (clientCreated)="onClientCreated($event)">
@@ -192,7 +193,7 @@
 </div>
 
 <!-- Repair Order Ticket Modal -->
-<div class="modal-overlay ticket-modal" *ngIf="showTicket" (click)="closeTicket()">
+<div class="modal-overlay ticket-modal" *ngIf="showTicket()" (click)="closeTicket()">
   <div class="ticket-container" (click)="$event.stopPropagation()">
     <div class="ticket-content">
       <div class="ticket-title">
@@ -215,7 +216,7 @@
             <span class="ticket-block-label">Prenda {{ i + 1 }}</span>
             <div class="ticket-row">
               <span class="ticket-label">Tipo de prenda:</span>
-              <span class="ticket-value">{{ item.garmentType }}</span>
+              <span class="ticket-value">{{ item.garment.name }}</span>
             </div>
             <div class="ticket-row">
               <span class="ticket-label">Tipo de reparación:</span>
@@ -252,7 +253,7 @@
 </div>
 
 <!-- Advance Payment Receipt Ticket -->
-<div class="receipt-overlay" *ngIf="showAdvancePaymentTicket" (click)="closeAdvancePaymentTicket()">
+<div class="receipt-overlay" *ngIf="showAdvancePaymentTicket()" (click)="closeAdvancePaymentTicket()">
   <div class="receipt-wrapper" (click)="$event.stopPropagation()">
 
     <!-- Screen-only actions bar -->
@@ -350,7 +351,7 @@
             <div class="receipt-service-row" *ngFor="let item of repair?.items">
               <div class="receipt-service-detail">
                 <span class="receipt-service-name">{{ item.repairType.name }}</span>
-                <span class="receipt-service-desc">{{ item.garmentType }} — {{ item.description }}</span>
+                <span class="receipt-service-desc">{{ item.garment.name }} — {{ item.description }}</span>
               </div>
               <span class="receipt-service-price">${{ item.estimatedPrice | number:'1.2-2':'en-US' }}</span>
             </div>

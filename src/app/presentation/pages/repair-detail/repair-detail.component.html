@@ -65,7 +65,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let item of repair.items">
-                <td>{{ item.garmentType }}</td>
+                <td>{{ item.garment.name }}</td>
                 <td>{{ item.repairType.name }}</td>
                 <td>{{ item.description }}</td>
                 <td class="text-right price-cell" *ngIf="repair.finalPrice && userRole?.code !== UserRole.SEAMSTRESS && userRole?.code !== UserRole.HEADSEWING">
@@ -288,7 +288,7 @@
             <span class="ticket-block-label">Prenda {{ i + 1 }}</span>
             <div class="ticket-row">
               <span class="ticket-label">Tipo de prenda:</span>
-              <span class="ticket-value">{{ item.garmentType }}</span>
+              <span class="ticket-value">{{ item.garment.name }}</span>
             </div>
             <div class="ticket-row">
               <span class="ticket-label">Tipo de reparación:</span>
@@ -536,7 +536,7 @@
             <div class="receipt-service-row" *ngFor="let item of repair?.items">
               <div class="receipt-service-detail">
                 <span class="receipt-service-name">{{ item.repairType.name }}</span>
-                <span class="receipt-service-desc">{{ item.garmentType }} — {{ item.description }}</span>
+                <span class="receipt-service-desc">{{ item.garment.name }} — {{ item.description }}</span>
               </div>
               <span class="receipt-service-price">${{ (item.finalPrice ?? item.estimatedPrice) | number:'1.2-2':'en-US' }}</span>
             </div>

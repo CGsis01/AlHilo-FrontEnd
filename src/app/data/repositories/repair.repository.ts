@@ -47,11 +47,12 @@ export class RepairRepository implements Repository<Repair> {
       notes: repair.notes,
       created_by: this.getStoredUserId(),
       repair_items: repair.items?.map(item => ({
-        garment_type: item.garmentType,
         repair_id: item.repairId,
+        garment_id: item.garment.id,
         repair_type_id: item.repairType?.id,
         description: item.description,
         price: item.estimatedPrice,
+        store_id: item.garment.storeId,
         created_by: this.getStoredUserId()}))};
 
     return this.repairApiService.create(createRequest);
@@ -76,8 +77,8 @@ export class RepairRepository implements Repository<Repair> {
       updated_by: this.getStoredUserId(),
       items: repair.items?.map(item => ({
         repair_item_id: item.id?.startsWith('new-') ? undefined : item.id,
-        garment_type: item.garmentType,
-        repair_type_id: item.repairType?.id,
+        garment_id: item.garment.id,
+        repair_type_id: item.repairType.id,
         description: item.description,
         estimated_price: item.estimatedPrice,
         final_price: item.finalPrice}))};
@@ -134,7 +135,7 @@ export class RepairRepository implements Repository<Repair> {
 
   addItem(repairId: string, item: Partial<RepairItem>): Observable<RepairItem> {
     const req: RepairItemRequest = {
-      garment_type: item.garmentType!,
+      garment_id: item.garment?.id!,
       repair_type_id: item.repairType!.id,
       description: item.description!,
       estimated_price: item.estimatedPrice!,
@@ -146,7 +147,7 @@ export class RepairRepository implements Repository<Repair> {
 
   updateItem(repairId: string, itemId: string, item: Partial<RepairItem>): Observable<RepairItem> {
     const req: Partial<RepairItemRequest> = {
-      garment_type: item.garmentType,
+      garment_id: item.garment?.id,
       repair_type_id: item.repairType?.id,
       description: item.description,
       estimated_price: item.estimatedPrice,

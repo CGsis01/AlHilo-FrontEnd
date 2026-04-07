@@ -1,9 +1,10 @@
+import { Garment } from './garment.model';
 import { RepairType } from './repair-type.model';
 
 export interface RepairItem {
   id?: string;
   repairId?: string;
-  garmentType: string;
+  garment: Garment;
   repairType: RepairType;
   description: string;
   estimatedPrice: number;

@@ -1,0 +1,77 @@
+<div class="modal-backdrop" *ngIf="isOpen" (click)="onBackdropClick($event)">
+  <div class="modal-content">
+
+    <!-- ── Step 1: Garments ── -->
+    <ng-container *ngIf="step === 'garments'">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span >👗</span>
+          <h2>Seleccionar Prenda</h2>
+        </div>
+        <button type="button" class="close-btn" (click)="close()" aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="modal-search">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="applyFilter()"
+          placeholder="Buscar prenda..."
+          class="search-input"
+          autofocus>
+      </div>
+
+      <div class="modal-body">
+        <div class="pos-grid" *ngIf="filtered.length > 0; else emptyGarments">
+          <button type="button"
+            class="pos-btn"
+            *ngFor="let garment of filtered"
+            (click)="selectGarment(garment)">
+            <span class="pos-btn__icon">✂️</span>
+            <span class="pos-btn__name">{{ garment.name }}</span>
+            <span class="pos-btn__meta" *ngIf="garment.code">{{ garment.code }}</span>
+          </button>
+        </div>
+        <ng-template #emptyGarments>
+          <div class="empty-state">Sin prendas disponibles</div>
+        </ng-template>
+      </div>
+    </ng-container>
+
+    <!-- ── Step 2: Repair Types ── -->
+    <ng-container *ngIf="step === 'repairTypes' && selectedGarment">
+      <div class="modal-header">
+        <div class="modal-title">
+          <button type="button" class="back-btn" (click)="back()" title="Volver">‹</button>
+          <span class="modal-icon">🔧</span>
+          <div class="step2-title">
+            <h2>Tipo de Reparación</h2>
+            <span class="step2-subtitle">{{ selectedGarment.name }}</span>
+          </div>
+        </div>
+        <button type="button" class="close-btn" (click)="close()" aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="pos-grid" *ngIf="selectedGarment.repairTypes && selectedGarment.repairTypes.length > 0; else emptyRepairTypes">
+          <button type="button"
+            class="pos-btn repair-type-btn"
+            *ngFor="let rt of selectedGarment.repairTypes"
+            [class.is-default]="rt.isDefault"
+            (click)="selectRepairType(rt)">
+            <span class="pos-btn__icon">🧵</span>
+            <span class="pos-btn__name">{{ rt.repairTypeName }}</span>
+            <span class="pos-btn__price" *ngIf="rt.estimatedPriceOverride">
+              ${{ rt.estimatedPriceOverride | number:'1.2-2':'en-US' }}
+            </span>
+            <span class="pos-btn__meta" *ngIf="rt.repairTypeCode">{{ rt.repairTypeCode }}</span>
+          </button>
+        </div>
+        <ng-template #emptyRepairTypes>
+          <div class="empty-state">Esta prenda no tiene reparaciones configuradas</div>
+        </ng-template>
+      </div>
+    </ng-container>
+
+  </div>
+</div>

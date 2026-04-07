@@ -167,7 +167,7 @@ export class GarmentApiService {
 
   private mapGarmentRepairType(rt: any): GarmentRepairType {
     return {
-      repairTypeId: rt.id,
+      repairTypeId: rt.repair_type_id,
       repairTypeName: rt.repair_type_name,
       repairTypeCode: rt.repair_type_code,
       isDefault: rt.is_default,

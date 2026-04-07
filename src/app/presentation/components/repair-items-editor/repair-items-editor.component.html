@@ -1,10 +1,17 @@
 <div class="items-editor">
   <div class="items-header">
     <span class="items-label">Servicios</span>
-    <button type="button" class="btn-add-item" (click)="addItem()">+ Agregar servicio</button>
+    <button type="button" class="btn-add-item" (click)="openGarmentModal()">+ Agregar servicio</button>
   </div>
 
-  <div class="items-table">
+  <app-garment-selector-modal
+    [isOpen]="showGarmentModal()"
+    [garments]="garments"
+    (garmentSelected)="onGarmentSelected($event)"
+    (closed)="closeGarmentModal()">
+  </app-garment-selector-modal>
+
+  <div class="items-table" *ngIf="drafts.length > 0">
     <!-- Column headers -->
     <div class="item-row item-row-header">
       <span>Tipo de Prenda *</span>
@@ -17,13 +24,13 @@
     <!-- Item rows -->
     <div class="item-row" *ngFor="let draft of drafts; let i = index">
       <input type="text"
-        [(ngModel)]="draft.garmentType"
+        [(ngModel)]="draft.garment.name"
         (ngModelChange)="onFieldChange()"
         placeholder="Ej. Pantalón"
         [name]="'garmentType_' + i"
         class="item-input" />
 
-      <select [(ngModel)]="draft.repairTypeId"
+      <select [(ngModel)]="draft.repairType.repairTypeId"
         (ngModelChange)="onFieldChange()"
         [name]="'repairType_' + i"
         class="item-input">
@@ -45,11 +52,10 @@
         inputmode="decimal"
         [name]="'price_' + i"
         class="item-input item-price" />
-
+        
       <button type="button"
         class="btn-remove-item"
         (click)="removeItem(i)"
-        [disabled]="drafts.length <= 1"
         title="Eliminar prenda">
         🗑️
       </button>
@@ -64,5 +70,9 @@
 
   <div class="items-validation-hint" *ngIf="!isValid && drafts.length > 0">
     Completa todos los campos de cada prenda para continuar.
+  </div>
+
+  <div class="items-validation-hint" *ngIf="drafts.length === 0">
+    Debe existir al menos un servicio para crear la orden de reparación.
   </div>
 </div>

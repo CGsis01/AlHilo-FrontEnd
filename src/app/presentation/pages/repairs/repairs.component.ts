@@ -1,4 +1,4 @@
-import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { RepairUseCases } from '../../../domain/usecases/repair.usecases';
@@ -16,9 +16,10 @@ import { UserRole, UserRoleCode } from '../../../core/models/user.model';
 })
 
 export class RepairsComponent implements OnInit {
+  isLoading = signal(true);
+
   repairs: Repair[] = [];
   filteredRepairs: Repair[] = [];
-  isLoading = true;
   selectedStatus: string = 'ALL';
   RepairStatus = RepairStatusEnum;
   userRole: UserRole | undefined;
@@ -65,7 +66,7 @@ export class RepairsComponent implements OnInit {
   }
 
   loadRepairs(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
 
     const isSeamstress = this.userRole?.code === UserRoleCode.SEAMSTRESS;
     const isHeadSewing = this.userRole?.code === UserRoleCode.HEADSEWING;
@@ -75,20 +76,23 @@ export class RepairsComponent implements OnInit {
       RepairStatusEnum.VALIDATED,
       RepairStatusEnum.DELIVERED
     ]);
-    
+
     const repairs$ = (isSeamstress) && currentUserId 
       ? this.repairUseCases.getRepairsByAssignedUser(currentUserId)
       : this.repairUseCases.getAllRepairs();
-  
+
     repairs$.subscribe({
       next: (repairs) => {
         this.repairs = isHeadSewing
           ? repairs.filter(repair => !excludedHeadSewingStatuses.has(repair.repairStatus.name))
           : repairs;
+
         this.filterRepairs();
-        this.isLoading = false;},
-      error: () => {
-        this.isLoading = false;}});
+        this.isLoading.set(false);},
+      error: (err) => { 
+        console.error('Error loading repairs:', err);
+        this.isLoading.set(false);
+      }});
   }
 
   filterRepairs(): void {

@@ -11,7 +11,7 @@ import { User } from '@core/models/user.model';
 export interface RepairItemRequest {
   repair_item_id?: string;
   repair_id?: string;
-  garment_type: string;
+  garment_id: string;
   repair_type_id: string;
   description: string;
   estimated_price: number;
@@ -210,6 +210,20 @@ export class RepairApiService {
     return this.apiService.get<any>(`${this.endpoint}/reports`, params);
   }
 
+  addRepairItem(repairId: string, item: RepairItemRequest): Observable<RepairItem> {
+    return this.apiService.post<any>(`${this.endpoint}/${repairId}/items`, item)
+      .pipe(map(i => this.mapRepairItem(repairId, i)));
+  }
+
+  updateRepairItem(repairId: string, itemId: string, item: Partial<RepairItemRequest>): Observable<RepairItem> {
+    return this.apiService.put<any>(`${this.endpoint}/${repairId}/items/${itemId}`, item)
+      .pipe(map(i => this.mapRepairItem(repairId, i)));
+  }
+
+  removeRepairItem(repairId: string, itemId: string): Observable<void> {
+    return this.apiService.delete<void>(`${this.endpoint}/${repairId}/items/${itemId}`);
+  }
+
   private buildFilterParams(filters?: RepairFilters): HttpParams {
     let params = new HttpParams();
 
@@ -242,31 +256,42 @@ export class RepairApiService {
       ? repair.repair_items.map((item: any): RepairItem => ({
           id: item.id,
           repairId: repair.id,
-          garmentType: item.garment_type,
+          garment: {
+            id: item.garment.id,
+            name: item.garment.name,
+            code: item.garment.code,
+            description: item.garment.description,
+            category: item.garment.category,
+            storeId: item.garment.store_id,
+            repairTypes: [], // This will be populated separately if needed
+            isActive: item.garment.is_active,
+            createdAt: item.garment.created_at,
+            updatedAt: item.garment.updated_at
+          },
           repairType: {
-            id: item.repair_type.repair_type_id,
+            id: item.repair_type.id,
             name: item.repair_type.name,
             code: item.repair_type.code,
             estimatedPrice: item.repair_type.estimated_price,
             estimatedTime: item.repair_type.estimated_time,
             commissionPercentage: item.repair_type.commission_percentage,
             repairComplexity: {
-              id: item.repair_complexity.id,
-              name: item.repair_complexity.name,
-              code: item.repair_complexity.code,
-              laborMultiplier: item.repair_complexity.labor_multiplier,
-              timeMultiplier: item.repair_complexity.time_multiplier,
-              storeId: item.repair_complexity.store_id,
-              isActive: item.repair_complexity.is_active,
-              createdAt: item.repair_complexity.created_at,
-              updatedAt: item.repair_complexity.updated_at
+              id: item.repair_type.repair_complexity.id,
+              name: item.repair_type.repair_complexity.name,
+              code: item.repair_type.repair_complexity.code,
+              laborMultiplier: item.repair_type.repair_complexity.labor_multiplier,
+              timeMultiplier: item.repair_type.repair_complexity.time_multiplier,
+              storeId: item.repair_type.repair_complexity.store_id,
+              isActive: item.repair_type.repair_complexity.is_active,
+              createdAt: item.repair_type.repair_complexity.created_at,
+              updatedAt: item.repair_type.repair_complexity.updated_at
             },
             store: {
-              id: item.store.id,
-              name: item.store.name,
-              isActive: item.store.is_active,
-              createdAt: item.store.created_at,
-              updatedAt: item.store.updated_at
+              id: item.repair_type.store.id,
+              name: item.repair_type.store.name,
+              isActive: item.repair_type.store.is_active,
+              createdAt: item.repair_type.store.created_at,
+              updatedAt: item.repair_type.store.updated_at
             },
             isActive: item.repair_type.is_active,
             createdAt: item.repair_type.created_at
@@ -320,25 +345,22 @@ export class RepairApiService {
     };
   }
 
-  addRepairItem(repairId: string, item: RepairItemRequest): Observable<RepairItem> {
-    return this.apiService.post<any>(`${this.endpoint}/${repairId}/items`, item)
-      .pipe(map(i => this.mapRepairItem(repairId, i)));
-  }
-
-  updateRepairItem(repairId: string, itemId: string, item: Partial<RepairItemRequest>): Observable<RepairItem> {
-    return this.apiService.put<any>(`${this.endpoint}/${repairId}/items/${itemId}`, item)
-      .pipe(map(i => this.mapRepairItem(repairId, i)));
-  }
-
-  removeRepairItem(repairId: string, itemId: string): Observable<void> {
-    return this.apiService.delete<void>(`${this.endpoint}/${repairId}/items/${itemId}`);
-  }
-
   private mapRepairItem(repairId: string, item: any): RepairItem {
     return {
       id: item.repair_item_id,
       repairId,
-      garmentType: item.garment_type,
+      garment: {
+        id: item.garment.id,
+        name: item.garment.name,
+        code: item.garment.code,
+        description: item.garment.description,
+        category: item.garment.category,
+        storeId: item.garment.store_id,
+        repairTypes: [], // This will be populated separately if needed
+        isActive: item.garment.is_active,
+        createdAt: item.garment.created_at,
+        updatedAt: item.garment.updated_at
+      },
       repairType: {
         id: item.repair_type.repair_type_id,
         name: item.repair_type.name,
@@ -347,23 +369,23 @@ export class RepairApiService {
         estimatedTime: item.repair_type.estimated_time,
         commissionPercentage: item.repair_type.commission_percentage,
         repairComplexity: {
-              id: item.repair_complexity.id,
-              name: item.repair_complexity.name,
-              code: item.repair_complexity.code,
-              laborMultiplier: item.repair_complexity.labor_multiplier,
-              timeMultiplier: item.repair_complexity.time_multiplier,
-              storeId: item.repair_complexity.store_id,
-              isActive: item.repair_complexity.is_active,
-              createdAt: item.repair_complexity.created_at,
-              updatedAt: item.repair_complexity.updated_at
-            },
-            store: {
-              id: item.store.id,
-              name: item.store.name,
-              isActive: item.store.is_active,
-              createdAt: item.store.created_at,
-              updatedAt: item.store.updated_at
-            },
+          id: item.repair_type.repair_complexity.id,
+          name: item.repair_type.repair_complexity.name,
+          code: item.repair_type.repair_complexity.code,
+          laborMultiplier: item.repair_type.repair_complexity.labor_multiplier,
+          timeMultiplier: item.repair_type.repair_complexity.time_multiplier,
+          storeId: item.repair_type.repair_complexity.store_id,
+          isActive: item.repair_type.repair_complexity.is_active,
+          createdAt: item.repair_type.repair_complexity.created_at,
+          updatedAt: item.repair_type.repair_complexity.updated_at
+        },
+        store: {
+          id: item.repair_type.store.id,
+          name: item.repair_type.store.name,
+          isActive: item.repair_type.store.is_active,
+          createdAt: item.repair_type.store.created_at,
+          updatedAt: item.repair_type.store.updated_at
+        },
         isActive: item.repair_type.is_active,
         createdAt: item.repair_type.created_at
       },
