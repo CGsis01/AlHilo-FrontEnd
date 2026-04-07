@@ -14,8 +14,9 @@ import { Role } from '../../../core/models/role.model';
 
 export class RolesComponent implements OnInit {
   isLoading = signal(true);
+  isEditing = signal(false);
+
   roles: Role[] = [];  
-  isEditing = false;
   editingRole: Partial<Role> = {};
   showModal = false;
   errorMessage = '';
@@ -39,14 +40,14 @@ export class RolesComponent implements OnInit {
   }
 
   openAddModal(): void {
-    this.isEditing = false;
+    this.isEditing.set(false);
     this.editingRole = { name: '', code: '', isActive: true };
     this.showModal = true;
     this.errorMessage = '';
   }
 
   openEditModal(role: Role): void {
-    this.isEditing = true;
+    this.isEditing.set(true);
     this.editingRole = { ...role };
     this.showModal = true;
     this.errorMessage = '';
@@ -65,7 +66,7 @@ export class RolesComponent implements OnInit {
       return;
     }
     
-    if (this.isEditing && this.editingRole.id) {
+    if (this.isEditing() && this.editingRole.id) {
       this.roleUseCases.updateRole(this.editingRole.id, this.editingRole).subscribe({
         next: () => {
           this.loadRoles();
