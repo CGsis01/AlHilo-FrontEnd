@@ -9,7 +9,7 @@
     </button>
   </div>
 
-  <div class="roles-table-wrapper" *ngIf="!isLoading && roles.length > 0">
+  <div class="roles-table-wrapper" *ngIf="!isLoading() && roles.length > 0">
     <table class="roles-table">
       <thead>
         <tr>
@@ -43,13 +43,13 @@
     </table>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading && roles.length === 0">
+  <div class="empty-state" *ngIf="!isLoading() && roles.length === 0">
     <div class="empty-icon">🎭</div>
     <h3>No se encontraron roles</h3>
     <p>Comienza agregando tu primer rol al sistema.</p>
   </div>
 
-  <div class="loading-state" *ngIf="isLoading">
+  <div class="loading-state" *ngIf="isLoading()">
     <div class="spinner"></div>
     <p>Cargando roles...</p>
   </div>

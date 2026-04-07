@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RoleUseCases } from '../../../domain/usecases/role.usecases';
@@ -13,8 +13,8 @@ import { Role } from '../../../core/models/role.model';
 })
 
 export class RolesComponent implements OnInit {
-  roles: Role[] = [];
-  isLoading = true;
+  isLoading = signal(true);
+  roles: Role[] = [];  
   isEditing = false;
   editingRole: Partial<Role> = {};
   showModal = false;
@@ -27,15 +27,15 @@ export class RolesComponent implements OnInit {
   }
 
   loadRoles(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     
     this.roleUseCases.getAllRoles().subscribe({
       next: (roles) => {
         this.roles = roles;
-        this.isLoading = false;},
+        this.isLoading.set(false);},
       error: (error) => {
         console.error('Error loading roles:', error);
-        this.isLoading = false;}});
+        this.isLoading.set(false);}});
   }
 
   openAddModal(): void {
