@@ -348,10 +348,12 @@ export class RepairDetailComponent implements OnInit {
         this.closePaymentModal();
 
         this.showPaymentTicket = true;
-        
-        this.printPaymentTicket();
-        this.closePaymentTicket();
-        this.goBack();
+
+        setTimeout(() => {
+          this.printPaymentTicket();
+          this.closePaymentTicket();
+          this.goBack();
+        }, 100);
       },
       error: (error) => {
         this.errorMessage = error.message || 'Error al actualizar el estado';}});
