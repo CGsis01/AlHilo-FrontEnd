@@ -623,6 +623,8 @@ export class RepairFormComponent implements OnInit {
     this.repair = repair; 
     this.isLoading.set(false);
 
+    void this.openTicketAndPrint();
+
     this.whatsappApiService.sendNotification({
       phone: repair.customerPhone,
       customer_name: repair.customerName,
@@ -635,8 +637,6 @@ export class RepairFormComponent implements OnInit {
         this.toastService.show('No se pudo enviar la notificación WhatsApp', 'error');
       }
     });
-    
-    void this.openTicketAndPrint();
   }
 
   onCancel(): void {
@@ -691,9 +691,13 @@ export class RepairFormComponent implements OnInit {
     if ((this.pendingAdvancePaymentTicket())) {
       this.ticketPrintService.simplePrint();
 
-      setTimeout(() => {
-        this.showTicket.set(false);
-        this.openAdvancePaymentTicket();
+      this.showTicket.set(false);
+
+      this.openAdvancePaymentTicket();
+
+      setTimeout(() => {        
+        this.printAdvancePaymentTicket();
+        this.closeAdvancePaymentTicket()
       }, 100);
 
       return;
