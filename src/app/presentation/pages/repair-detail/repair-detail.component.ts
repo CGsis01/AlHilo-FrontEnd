@@ -346,7 +346,13 @@ export class RepairDetailComponent implements OnInit {
             this.handleRepairUpdated(updatedRepair);}});        
 
         this.closePaymentModal();
-        this.showPaymentTicket = true;},
+
+        this.showPaymentTicket = true;
+        
+        this.printPaymentTicket();
+        this.closePaymentTicket();
+        this.goBack();
+      },
       error: (error) => {
         this.errorMessage = error.message || 'Error al actualizar el estado';}});
   }
