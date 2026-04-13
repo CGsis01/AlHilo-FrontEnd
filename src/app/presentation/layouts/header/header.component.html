@@ -2,7 +2,7 @@
   <div class="header-container">
     <div class="header-left">
       <button class="menu-toggle" (click)="toggleMenu()" aria-label="Toggle menu" *ngIf="currentUser">
-        <span class="menu-icon" [class.open]="isMenuOpen">
+        <span class="menu-icon" [class.open]="isMenuOpen()">
           <span></span>
           <span></span>
           <span></span>
@@ -14,7 +14,7 @@
       </div>
     </div>
 
-    <nav class="nav-menu" [class.open]="isMenuOpen">
+    <nav class="nav-menu" [class.open]="isMenuOpen()">
       <ng-container *ngFor="let item of filteredMenuItems">
         <ng-container *ngTemplateOutlet="menuItemTemplate; context: { item: item, path: item.label }"></ng-container>
       </ng-container>
@@ -84,4 +84,4 @@
   </div>
 </header>
 
-<div class="backdrop" *ngIf="isMenuOpen" (click)="toggleMenu()"></div>
+<div class="backdrop" *ngIf="isMenuOpen()" (click)="toggleMenu()"></div>

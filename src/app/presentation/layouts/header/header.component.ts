@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Input, OnChanges, SimpleChanges, HostListener, ElementRef } from '@angular/core';
+import { Component, EventEmitter, Output, Input, OnChanges, SimpleChanges, HostListener, ElementRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { User, UserRoleCode } from '../../../core/models/user.model';
@@ -25,7 +25,7 @@ export class HeaderComponent implements OnChanges {
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
 
-  isMenuOpen = false;
+  isMenuOpen = signal(false);
   openDropdowns: Set<string> = new Set();
   filteredMenuItems: MenuItem[] = [];
 
@@ -97,7 +97,7 @@ export class HeaderComponent implements OnChanges {
       return;
     }
 
-    this.isMenuOpen = false;
+    this.isMenuOpen.set(false);
     this.openDropdowns.clear();
     
     this.filteredMenuItems = this.filterMenuItemsRecursively(this.menuItems);
@@ -133,11 +133,11 @@ export class HeaderComponent implements OnChanges {
   }
 
   toggleMenu(): void {
-    this.isMenuOpen = !this.isMenuOpen;
+    this.isMenuOpen.set(!this.isMenuOpen());
   }
 
   closeMenu(): void {
-    this.isMenuOpen = false;
+    this.isMenuOpen.set(false);
     this.openDropdowns.clear();
   }
 
