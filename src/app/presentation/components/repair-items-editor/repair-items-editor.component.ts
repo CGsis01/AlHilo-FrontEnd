@@ -28,18 +28,18 @@ export class RepairItemsEditorComponent implements OnChanges {
   @Input() items: RepairItem[] = [];
   @Input() garments: Garment[] = [];
   @Output() itemsChange = new EventEmitter<RepairItem[]>();
-
-  drafts: RepairItemDraft[] = [];
-  showGarmentModal = signal(false);
+  
   private _draftCounter = 0;
-
+  
+  showGarmentModal = signal(false);
+  drafts: RepairItemDraft[] = [];
+  
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['items'] && this.drafts.length === 0) {
       if (this.items.length > 0) {
         this.drafts = this.items.map(item => this.toDraft(item));
       } else {
         this.drafts = [];
-        //this.addItem(); // always start with at least one row
       }
     }
   }
