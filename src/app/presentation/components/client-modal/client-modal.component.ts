@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Input, OnInit, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Output, Input, OnInit, OnChanges, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ClientRepository } from '../../../data/repositories/client.repository';
@@ -20,8 +20,9 @@ export class ClientModalComponent implements OnInit, OnChanges {
   @Output() clientCreated = new EventEmitter<Client>();
 
   clientForm!: FormGroup;
-  isLoading = false;
-  errorMessage = '';
+  
+  isLoading = signal(false);
+  errorMessage = signal('');
 
   constructor(
     private fb: FormBuilder,
@@ -49,11 +50,12 @@ export class ClientModalComponent implements OnInit, OnChanges {
 
   onSubmit(): void {
     if (this.clientForm.invalid) {
+      this.errorMessage.set('Favor de llenar todos los campos requeridos correctamente.');
       return;
     }
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
     const clientData = {
       ...this.clientForm.value,
@@ -62,12 +64,13 @@ export class ClientModalComponent implements OnInit, OnChanges {
 
     this.clientRepository.create(clientData).subscribe({
       next: (client) => {
-        this.isLoading = false;
         this.clientCreated.emit(client);
         this.resetForm();},
       error: (error) => {
-        this.errorMessage = error.message || 'Error al crear el cliente. Intente nuevamente.';
-        this.isLoading = false;}});
+        this.errorMessage.set(error.message || 'Error al crear el cliente. Intente nuevamente.');
+        }});
+
+    this.isLoading.set(false);
   }
 
   onClose(): void {
@@ -83,6 +86,6 @@ export class ClientModalComponent implements OnInit, OnChanges {
 
   private resetForm(): void {
     this.clientForm.reset({ personalPhone: '' });
-    this.errorMessage = '';
+    this.errorMessage.set('');
   }
 }
