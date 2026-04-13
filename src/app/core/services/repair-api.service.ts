@@ -113,7 +113,7 @@ export class RepairApiService {
     params = this.mergeParams(params, this.buildFilterParams(filters));
 
     return this.apiService.get<PaginatedResponse<Repair>>(this.endpoint, params)
-    .pipe(map(response => {
+    .pipe(map(response => { 
       response.items = response.items.map(r => this.mapRepair(r));
       return response;}));
   }
@@ -180,6 +180,7 @@ export class RepairApiService {
 
   getStats(filters?: RepairFilters): Observable<RepairStats> {
     let params = this.buildFilterParams(filters);
+
     return this.apiService.get<RepairStats>(`${this.endpoint}/stats`, params);
   }
 
@@ -207,17 +208,18 @@ export class RepairApiService {
     const params = new HttpParams()
       .set('date_from', dateFrom)
       .set('date_to', dateTo);
+
     return this.apiService.get<any>(`${this.endpoint}/reports`, params);
   }
 
   addRepairItem(repairId: string, item: RepairItemRequest): Observable<RepairItem> {
     return this.apiService.post<any>(`${this.endpoint}/${repairId}/items`, item)
-      .pipe(map(i => this.mapRepairItem(repairId, i)));
+    .pipe(map(i => this.mapRepairItem(repairId, i)));
   }
 
   updateRepairItem(repairId: string, itemId: string, item: Partial<RepairItemRequest>): Observable<RepairItem> {
     return this.apiService.put<any>(`${this.endpoint}/${repairId}/items/${itemId}`, item)
-      .pipe(map(i => this.mapRepairItem(repairId, i)));
+    .pipe(map(i => this.mapRepairItem(repairId, i)));
   }
 
   removeRepairItem(repairId: string, itemId: string): Observable<void> {

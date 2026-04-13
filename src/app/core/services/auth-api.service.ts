@@ -98,12 +98,10 @@ export class AuthApiService {
 
   refreshToken(refreshToken: string): Observable<AuthResponse> {
     const data: RefreshTokenRequest = { refresh_token: refreshToken };
+    
     return this.apiService
       .post<ApiTokenResponse>(`${this.endpoint}/refresh`, data)
-      .pipe(
-        map(token => ({
-          user: this.getStoredUser(),
-          token: this.mapToken(token) })));
+      .pipe(map(token => ({ user: this.getStoredUser(), token: this.mapToken(token) })));
   }
 
   logout(): Observable<void> {
@@ -117,9 +115,7 @@ export class AuthApiService {
   }
 
   changePassword(oldPassword: string, newPassword: string): Observable<{ message: string }> {
-    const data: ChangePasswordRequest = {
-      old_password: oldPassword,
-      new_password: newPassword};
+    const data: ChangePasswordRequest = { old_password: oldPassword, new_password: newPassword};
     
     return this.apiService.post<{ message: string }>(`${this.endpoint}/change-password`, data);
   }
@@ -129,9 +125,7 @@ export class AuthApiService {
   }
 
   resetPassword(token: string, newPassword: string): Observable<{ message: string }> {
-    return this.apiService.post<{ message: string }>(`${this.endpoint}/reset-password`, {
-      token,
-      new_password: newPassword});
+    return this.apiService.post<{ message: string }>(`${this.endpoint}/reset-password`, { token, new_password: newPassword});
   }
 
   verifyEmail(token: string): Observable<{ message: string }> {
@@ -139,9 +133,7 @@ export class AuthApiService {
   }
 
   private mapAuthResponse(response: ApiAuthResponse): AuthResponse {
-    return {
-      user: this.mapUser(response.user),
-      token: this.mapToken(response.token)};
+    return { user: this.mapUser(response.user), token: this.mapToken(response.token)};
   }
 
   private mapUser(user: ApiUserResponse): User {

@@ -93,6 +93,7 @@ export class ClientApiService {
 
   searchByName(name: string): Observable<Client[]> {
     const params = new HttpParams().set('name', name);
+
     return this.apiService.get<Client[]>(`${this.endpoint}/search/name`, params)
     .pipe(map((response: Client[]) => response.map(client => this.mapClient(client))));
   }
@@ -122,6 +123,7 @@ export class ClientApiService {
 
   getUpcomingBirthdays(days: number = 30): Observable<Client[]> {
     const params = new HttpParams().set('days', days.toString());
+    
     return this.apiService.get<Client[]>(`${this.endpoint}/birthdays/upcoming`, params);
   }
 

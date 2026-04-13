@@ -49,17 +49,17 @@ export class RepairTypeRelationApiService {
     }
 
     return this.apiService.get<RepairTypeMaterial[]>(`${this.endpoint}/${repairTypeId}/materials`, params)
-      .pipe(map(res => res.map(r => this.mapMaterial(r))));
+    .pipe(map(res => res.map(r => this.mapMaterial(r))));
   }
 
   addMaterial(repairTypeId: string, data: CreateRepairTypeMaterialRequest): Observable<RepairTypeMaterial> {
     return this.apiService.post<RepairTypeMaterial>(`${this.endpoint}/${repairTypeId}/materials`, data)
-      .pipe(map(r => this.mapMaterial(r)));
+    .pipe(map(r => this.mapMaterial(r)));
   }
 
   updateMaterial(repairTypeId: string, materialId: string, storeId: string, data: UpdateRepairTypeMaterialRequest): Observable<RepairTypeMaterial> {
     return this.apiService.put<RepairTypeMaterial>(`${this.endpoint}/${repairTypeId}/materials`, data)
-      .pipe(map(r => this.mapMaterial(r)));
+    .pipe(map(r => this.mapMaterial(r)));
   }
 
   removeMaterial(repairTypeId: string, data: DeleteRepairTypeMaterialRequest): Observable<void> {

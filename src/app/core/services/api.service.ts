@@ -16,9 +16,7 @@ export class ApiService {
 
   get<T>(endpoint: string, params?: HttpParams): Observable<T> {
     return this.http
-      .get<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, {
-        params,
-        headers: this.getHeaders() })
+      .get<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, { params, headers: this.getHeaders() })
       .pipe(
         map(response => response.data),
         catchError(this.handleError));
@@ -26,8 +24,7 @@ export class ApiService {
 
   post<T>(endpoint: string, data: any): Observable<T> {
     return this.http
-      .post<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, data, {
-        headers: this.getHeaders() })
+      .post<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, data, { headers: this.getHeaders() })
       .pipe(
         map(response => response.data),
         catchError(this.handleError));
@@ -35,8 +32,7 @@ export class ApiService {
 
   put<T>(endpoint: string, data: any): Observable<T> {
     return this.http
-      .put<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, data, {
-        headers: this.getHeaders() })
+      .put<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, data, { headers: this.getHeaders() })
       .pipe(
         map(response => response.data),
         catchError(this.handleError));
@@ -44,8 +40,7 @@ export class ApiService {
 
   patch<T>(endpoint: string, data: any): Observable<T> {
     return this.http
-      .patch<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, data, {
-        headers: this.getHeaders() })
+      .patch<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, data, { headers: this.getHeaders() })
       .pipe(
         map(response => response.data),
         catchError(this.handleError));
@@ -53,8 +48,7 @@ export class ApiService {
 
   delete<T>(endpoint: string): Observable<T> {
     return this.http
-      .delete<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, {
-        headers: this.getHeaders() })
+      .delete<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, { headers: this.getHeaders() })
       .pipe(
         map(response => response.data),
         catchError(this.handleError));

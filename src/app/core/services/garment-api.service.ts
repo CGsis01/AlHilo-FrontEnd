@@ -72,15 +72,13 @@ export class GarmentApiService {
       params = params.set('store_id', filters.store_id);
     }
 
-    return this.apiService.get<Garment[]>(this.apiUrl, params).pipe(
-      map(response => response.map(g => this.mapGarment(g)))
-    );
+    return this.apiService.get<Garment[]>(this.apiUrl, params)
+    .pipe(map(response => response.map(g => this.mapGarment(g))));
   }
 
   getById(id: string): Observable<Garment> {
-    return this.apiService.get<Garment>(`${this.apiUrl}/${id}`).pipe(
-      map(garment => this.mapGarment(garment))
-    );
+    return this.apiService.get<Garment>(`${this.apiUrl}/${id}`)
+    .pipe(map(garment => this.mapGarment(garment)));
   }
 
   getByStore(storeId: string): Observable<Garment[]> {
@@ -88,21 +86,18 @@ export class GarmentApiService {
   }
 
   getActiveGarments(storeId?: string): Observable<Garment[]> {
-    return this.getAll({ store_id: storeId }).pipe(
-      map(garments => garments.filter(g => g.isActive))
-    );
+    return this.getAll({ store_id: storeId })
+    .pipe(map(garments => garments.filter(g => g.isActive)));
   }
 
   create(garment: CreateGarmentRequest): Observable<Garment> {
-    return this.apiService.post<Garment>(this.apiUrl, garment).pipe(
-      map(g => this.mapGarment(g))
-    );
+    return this.apiService.post<Garment>(this.apiUrl, garment)
+    .pipe(map(g => this.mapGarment(g)));
   }
 
   update(id: string, garment: UpdateGarmentRequest): Observable<Garment> {
-    return this.apiService.put<Garment>(`${this.apiUrl}/${id}`, garment).pipe(
-      map(g => this.mapGarment(g))
-    );
+    return this.apiService.put<Garment>(`${this.apiUrl}/${id}`, garment)
+    .pipe(map(g => this.mapGarment(g)));
   }
 
   activate(request: ActivateGarmentRequest): Observable<boolean> {
@@ -115,23 +110,15 @@ export class GarmentApiService {
 
   // Repair Type Relationship Methods
   addRepairType(garmentId: string, request: AddRepairTypeToGarmentRequest): Observable<GarmentRepairType> {
-    return this.apiService.post<GarmentRepairType>(
-      `${this.apiUrl}/${garmentId}/repair-types`,
-      request
-    ).pipe(
-      map(rt => this.mapGarmentRepairType(rt))
-    );
+    return this.apiService.post<GarmentRepairType>(`${this.apiUrl}/${garmentId}/repair-types`, request)
+    .pipe(map(rt => this.mapGarmentRepairType(rt)));
   }
 
   getGarmentRepairTypes(garmentId: string, storeId: string): Observable<GarmentRepairType[]> {
     const params = new HttpParams().set('store_id', storeId);
     
-    return this.apiService.get<GarmentRepairType[]>(
-      `${this.apiUrl}/${garmentId}/repair-types`,
-      params
-    ).pipe(
-      map(response => response.map(rt => this.mapGarmentRepairType(rt)))
-    );
+    return this.apiService.get<GarmentRepairType[]>(`${this.apiUrl}/${garmentId}/repair-types`, params)
+    .pipe(map(response => response.map(rt => this.mapGarmentRepairType(rt))));
   }
 
   updateGarmentRepairType(
@@ -140,14 +127,8 @@ export class GarmentApiService {
     storeId: string,
     request: UpdateGarmentRepairTypeRequest
   ): Observable<GarmentRepairType> {
-    const params = new HttpParams().set('store_id', storeId);
-    
-    return this.apiService.put<GarmentRepairType>(
-      `${this.apiUrl}/${garmentId}/repair-types/${repairTypeId}`,
-      request
-    ).pipe(
-      map(rt => this.mapGarmentRepairType(rt))
-    );
+    return this.apiService.put<GarmentRepairType>(`${this.apiUrl}/${garmentId}/repair-types/${repairTypeId}`, request)
+    .pipe(map(rt => this.mapGarmentRepairType(rt)));
   }
 
   private mapGarment(garment: any): Garment {

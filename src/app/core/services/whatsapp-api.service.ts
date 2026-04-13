@@ -26,7 +26,7 @@ export class WhatsappApiService {
   constructor(private apiService: ApiService) {}
 
   sendNotification(request: WhatsappNotificationRequest): Observable<WhatsappNotificationResponse> {
-    return this.apiService.post<WhatsappNotificationResponse>(this.endpoint, request).pipe(
-      catchError(() => of({ success: false, message: 'Error al enviar notificación de WhatsApp' })));
+    return this.apiService.post<WhatsappNotificationResponse>(this.endpoint, request)
+    .pipe(catchError(() => of({ success: false, message: 'Error al enviar notificación de WhatsApp' })));
   }
 }

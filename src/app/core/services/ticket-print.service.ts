@@ -33,9 +33,7 @@ export class TicketPrintService {
           dark: '#000000',
           light: '#FFFFFF'}});
 
-      return {
-        qrCodeDataUrl,
-        repair};
+      return { qrCodeDataUrl, repair };
     } catch (error) {
       console.error('Error generating QR code:', error);
       
@@ -87,6 +85,7 @@ export class TicketPrintService {
 
       if (this.printRedirectTimeoutId !== null) {
         clearTimeout(this.printRedirectTimeoutId);
+        
         this.printRedirectTimeoutId = null;
       }
     };

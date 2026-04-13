@@ -17,12 +17,14 @@ export class ThemeService {
 
   toggleTheme(): void {
     const newTheme = this.themeSubject.value === 'light' ? 'dark' : 'light';
+    
     this.setTheme(newTheme);
   }
 
   setTheme(theme: Theme): void {
     this.themeSubject.next(theme);
     this.applyTheme(theme);
+    
     localStorage.setItem(this.THEME_KEY, theme);
   }
 

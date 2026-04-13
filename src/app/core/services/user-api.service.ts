@@ -97,7 +97,6 @@ export class UserApiService {
       if (filters.role_codes) { filters.role_codes.forEach(code => { params = params.append('role_codes', code); }); }
     }
 
-
     return this.apiService.get<PaginatedResponse<User>>(this.endpoint, params);
   }
 
@@ -107,6 +106,7 @@ export class UserApiService {
 
   getByRole(roles: UserRole[]): Observable<User[]> {
     const roleCodes = roles.map(role => role.code);
+    
     return this.getAll({ role_codes: roleCodes });
   }
 

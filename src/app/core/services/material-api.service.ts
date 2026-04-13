@@ -110,9 +110,11 @@ export class MaterialApiService {
 
   getActiveMaterials(storeId?: string): Observable<Material[]> {
     const filters: MaterialFilters = { is_active: true };
+
     if (storeId) {
       filters.store_id = storeId;
     }
+    
     return this.getAll(filters);
   }
 
