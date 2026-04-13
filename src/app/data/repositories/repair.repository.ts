@@ -6,7 +6,7 @@ import { User } from '../../core/models/user.model';
 import { Repository } from '../../core/interfaces/repository.interface';
 import { PaginatedResponse } from '../../core/interfaces/api-response.interface';
 import { RepairApiService, RepairItemRequest } from '../../core/services/repair-api.service';
-import { environment } from '../../../environments/environment';
+import { getStoredUserId } from '../../shared/utils/userLocalData.utils';
 import { RepairStatus } from '@core/models/repair-status.model';
 
 @Injectable({
@@ -45,7 +45,7 @@ export class RepairRepository implements Repository<Repair> {
       estimated_delivery_date: this.toIsoString(repair.estimatedDeliveryDate, true) || nowIso,
       actual_delivery_date: this.toIsoString(repair.actualDeliveryDate),
       notes: repair.notes,
-      created_by: this.getStoredUserId(),
+      created_by: getStoredUserId(),
       repair_items: repair.items?.map(item => ({
         repair_id: item.repairId,
         garment_id: item.garment.id,
@@ -53,7 +53,7 @@ export class RepairRepository implements Repository<Repair> {
         description: item.description,
         price: item.estimatedPrice,
         store_id: item.garment.storeId,
-        created_by: this.getStoredUserId()}))};
+        created_by: getStoredUserId()}))};
 
     return this.repairApiService.create(createRequest);
   }
@@ -74,7 +74,7 @@ export class RepairRepository implements Repository<Repair> {
       estimated_delivery_date: this.toIsoString(repair.estimatedDeliveryDate, true),
       actual_delivery_date: this.toIsoString(repair.actualDeliveryDate),
       notes: repair.notes,
-      updated_by: this.getStoredUserId(),
+      updated_by: getStoredUserId(),
       items: repair.items?.map(item => ({
         repair_item_id: item.id?.startsWith('new-') ? undefined : item.id,
         garment_id: item.garment.id,
@@ -119,7 +119,7 @@ export class RepairRepository implements Repository<Repair> {
     const assignRequest = {
       repair_id: repairId,
       assigned_to_id: seamstress.id,
-      updated_by: this.getStoredUserId()};
+      updated_by: getStoredUserId()};
     
     return this.repairApiService.assignToSeamstress(assignRequest);
   }
@@ -128,7 +128,7 @@ export class RepairRepository implements Repository<Repair> {
     const updateStatusRequest = {
       repair_id: repairId,
       repair_status_id: status.id,
-      updated_by: this.getStoredUserId()};
+      updated_by: getStoredUserId()};
     
     return this.repairApiService.updateStatus(updateStatusRequest);
   }
@@ -194,13 +194,4 @@ export class RepairRepository implements Repository<Repair> {
     return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
   }
 
-  private getStoredUserId(): string {
-    const userJson = localStorage.getItem(environment.userKey);
-
-    if (!userJson) {
-      throw new Error('No user found in local storage');
-    }
-
-    return (JSON.parse(userJson) as User).id;
-  }
 }

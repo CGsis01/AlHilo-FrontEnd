@@ -3,8 +3,7 @@ import { Observable } from 'rxjs';
 import { Garment, GarmentRepairType } from '../../core/models/garment.model';
 import { Repository } from '../../core/interfaces/repository.interface';
 import { GarmentApiService } from '../../core/services/garment-api.service';
-import { User } from '@core/models/user.model';
-import { environment } from '@environments/environment';
+import { getStoredUserId } from '../../shared/utils/userLocalData.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +27,7 @@ export class GarmentRepository implements Repository<Garment> {
       description: garment.description,
       category: garment.category,
       store_id: garment.storeId!,
-      created_by: this.getStoredUserId()
+      created_by: getStoredUserId()
     };
     
     return this.garmentApiService.create(createRequest);
@@ -41,7 +40,7 @@ export class GarmentRepository implements Repository<Garment> {
       description: garment.description,
       category: garment.category,
       store_id: garment.storeId,
-      updated_by: this.getStoredUserId()
+      updated_by: getStoredUserId()
     };
     
     return this.garmentApiService.update(id, updateRequest);
@@ -50,21 +49,21 @@ export class GarmentRepository implements Repository<Garment> {
   delete(id: string): Observable<boolean> {
     return this.garmentApiService.deactivate({
       id,
-      updated_by: this.getStoredUserId()
+      updated_by: getStoredUserId()
     });
   }
 
   activate(id: string): Observable<boolean> {
     return this.garmentApiService.activate({
       id,
-      updated_by: this.getStoredUserId()
+      updated_by: getStoredUserId()
     });
   }
 
   deactivate(id: string): Observable<boolean> {
     return this.garmentApiService.deactivate({
       id,
-      updated_by: this.getStoredUserId()
+      updated_by: getStoredUserId()
     });
   }
 
@@ -90,7 +89,7 @@ export class GarmentRepository implements Repository<Garment> {
       estimated_price_override: options?.estimatedPriceOverride,
       estimated_time_override: options?.estimatedTimeOverride,
       sort_order: options?.sortOrder,
-      created_by: this.getStoredUserId()
+      created_by: getStoredUserId()
     });
   }
 
@@ -114,17 +113,8 @@ export class GarmentRepository implements Repository<Garment> {
       estimated_price_override: options.estimatedPriceOverride,
       estimated_time_override: options.estimatedTimeOverride,
       sort_order: options.sortOrder,
-      updated_by: this.getStoredUserId()
+      updated_by: getStoredUserId()
     });
   }
 
-  private getStoredUserId(): string {
-    const userJson = localStorage.getItem(environment.userKey);
-    
-    if (!userJson) {
-        throw new Error('No user found in local storage');
-    }
-
-    return (JSON.parse(userJson) as User).id;
-  }
 }

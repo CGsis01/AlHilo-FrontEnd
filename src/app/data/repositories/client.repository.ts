@@ -3,8 +3,7 @@ import { Observable, map } from 'rxjs';
 import { Client } from '../../core/models/client.model';
 import { Repository } from '../../core/interfaces/repository.interface';
 import { ClientApiService } from '../../core/services/client-api.service';
-import { environment } from '../../../environments/environment';
-import { User } from '../../core/models/user.model';
+import { getStoredUserId, getStoredStoreId } from '../../shared/utils/userLocalData.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -39,8 +38,8 @@ export class ClientRepository implements Repository<Client> {
       facebook: client.facebook,
       instagram: client.instagram,
       birth_date: client.birthDate ? client.birthDate.toISOString().split('T')[0] : undefined,
-      store_id: this.getStoredStoreId(),
-      created_by: this.getStoredUserId() };
+      store_id: getStoredStoreId(),
+      created_by: getStoredUserId() };
     
     return this.clientApiService.create(createRequest);
   }
@@ -57,7 +56,7 @@ export class ClientRepository implements Repository<Client> {
       instagram: client.instagram,
       birth_date: client.birthDate ? client.birthDate.toISOString().split('T')[0] : undefined,
       store_id: client.store?.id,
-      updated_by: this.getStoredUserId()};
+      updated_by: getStoredUserId()};
     
     return this.clientApiService.update(id, updateRequest);
   }
@@ -73,29 +72,9 @@ export class ClientRepository implements Repository<Client> {
   }
 
   searchByPhone(phone: string): Observable<Client | undefined> {
-    const storeId = this.getStoredStoreId();
+    const storeId = getStoredStoreId();
 
     return this.clientApiService.searchByPhone(phone, storeId)
     .pipe(map(client => client || undefined));
-  }
-
-  private getStoredUserId(): string {
-    const userJson = localStorage.getItem(environment.userKey);
-
-    if (!userJson) {
-      throw new Error('No user found in local storage');
-    }
-
-    return (JSON.parse(userJson) as User).id;
-  }
-
-  private getStoredStoreId(): string {
-    const userJson = localStorage.getItem(environment.userKey);
-
-    if (!userJson) {
-      throw new Error('No user found in local storage');
-    }
-
-    return (JSON.parse(userJson) as User).store?.id || '';
   }
 }

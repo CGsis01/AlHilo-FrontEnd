@@ -3,8 +3,7 @@ import { Observable } from 'rxjs';
 import { Material } from '../../core/models/material.model';
 import { Repository } from '../../core/interfaces/repository.interface';
 import { MaterialApiService } from '../../core/services/material-api.service';
-import { environment } from '@environments/environment';
-import { User } from '@core/models/user.model';
+import { getStoredUserId } from '../../shared/utils/userLocalData.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -27,7 +26,7 @@ export class MaterialRepository implements Repository<Material> {
       unit: material.unit!,
       unit_cost: material.unitCost!,
       store_id: material.storeId!,
-      created_by: this.getStoredUserId()};
+      created_by: getStoredUserId()};
     
     return this.materialApiService.create(createRequest);
   }
@@ -38,7 +37,7 @@ export class MaterialRepository implements Repository<Material> {
       unit: material.unit,
       unit_cost: material.unitCost,
       store_id: material.storeId,
-      updated_by: this.getStoredUserId()};
+      updated_by: getStoredUserId()};
     
     return this.materialApiService.update(id, updateRequest);
   }
@@ -65,7 +64,7 @@ export class MaterialRepository implements Repository<Material> {
     const activateRequest = {
       id: id,
       store_id: storeId,
-      updated_by: this.getStoredUserId()}
+      updated_by: getStoredUserId()}
 
     return this.materialApiService.activate(activateRequest);
   }
@@ -74,18 +73,9 @@ export class MaterialRepository implements Repository<Material> {
     const deactivateRequest = {
       id: id,
       store_id: storeId,
-      updated_by: this.getStoredUserId()}
+      updated_by: getStoredUserId()}
 
     return this.materialApiService.deactivate(deactivateRequest);
   }
 
-  private getStoredUserId(): string {
-    const userJson = localStorage.getItem(environment.userKey);
-
-    if (!userJson) {
-      throw new Error('No user found in local storage');
-    }
-
-    return (JSON.parse(userJson) as User).id;
-  }
 }

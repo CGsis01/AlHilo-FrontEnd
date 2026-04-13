@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { User } from '../../core/models/user.model';
-import { environment } from '../../../environments/environment';
 import { Payment } from '@core/models/payment.model';
 import { PaymentApiService } from '../../core/services/payment-api.service';
+import { getStoredUserId } from '../../shared/utils/userLocalData.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -25,18 +24,8 @@ export class PaymentRepository {
         is_debit: payment.isDebit!,
         voucher_id: payment.voucherId,
         is_advance: payment.isAdvance,
-        created_by: this.getStoredUserId()};
+        created_by: getStoredUserId()};
 
     return this.paymentApiService.create(createRequest);
-  }
-
-  private getStoredUserId(): string {
-    const userJson = localStorage.getItem(environment.userKey);
-  
-    if (!userJson) {
-      throw new Error('No user found in local storage');
-    }
-  
-    return (JSON.parse(userJson) as User).id;
   }
 }

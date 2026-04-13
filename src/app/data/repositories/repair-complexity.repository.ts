@@ -3,8 +3,7 @@ import { Observable } from 'rxjs';
 import { RepairComplexity } from '../../core/models/repair-complexity.model';
 import { Repository } from '../../core/interfaces/repository.interface';
 import { RepairComplexityApiService } from '../../core/services/repair-complexity-api.service';
-import { environment } from '@environments/environment';
-import { User } from '@core/models/user.model';
+import { getStoredUserId } from '../../shared/utils/userLocalData.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +27,7 @@ export class RepairComplexityRepository implements Repository<RepairComplexity> 
       labor_multiplier: repairComplexity.laborMultiplier!,
       time_multiplier: repairComplexity.timeMultiplier!,
       store_id: repairComplexity.storeId!,
-      created_by: this.getStoredUserId()};
+      created_by: getStoredUserId()};
     
     return this.repairComplexityApiService.create(createRequest);
   }
@@ -40,7 +39,7 @@ export class RepairComplexityRepository implements Repository<RepairComplexity> 
       labor_multiplier: repairComplexity.laborMultiplier,
       time_multiplier: repairComplexity.timeMultiplier,
       store_id: repairComplexity.storeId,
-      updated_by: this.getStoredUserId()};
+      updated_by: getStoredUserId()};
     
     return this.repairComplexityApiService.update(id, updateRequest);
   }
@@ -66,7 +65,7 @@ export class RepairComplexityRepository implements Repository<RepairComplexity> 
   activate(id: string): Observable<boolean> {
     const activateRequest = {
       id: id,
-      updated_by: this.getStoredUserId()}
+      updated_by: getStoredUserId()}
 
     return this.repairComplexityApiService.activate(activateRequest);
   }
@@ -74,18 +73,8 @@ export class RepairComplexityRepository implements Repository<RepairComplexity> 
   deactivate(id: string): Observable<boolean> {
     const deactivateRequest = {
       id: id,
-      updated_by: this.getStoredUserId()}
+      updated_by: getStoredUserId()}
 
     return this.repairComplexityApiService.deactivate(deactivateRequest);
-  }
-
-  private getStoredUserId(): string {
-    const userJson = localStorage.getItem(environment.userKey);
-
-    if (!userJson) {
-      throw new Error('No user found in local storage');
-    }
-
-    return (JSON.parse(userJson) as User).id;
   }
 }

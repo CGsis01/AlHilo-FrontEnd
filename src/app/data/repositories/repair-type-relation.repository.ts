@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { RepairTypeMaterial } from '../../core/models/repair-type-material.model';
 import { RepairTypeRelationApiService } from '../../core/services/repair-type-relation-api.service';
-import { environment } from '@environments/environment';
-import { User } from '@core/models/user.model';
+import { getStoredUserId, getStoredStoreId } from '../../shared/utils/userLocalData.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -14,11 +13,10 @@ export class RepairTypeRelationRepository {
 
   // Materials
   getMaterials(repairTypeId: string): Observable<RepairTypeMaterial[]> {
-    return this.apiService.getMaterials(repairTypeId, this.getStoredStoreId());
+    return this.apiService.getMaterials(repairTypeId, getStoredStoreId());
   }
 
   addMaterial(materialRelation: RepairTypeMaterial): Observable<RepairTypeMaterial> {
-
     const createMaterialRelation = {
       repair_type_id: materialRelation.repairTypeId,
       material_id: materialRelation.materialId,
@@ -26,8 +24,8 @@ export class RepairTypeRelationRepository {
       unit_cost_override: materialRelation.unitCost,
       is_optional: materialRelation.isOptional,
       sort_order: materialRelation.sortOrder,
-      store_id: this.getStoredStoreId(),
-      created_by: this.getStoredUserId()
+      store_id: getStoredStoreId(),
+      created_by: getStoredUserId()
     }
 
     return this.apiService.addMaterial(materialRelation.repairTypeId, createMaterialRelation);
@@ -40,7 +38,7 @@ export class RepairTypeRelationRepository {
       is_optional: materialRelation.isOptional,
       sort_order: materialRelation.sortOrder,
       store_id: materialRelation.storeId,
-      updated_by: this.getStoredUserId()
+      updated_by: getStoredUserId()
     }
 
     return this.apiService.updateMaterial(materialRelation.repairTypeId, materialRelation.materialId, materialRelation.storeId, updateMaterialRelation);
@@ -50,28 +48,8 @@ export class RepairTypeRelationRepository {
     const deleteMaterialRelation = {
       repair_type_id: materialRelation.repairTypeId,
       material_id: materialRelation.materialId,
-      store_id: this.getStoredStoreId()    }
+      store_id: getStoredStoreId()    }
 
     return this.apiService.removeMaterial(materialRelation.repairTypeId, deleteMaterialRelation);
-  }
-
-  private getStoredStoreId(): string {
-    const userJson = localStorage.getItem(environment.userKey);
-
-    if (!userJson) {
-      throw new Error('No user found in local storage');
-    }
-
-    return (JSON.parse(userJson) as User).store?.id || '';
-  }
-
-  private getStoredUserId(): string {
-    const userJson = localStorage.getItem(environment.userKey);
-
-    if (!userJson) {
-      throw new Error('No user found in local storage');
-    }
-
-    return (JSON.parse(userJson) as User).id;
   }
 }
