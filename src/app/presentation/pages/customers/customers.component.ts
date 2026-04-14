@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal,computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClientUseCases } from '../../../domain/usecases/client.usecases';
@@ -17,19 +19,35 @@ import { DateFormatDirective } from '../../../shared/directives/date-format.dire
 })
 
 export class CustomersComponent implements OnInit {
+  isLoading = signal(true);
+  isEditing = signal(false);
+  showModal = signal(false);
+  
   clients: Client[] = [];
   filteredClients: Client[] = [];
-  stores: Store[] = [];
+  
   selectedStore: Store | null = null;
   selectedStoreFilter: string = '';
-  isLoading = true;
-  isEditing = false;
-  showModal = false;
+  
   errorMessage = '';
   searchQuery = '';
+  birthDateStr = '';
 
   editingClient: Partial<Omit<Client, 'store'>> & { store: Partial<Store>; } = { store: { id: '', name: '' } as Store };
-  birthDateStr = '';
+
+  stores = toSignal(
+      this.storeUseCases.getActiveStores().pipe(
+        catchError(err => {
+          console.error('Error loading stores:', err);
+          return of([] as Store[]);
+        })
+      ),
+      { initialValue: [] as Store[] }
+    );
+
+  // Modal to Add/Edit RepairType state
+  modalTitle = computed(() => this.isEditing() ? 'Editar Cliente' : 'Agregar Cliente');
+  saveButtonLabel = computed(() => this.isEditing() ? 'Actualizar' : 'Crear');
 
   constructor(
     private clientUseCases: ClientUseCases,
@@ -38,18 +56,11 @@ export class CustomersComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
 
-    this.loadStores();
     this.loadClients();
 
-    this.isLoading = false;
-  }
-
-  loadStores(): void {
-    this.storeUseCases.getActiveStores().subscribe({
-      next: (stores) => { this.stores = stores; },
-      error: (error) => { console.error('Error loading stores:', error); }});
+    this.isLoading.set(false);
   }
 
   loadClients(): void {
@@ -84,26 +95,32 @@ export class CustomersComponent implements OnInit {
   }
 
   openAddModal(): void {
-    this.isEditing = false;
+    this.isEditing.set(false);
+
     this.editingClient = {store: { id: '', name: '' } as Store };
     this.birthDateStr = '';
     this.errorMessage = '';
-    this.showModal = true;
+
+    this.showModal.set(true);
   }
 
   openEditModal(client: Client): void {
-    this.isEditing = true;
+    this.isEditing.set(true);
+
     this.editingClient = { ...client, store: client.store ? { ...client.store } : { id: '', name: '' } as Store };
     this.birthDateStr = client.birthDate ? this.dateToYMD(new Date(client.birthDate)) : '';
     this.errorMessage = '';
-    this.showModal = true;
+
+    this.showModal.set(true);
   }
 
   closeModal(): void {
-    this.showModal = false;
     this.editingClient = { store: { id: '', name: '' } as Store };
     this.birthDateStr = '';
     this.errorMessage = '';
+
+    this.isEditing.set(false);
+    this.showModal.set(false);    
   }
 
   saveClient(): void {
@@ -137,8 +154,7 @@ export class CustomersComponent implements OnInit {
       return;
     }
 
-    if (this.isEditing && this.editingClient.id) {
-      
+    if (this.isEditing() && this.editingClient.id) {
       this.clientUseCases.updateClient(this.editingClient.id, {
         ...this.editingClient,
         birthDate: this.birthDateStr ? new Date(this.birthDateStr) : undefined,
@@ -193,7 +209,7 @@ export class CustomersComponent implements OnInit {
       ? storeIdOrEvent
       : ((storeIdOrEvent.target as HTMLSelectElement | null)?.value ?? '');
     
-      this.selectedStore = this.stores.find(store => store.id === storeId) || null;
+      this.selectedStore = this.stores().find(store => store.id === storeId) || null;
       
       this.editingClient.store = this.selectedStore
       ? { id: this.selectedStore.id, name: this.selectedStore.name } as Store
@@ -201,11 +217,11 @@ export class CustomersComponent implements OnInit {
   }
 
   onStoreFilterChange(): void {
-    this.isLoading = true;
-    
+    this.isLoading.set(true);
+
     this.loadClients();
 
-    this.isLoading = false;
+    this.isLoading.set(false);
   }
 
   private dateToYMD(d: Date): string {

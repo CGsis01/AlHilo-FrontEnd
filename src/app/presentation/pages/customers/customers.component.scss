@@ -157,10 +157,18 @@
         
         &.client-name { 
           font-weight: 600; 
+          max-width: 200px;
+          overflow: hidden; 
+          text-overflow: ellipsis; 
+          white-space: nowrap;
         }
         
         &.client-email { 
           color: var(--text-secondary); 
+          max-width: 200px; 
+          overflow: hidden; 
+          text-overflow: ellipsis; 
+          white-space: nowrap;
         }
         
         &.client-address { 
@@ -174,6 +182,10 @@
         &.client-store {
           color: var(--text-secondary);
           font-size: 0.9rem;
+          max-width: 200px;
+          overflow: hidden; 
+          text-overflow: ellipsis; 
+          white-space: nowrap; 
         }
         
         &.date-cell { 

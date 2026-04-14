@@ -12,7 +12,7 @@
           (change)="onStoreFilterChange()"
           class="form-select">
           <option value="">Todas las sucursales</option>
-          <option *ngFor="let store of stores" [value]="store.id">{{ store.name }}</option>
+          <option *ngFor="let store of stores()" [value]="store.id">{{ store.name }}</option>
         </select>
       </div>
       <button type="button" class="btn-primary" (click)="openAddModal()">
@@ -32,7 +32,7 @@
   </div>
 
   <!-- Table -->
-  <div class="customers-table-wrapper" *ngIf="!isLoading && filteredClients.length > 0">
+  <div class="customers-table-wrapper" *ngIf="!isLoading() && filteredClients.length > 0">
     <table class="customers-table">
       <thead>
         <tr>
@@ -67,24 +67,24 @@
   </div>
 
   <!-- Empty state -->
-  <div class="empty-state" *ngIf="!isLoading && filteredClients.length === 0">
+  <div class="empty-state" *ngIf="!isLoading() && filteredClients.length === 0">
     <div class="empty-icon">👤</div>
     <h3>{{ searchQuery ? 'Sin resultados' : 'No hay clientes registrados' }}</h3>
     <p>{{ searchQuery ? 'Intenta con otro término de búsqueda.' : 'Comienza agregando tu primer cliente.' }}</p>
   </div>
 
   <!-- Loading state -->
-  <div class="loading-state" *ngIf="isLoading">
+  <div class="loading-state" *ngIf="isLoading()">
     <div class="spinner"></div>
     <p>Cargando clientes...</p>
   </div>
 </div>
 
 <!-- Add/Edit Modal -->
-<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+<div class="modal-backdrop" *ngIf="showModal()" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>{{ isEditing ? 'Editar Cliente' : 'Agregar Cliente' }}</h2>
+      <h2>{{ modalTitle() }}</h2>
       <button class="btn-close" (click)="closeModal()">✕</button>
     </div>
 
@@ -169,7 +169,7 @@
           <label for="customerStore">Sucursal *</label>
           <select id="customerStore" [(ngModel)]="editingClient.store.id" (ngModelChange)="onStoreChange($event)" class="form-select">
             <option value="">Seleccione la sucursal</option>
-            <option *ngFor="let store of stores" [value]="store.id">{{ store.name }}</option>
+            <option *ngFor="let store of stores()" [value]="store.id">{{ store.name }}</option>
           </select>
         </div>
       </div>
@@ -182,7 +182,7 @@
     <div class="modal-footer">
       <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
       <button class="btn-primary" (click)="saveClient()">
-        {{ isEditing ? 'Actualizar' : 'Crear' }}
+        {{ saveButtonLabel() }}
       </button>
     </div>
   </div>
