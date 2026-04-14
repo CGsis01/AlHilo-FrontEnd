@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { RepairUseCases } from '../../../domain/usecases/repair.usecases';
@@ -32,7 +32,8 @@ export class DashboardComponent implements OnInit {
     validated: 0,
     delivered: 0};
 
-  isLoading = true;
+  isLoading = signal(true);
+
   userRole: UserRole | undefined;
   UserRole = UserRoleCode;
   RepairStatus = RepairStatusEnum;
@@ -49,7 +50,7 @@ export class DashboardComponent implements OnInit {
   }
 
   loadDashboardData(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     
     this.repairUseCases.getAllRepairs().subscribe({
       next: (repairs) => {
@@ -59,9 +60,10 @@ export class DashboardComponent implements OnInit {
         this.stats.inValidation = repairs.filter(r => r.repairStatus.name === RepairStatusEnum.IN_VALIDATION).length;
         this.stats.validated = repairs.filter(r => r.repairStatus.name === RepairStatusEnum.VALIDATED).length;
         this.stats.delivered = repairs.filter(r => r.repairStatus.name === RepairStatusEnum.DELIVERED).length;
-        this.isLoading = false;},
-      error: () => {
-        this.isLoading = false;}});
+        },
+      error: () => {}});
+
+    this.isLoading.set(false);
   }
 
   navigateToRepairs(repairStatus?: RepairStatusEnum): void {

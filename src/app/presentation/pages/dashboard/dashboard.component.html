@@ -4,7 +4,7 @@
     <p class="subtitle">Bienvenido! Aquí tienes un resumen de tus órdenes de reparación.</p>
   </div>
 
-  <div class="stats-grid" *ngIf="!isLoading">
+  <div class="stats-grid" *ngIf="!isLoading()">
     <div class="stat-card primary clickable" (click)="navigateToRepairs()">
       <div class="stat-icon">📦</div>
       <div class="stat-content">
@@ -54,7 +54,7 @@
     </div>
   </div>
 
-  <div class="loading-state" *ngIf="isLoading">
+  <div class="loading-state" *ngIf="isLoading()">
     <div class="spinner"></div>
     <p>Cargando tablero...</p>
   </div>
