@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -15,7 +15,7 @@ import { UserRoleCode } from '@core/models/user.model';
 
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
-  isLoading = false;
+  isLoading = signal(false);
   errorMessage = '';
 
   constructor(
@@ -40,7 +40,7 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.errorMessage = '';
 
     const { email, password } = this.loginForm.value;
@@ -54,7 +54,7 @@ export class LoginComponent implements OnInit {
         }},
       error: (error) => {
         this.errorMessage = error.message || 'Login failed. Please try again.';
-        this.isLoading = false;}});
+        this.isLoading.set(false);}});
   }
 
   get email() {

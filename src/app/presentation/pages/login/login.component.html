@@ -39,9 +39,9 @@
 
       <button type="submit" 
         class="login-btn" 
-        [disabled]="isLoading || loginForm.invalid">
-        <span *ngIf="!isLoading">Conectar</span>
-        <span *ngIf="isLoading" class="loading-spinner">Conectando...</span>
+        [disabled]="isLoading() || loginForm.invalid">
+        <span *ngIf="!isLoading()">Conectar</span>
+        <span *ngIf="isLoading()" class="loading-spinner">Conectando...</span>
       </button>
     </form>
   </div>
