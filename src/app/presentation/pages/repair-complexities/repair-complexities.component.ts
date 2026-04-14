@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RepairComplexityUseCases } from '../../../domain/usecases/repair-complexity.usecases';
@@ -16,13 +18,27 @@ import { Store } from '../../../core/models/store.model';
 
 export class RepairComplexitiesComponent implements OnInit {
   repairComplexities: RepairComplexity[] = [];
-  stores: Store[] = [];
-  isLoading = true;
-  isEditing = false;
   editingRepairComplexity: Partial<RepairComplexity> = {};
-  showModal = false;
+  
+  isLoading = signal(true);
+  isEditing = signal(false);
+  showModal = signal(false);
   errorMessage = '';
   selectedStoreFilter: string = '';
+
+  stores = toSignal(
+    this.storeUseCases.getActiveStores().pipe(
+      catchError(err => {
+        console.error('Error loading stores:', err);
+        return of([] as Store[]);
+      })
+    ),
+    { initialValue: [] as Store[] }
+  ); 
+
+  // Modal to Add/Edit RepairType state
+  modalTitle = computed(() => this.isEditing() ? 'Editar Complejidad' : 'Agregar Complejidad');
+  saveButtonLabel = computed(() => this.isEditing() ? 'Actualizar' : 'Crear');
 
   constructor(
     private repairComplexityUseCases: RepairComplexityUseCases,
@@ -30,38 +46,21 @@ export class RepairComplexitiesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadStores();
     this.loadRepairComplexities();
   }
 
-  loadStores(): void {
-    this.storeUseCases.getActiveStores().subscribe({
-      next: (stores) => {
-        this.stores = stores;
-      },
-      error: (error) => {
-        console.error('Error loading stores:', error);
-      }
-    });
-  }
-
   loadRepairComplexities(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     
     const loadMethod = this.selectedStoreFilter 
       ? this.repairComplexityUseCases.getRepairComplexitiesByStore(this.selectedStoreFilter)
       : this.repairComplexityUseCases.getAllRepairComplexities();
     
     loadMethod.subscribe({
-      next: (repairComplexities) => {
-        this.repairComplexities = repairComplexities;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading repair complexities:', error);
-        this.isLoading = false;
-      }
-    });
+      next: (repairComplexities) => { this.repairComplexities = repairComplexities; },
+      error: (error) => { console.error('Error loading repair complexities:', error); }});
+
+    this.isLoading.set(false);
   }
 
   onStoreFilterChange(): void {
@@ -69,28 +68,32 @@ export class RepairComplexitiesComponent implements OnInit {
   }
 
   openAddModal(): void {
-    this.isEditing = false;
+    this.isEditing.set(false);
+    
     this.editingRepairComplexity = { 
       name: '', 
       code: '', 
       laborMultiplier: 1.0,
       timeMultiplier: 1.0,
-      storeId: this.selectedStoreFilter || (this.stores.length > 0 ? this.stores[0].id : ''),
+      storeId: this.selectedStoreFilter || (this.stores.length > 0 ? this.stores()[0].id : ''),
       isActive: true 
     };
-    this.showModal = true;
+    
+    this.showModal.set(true);
     this.errorMessage = '';
   }
 
   openEditModal(repairComplexity: RepairComplexity): void {
-    this.isEditing = true;
+    this.isEditing.set(true);
+    
     this.editingRepairComplexity = { ...repairComplexity };
-    this.showModal = true;
+    
+    this.showModal.set(true);
     this.errorMessage = '';
   }
 
   closeModal(): void {
-    this.showModal = false;
+    this.showModal.set(false);
     this.editingRepairComplexity = {};
     this.errorMessage = '';
   }
@@ -98,66 +101,60 @@ export class RepairComplexitiesComponent implements OnInit {
   saveRepairComplexity(): void {
     if (!this.editingRepairComplexity.name || this.editingRepairComplexity.name.trim() === '') {
       this.errorMessage = 'El nombre es requerido';
+      
       return;
     }
     
     if (!this.editingRepairComplexity.code || this.editingRepairComplexity.code.trim() === '') {
       this.errorMessage = 'El código es requerido';
+      
       return;
     }
     
     if (!this.editingRepairComplexity.laborMultiplier || this.editingRepairComplexity.laborMultiplier <= 0) {
       this.errorMessage = 'El multiplicador de mano de obra debe ser mayor a 0';
+      
       return;
     }
     
     if (!this.editingRepairComplexity.timeMultiplier || this.editingRepairComplexity.timeMultiplier <= 0) {
       this.errorMessage = 'El multiplicador de tiempo debe ser mayor a 0';
+      
       return;
     }
     
     if (!this.editingRepairComplexity.storeId) {
       this.errorMessage = 'La sucursal es requerida';
+      
       return;
     }
     
-    if (this.isEditing && this.editingRepairComplexity.id) {
+    if (this.isEditing() && this.editingRepairComplexity.id) {
       this.repairComplexityUseCases.updateRepairComplexity(this.editingRepairComplexity.id, this.editingRepairComplexity).subscribe({
         next: () => {
           this.loadRepairComplexities();
-          this.closeModal();
-        },
+          this.closeModal(); },
         error: (error) => {
           console.error('Error updating repair complexity:', error);
-          this.errorMessage = 'Error al actualizar la complejidad';
-        }
-      });
+          this.errorMessage = 'Error al actualizar la complejidad'; }});
     } else {
       this.repairComplexityUseCases.createRepairComplexity(this.editingRepairComplexity).subscribe({
         next: () => {
           this.loadRepairComplexities();
-          this.closeModal();
-        },
+          this.closeModal(); },
         error: (error) => {
           console.error('Error creating repair complexity:', error);
-          this.errorMessage = 'Error al crear la complejidad';
-        }
-      });
+          this.errorMessage = 'Error al crear la complejidad'; }});
     }
   }
 
   deleteRepairComplexity(repairComplexity: RepairComplexity): void {
     if (confirm(`¿Estás seguro de que deseas eliminar la complejidad "${repairComplexity.name}"?`)) {
       this.repairComplexityUseCases.deleteRepairComplexity(repairComplexity.id).subscribe({
-        next: () => {
-          this.loadRepairComplexities();
-        },
+        next: () => { this.loadRepairComplexities(); },
         error: (error) => {
           console.error('Error deleting repair complexity:', error);
-          alert('Error al eliminar la complejidad');
-        }
-      });
-    }
+          alert('Error al eliminar la complejidad'); }})}
   }
 
   toggleStatus(repairComplexity: RepairComplexity): void {
@@ -166,27 +163,25 @@ export class RepairComplexitiesComponent implements OnInit {
       : this.repairComplexityUseCases.activateRepairComplexity(repairComplexity.id);
 
     action.subscribe({
-      next: () => {
-        this.loadRepairComplexities();
-      },
-      error: (error) => {
-        console.error('Error toggling repair complexity status:', error);
-      }
-    });
+      next: () => { this.loadRepairComplexities(); },
+      error: (error) => { console.error('Error toggling repair complexity status:', error); }});
   }
 
   getStoreName(storeId: string): string {
-    const store = this.stores.find(s => s.id === storeId);
+    const store = this.stores().find(s => s.id === storeId);
+    
     return store ? store.name : 'N/A';
   }
 
   onLaborMultiplierInput(event: Event): void {
     const sanitizedValue = this.onDecimalInput(event);
+    
     this.editingRepairComplexity.laborMultiplier = parseFloat(sanitizedValue) || 0;
   }
 
   onLaborMultiplierBlur(event: Event): void {
     const input = event.target as HTMLInputElement;
+    
     if (this.editingRepairComplexity.laborMultiplier !== undefined && this.editingRepairComplexity.laborMultiplier !== null) {
       const formatted = this.formatToTwoDecimals(this.editingRepairComplexity.laborMultiplier);
       input.value = formatted;
@@ -196,11 +191,13 @@ export class RepairComplexitiesComponent implements OnInit {
 
   onTimeMultiplierInput(event: Event): void {
     const sanitizedValue = this.onDecimalInput(event);
+    
     this.editingRepairComplexity.timeMultiplier = parseFloat(sanitizedValue) || 0;
   }
 
   onTimeMultiplierBlur(event: Event): void {
     const input = event.target as HTMLInputElement;
+    
     if (this.editingRepairComplexity.timeMultiplier !== undefined && this.editingRepairComplexity.timeMultiplier !== null) {
       const formatted = this.formatToTwoDecimals(this.editingRepairComplexity.timeMultiplier);
       input.value = formatted;

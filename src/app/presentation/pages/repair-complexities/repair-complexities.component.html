@@ -12,7 +12,7 @@
           (change)="onStoreFilterChange()"
           class="form-select">
           <option value="">Todas las sucursales</option>
-          <option *ngFor="let store of stores" [value]="store.id">{{ store.name }}</option>
+          <option *ngFor="let store of stores()" [value]="store.id">{{ store.name }}</option>
         </select>
       </div>
       <button type="button" class="btn-primary" (click)="$event.stopPropagation(); openAddModal()">
@@ -21,7 +21,7 @@
     </div>
   </div>
 
-  <div class="repair-complexities-table-wrapper" *ngIf="!isLoading && repairComplexities.length > 0">
+  <div class="repair-complexities-table-wrapper" *ngIf="!isLoading() && repairComplexities.length > 0">
     <table class="repair-complexities-table">
       <thead>
         <tr>
@@ -57,23 +57,23 @@
     </table>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading && repairComplexities.length === 0">
+  <div class="empty-state" *ngIf="!isLoading() && repairComplexities.length === 0">
     <div class="empty-icon">⚙️</div>
     <h3>No se encontraron complejidades</h3>
     <p>Comienza agregando tu primera complejidad de reparación al sistema.</p>
   </div>
 
-  <div class="loading-state" *ngIf="isLoading">
+  <div class="loading-state" *ngIf="isLoading()">
     <div class="spinner"></div>
     <p>Cargando complejidades...</p>
   </div>
 </div>
 
 <!-- Modal for Add/Edit -->
-<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+<div class="modal-backdrop" *ngIf="showModal()" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>{{ isEditing ? 'Editar Complejidad' : 'Agregar Complejidad' }}</h2>
+      <h2>{{ modalTitle() }}</h2>
       <button class="btn-close" (click)="closeModal()">✕</button>
     </div>
 
@@ -83,7 +83,7 @@
         <input id="repairComplexityName"
           type="text" 
           [(ngModel)]="editingRepairComplexity.name" 
-          [disabled]="isEditing"
+          [disabled]="isEditing()"
           placeholder="Ej: Complejidad Básica" 
           class="form-input"/>
       </div>
@@ -94,7 +94,7 @@
           <input id="repairComplexityCode"
             type="text" 
             [(ngModel)]="editingRepairComplexity.code" 
-            [disabled]="isEditing"
+            [disabled]="isEditing()"
             placeholder="Ej: BASIC" 
             class="form-input"/>
         </div>
@@ -105,7 +105,7 @@
             [(ngModel)]="editingRepairComplexity.storeId"
             class="form-select">
             <option value="">Seleccione una sucursal</option>
-            <option *ngFor="let store of stores" [value]="store.id">{{ store.name }}</option>
+            <option *ngFor="let store of stores()" [value]="store.id">{{ store.name }}</option>
           </select>
         </div>
       </div>
@@ -142,7 +142,7 @@
     <div class="modal-footer">
       <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
       <button class="btn-primary" (click)="saveRepairComplexity()">
-        {{ isEditing ? 'Actualizar' : 'Crear' }}
+        {{ saveButtonLabel() }}
       </button>
     </div>
   </div>
