@@ -5,19 +5,19 @@
     </button>
   </div>
 
-  <div class="loading-state" *ngIf="isLoading">
+  <div class="loading-state" *ngIf="isLoading()">
     <div class="spinner"></div>
     <p>Cargando detalles de la reparación...</p>
   </div>
 
-  <div class="error-state" *ngIf="errorMessage && !isLoading">
+  <div class="error-state" *ngIf="errorMessage && !isLoading()">
     <div class="error-icon">⚠️</div>
     <h3>Error</h3>
     <p>{{ errorMessage }}</p>
     <button class="btn-primary" (click)="goBack()">Volver</button>
   </div>
 
-  <div class="repair-detail" *ngIf="repair && !isLoading">
+  <div class="repair-detail" *ngIf="repair && !isLoading()">
     <div class="detail-title">
       <div class="title-content">
         <h1>Orden de Reparación</h1>
@@ -60,7 +60,7 @@
                 <th>Prenda</th>
                 <th>Tipo</th>
                 <th>Descripción</th>
-                <th class="text-right" *ngIf="repair.finalPrice && userRole?.code !== UserRole.SEAMSTRESS">Precio Final</th>
+                <th class="text-right" *ngIf="repair.finalPrice && userRole?.code !== UserRole.SEAMSTRESS && userRole?.code !== UserRole.HEADSEWING">Precio Final</th>
               </tr>
             </thead>
             <tbody>
@@ -223,7 +223,7 @@
 </div>
 
 <!-- Modal de Asignación de Costurera -->
-<div class="modal-overlay" *ngIf="showAssignModal" (click)="closeAssignModal()">
+<div class="modal-overlay" *ngIf="showAssignModal()" (click)="closeAssignModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>Asignar Costurera</h2>
@@ -233,12 +233,12 @@
     <div class="modal-body">
       <p class="modal-description">Selecciona una costurera para asignar a esta reparación:</p>
 
-      <div class="loading-seamstresses" *ngIf="isLoadingSeamstresses">
+      <div class="loading-seamstresses" *ngIf="(isLoadingSeamstresses())">
         <div class="spinner-small"></div>
         <span>Cargando costureras...</span>
       </div>
 
-      <div class="seamstress-list" *ngIf="!isLoadingSeamstresses">
+      <div class="seamstress-list" *ngIf="!isLoadingSeamstresses()">
         <div class="seamstress-item" *ngFor="let seamstress of seamstresses"
           [class.selected]="selectedSeamstress?.id === seamstress.id"
           (click)="selectSeamstress(seamstress)">
@@ -266,7 +266,7 @@
 </div>
 
 <!-- Repair Reprint Ticket -->
-<div class="modal-overlay ticket-modal" *ngIf="showTicket" (click)="closeTicket()">
+<div class="modal-overlay ticket-modal" *ngIf="showTicket()" (click)="closeTicket()">
   <div class="ticket-container" (click)="$event.stopPropagation()">    
     <div class="ticket-content">
       <div class="ticket-title">
@@ -331,7 +331,7 @@
 </div>
 
 <!-- Modal de Pago (POS) -->
-<div class="modal-overlay payment-modal-overlay" *ngIf="showPaymentModal" (click)="closePaymentModal()">
+<div class="modal-overlay payment-modal-overlay" *ngIf="showPaymentModal()" (click)="closePaymentModal()">
   <div class="modal-content payment-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>💳 Cobro de Reparación</h2>
@@ -453,7 +453,7 @@
 </div>
 
 <!-- Payment Receipt Ticket -->
-<div class="receipt-overlay" *ngIf="showPaymentTicket" (click)="closePaymentTicket()">
+<div class="receipt-overlay" *ngIf="showPaymentTicket()" (click)="closePaymentTicket()">
   <div class="receipt-wrapper" (click)="$event.stopPropagation()">
 
     <!-- Screen-only actions bar -->

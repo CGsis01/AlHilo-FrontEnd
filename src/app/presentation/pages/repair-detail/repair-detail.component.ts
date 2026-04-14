@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -26,24 +28,27 @@ import { forkJoin } from 'rxjs';
 })
 
 export class RepairDetailComponent implements OnInit {
-  repair: Repair | null = null;
-  isLoading = true;
+  // ─── Repair ───────────────────────────────────────────────────
+  isLoading = signal(true);
   errorMessage = '';
+
+  repair: Repair | null = null;
   userRole: UserRole | undefined;
   UserRole = UserRoleCode;
   RepairStatus = RepairStatusEnum;
-  repairStatuses: RepairStatus[] = [];
-  paymentTypes: PaymentType[] = [];
 
-  showAssignModal = false;
+  // ─── Seamstresses ─────────────────────────────────────────────
+  showAssignModal = signal(false);
+  isLoadingSeamstresses = signal(false);
   seamstresses: User[] = [];
-  selectedSeamstress: User | null = null;
-  isLoadingSeamstresses = false;
+  selectedSeamstress: User | null = null;  
 
-  showTicket = false;
+  // ─── Repair Ticket ────────────────────────────────────────────
+  showTicket = signal(false);
   qrCodeDataUrl = '';
 
-  showPaymentModal = false;
+  // ─── Payment Modal ────────────────────────────────────────────
+  showPaymentModal = signal(false);
   paymentType: 'cash' | 'card' | 'mixed' = 'cash';
   cardType: 'debit' | 'credit' = 'debit';
   voucherId = '';
@@ -51,7 +56,8 @@ export class RepairDetailComponent implements OnInit {
   mixedCashAmount: string | null = null;
   mixedCardAmount: string | null = null;
 
-  showPaymentTicket = false;
+  // ─── Payment Ticket ───────────────────────────────────────────
+  showPaymentTicket = signal(false);
   paymentDate: Date = new Date();
   paidPaymentType: 'cash' | 'card' | 'mixed' = 'cash';
   paidCardType: 'debit' | 'credit' = 'debit';
@@ -59,6 +65,26 @@ export class RepairDetailComponent implements OnInit {
   paidMixedCashAmount: string | null = null;
   paidMixedCardAmount: string | null = null;
   paidVoucherId = '';
+
+  repairStatuses = toSignal(
+    this.repairStatusUseCases.getAllRepairStatuses().pipe(
+      catchError(err => {
+        console.error('Error loading stores:', err);
+        return of([] as RepairStatus[]);
+      })
+    ),
+    { initialValue: [] as RepairStatus[] }
+  );
+
+  paymentTypes = toSignal(
+    this.paymentTypeUseCases.getAllPaymentTypes().pipe(
+      catchError(err => {
+        console.error('Error loading payment types:', err);
+        return of([] as PaymentType[]);
+      })
+    ),
+    { initialValue: [] as PaymentType[] }
+  );
 
   constructor(
     private route: ActivatedRoute,
@@ -81,39 +107,20 @@ export class RepairDetailComponent implements OnInit {
     
     if (repairId) {
       this.loadRepair(repairId);
-      this.loadRepairStatuses();
-      this.loadPaymentTypes();
     } else {
       this.router.navigate(['/repairs']);
     }
   }
 
+  // ─── Repair ───────────────────────────────────────────────────
   loadRepair(id: string): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     
     this.repairUseCases.getRepairById(id).subscribe({
-      next: (repair) => {
-        this.repair = repair;
-        this.isLoading = false;},
-      error: (error) => {
-        this.errorMessage = error.message || 'Error al cargar la reparación';
-        this.isLoading = false;}});
-  }
-
-  loadRepairStatuses(): void {
-    this.repairStatusUseCases.getAllRepairStatuses().subscribe({
-      next: (statuses) => {
-        this.repairStatuses = statuses;},
-      error: () => {
-        this.repairStatuses = [];}});
-  }
-
-  loadPaymentTypes(): void {
-    this.paymentTypeUseCases.getAllPaymentTypes().subscribe({
-      next: (types) => {
-        this.paymentTypes = types;},
-      error: () => {
-        this.paymentTypes = [];}});
+      next: (repair) => { this.repair = repair; },
+      error: (error) => { this.errorMessage = error.message || 'Error al cargar la reparación'; }});
+    
+    this.isLoading.set(false);
   }
 
   getStatusClass(status: string): string {
@@ -128,7 +135,7 @@ export class RepairDetailComponent implements OnInit {
   }
 
   getRepairStatus(statusName: string): RepairStatus {
-    return this.repairStatuses.filter(status => status.name === statusName)[0]!;
+    return this.repairStatuses().filter(status => status.name === statusName)[0]!;
   }
 
   updateStatus(newStatus: RepairStatus): void {
@@ -155,26 +162,28 @@ export class RepairDetailComponent implements OnInit {
         this.errorMessage = error.message || 'Error al actualizar el estado';}});
   }
 
+  // ─── Seamstresses ─────────────────────────────────────────────
   openAssignModal(): void {
-    this.showAssignModal = true;
-    this.selectedSeamstress = this.repair?.assignedTo || null;
-    
+    this.selectedSeamstress = this.repair?.assignedTo || null;    
     this.loadSeamstresses();
+
+    this.showAssignModal.set(true);
   }
 
   closeAssignModal(): void {
-    this.showAssignModal = false;
+    this.showAssignModal.set(false);
+    
     this.selectedSeamstress = null;
   }
 
   loadSeamstresses(): void {
-    this.isLoadingSeamstresses = true;
+    this.isLoadingSeamstresses.set(true);
+    
     this.userUseCases.getUsersByRole([{ code: UserRoleCode.SEAMSTRESS }, { code: UserRoleCode.HEADSEWING }] as UserRole[]).subscribe({
-      next: (users) => {
-        this.seamstresses = users.filter(u => u.isActive);
-        this.isLoadingSeamstresses = false;},
-      error: () => {
-        this.isLoadingSeamstresses = false;}});
+      next: (users) => { this.seamstresses = users.filter(u => u.isActive); },
+      error: () => { }});
+    
+    this.isLoadingSeamstresses.set(false);
   }
 
   selectSeamstress(seamstress: User): void {
@@ -189,7 +198,7 @@ export class RepairDetailComponent implements OnInit {
     .subscribe({
       next: async (updatedRepair) => {
         this.repair = updatedRepair;
-        this.updateStatus(this.repairStatuses.filter(s => s.name === RepairStatusEnum.IN_PROGRESS)[0]);
+        this.updateStatus(this.repairStatuses().filter(s => s.name === RepairStatusEnum.IN_PROGRESS)[0]);
         
         this.whatsappApiService.sendNotification({
           phone: updatedRepair.customerPhone,
@@ -203,28 +212,53 @@ export class RepairDetailComponent implements OnInit {
             this.toastService.show('No se pudo enviar la notificación WhatsApp', 'error');
           }
         });
+
         this.closeAssignModal();},
-      error: (error) => {
-        this.errorMessage = error.message || 'Error al asignar la costurera';}});
+      error: (error) => { this.errorMessage = error.message || 'Error al asignar la costurera';}});
   }
 
+  // ─── Repair Ticket ────────────────────────────────────────────
+  async generateTicket(): Promise<void> {
+    if (!this.repair) 
+      return;
+
+    try {
+      // Use the ticket print service to generate ticket data
+      const ticketData = await this.ticketPrintService.generateTicketData(this.repair);
+      this.qrCodeDataUrl = ticketData.qrCodeDataUrl;
+      
+      this.showTicket.set(true);
+
+      // Wait for the modal to render before printing
+      setTimeout(() => {
+        this.ticketPrintService.simplePrint();
+        this.closeTicket();
+      }, 100);      
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    }
+  }
+
+  closeTicket(): void {
+    this.showTicket.set(false);
+  }
+
+  printTicket(): void {
+    // Use simple print for re-printing (no redirect)
+    this.ticketPrintService.simplePrint();
+  }
+
+  // ─── Payment Modal ────────────────────────────────────────────
   openPaymentModal(): void {
-    this.paymentType = 'cash';
-    this.cardType = 'debit';
-    this.voucherId = '';
-    this.cashAmount = null;
-    this.mixedCashAmount = null;
-    this.mixedCardAmount = null;
-    this.showPaymentModal = true;
+    this.initializePaymentModal();
+    
+    this.showPaymentModal.set(true);
   }
 
   closePaymentModal(): void {
-    this.showPaymentModal = false;
-    this.cardType = 'debit';
-    this.voucherId = '';
-    this.cashAmount = null;
-    this.mixedCashAmount = null;
-    this.mixedCardAmount = null;
+    this.showPaymentModal.set(false);
+
+    this.initializePaymentModal();
   }
 
   confirmPayment(): void {
@@ -253,24 +287,28 @@ export class RepairDetailComponent implements OnInit {
           if (mixedTotal < remaining) {
             this.toastService.show('El pago mixto debe cubrir el saldo restante.', 'error');
             this.handleRepairUpdated(updatedRepair);
+            
             return;
           }
 
           if (mixedTotal > remaining) {
             this.toastService.show('El pago mixto no puede ser mayor al saldo restante.', 'error');
             this.handleRepairUpdated(updatedRepair);
+            
             return;
           }
 
           if (mixedCardPaid > remaining) {
             this.toastService.show('El pago con tarjeta no puede ser mayor al saldo restante.', 'error');
             this.handleRepairUpdated(updatedRepair);
+            
             return;
           }
 
           if (mixedCardPaid > 0 && !this.voucherId.trim()) {
             this.toastService.show('Ingresa el ID del voucher para registrar el pago con tarjeta.', 'error');
             this.handleRepairUpdated(updatedRepair);
+            
             return;
           }
         }
@@ -314,8 +352,7 @@ export class RepairDetailComponent implements OnInit {
             isDebit: false,
             isAdvance: false,
             createdBy: this.authService.currentUser!,
-            paymentDate: new Date()
-          }));
+            paymentDate: new Date() }));
         }
 
         if (needsCard && paymentTypeCard) {
@@ -327,14 +364,14 @@ export class RepairDetailComponent implements OnInit {
             voucherId: this.voucherId || undefined,
             isAdvance: false,
             createdBy: this.authService.currentUser!,
-            paymentDate: new Date()
-          }));
+            paymentDate: new Date() }));
         }
 
         if (paymentRequests.length === 0) {
           this.handleRepairUpdated(updatedRepair);
           this.closePaymentModal();
-          this.showPaymentTicket = true;
+          
+          this.showPaymentTicket.set(true);
           
           return;
         }
@@ -347,7 +384,7 @@ export class RepairDetailComponent implements OnInit {
 
         this.closePaymentModal();
 
-        this.showPaymentTicket = true;
+        this.showPaymentTicket.set(true);
 
         setTimeout(() => {
           this.printPaymentTicket();
@@ -355,8 +392,7 @@ export class RepairDetailComponent implements OnInit {
           this.goBack();
         }, 100);
       },
-      error: (error) => {
-        this.errorMessage = error.message || 'Error al actualizar el estado';}});
+      error: (error) => { this.errorMessage = error.message || 'Error al actualizar el estado';}});
   }
 
   onPaymentTypeChange(selectedType: 'cash' | 'card' | 'mixed'): void {
@@ -364,12 +400,14 @@ export class RepairDetailComponent implements OnInit {
       this.cashAmount = null;
       this.mixedCashAmount = null;
       this.mixedCardAmount = null;
+      
       return;
     }
 
     if (selectedType === 'cash') {
       this.mixedCashAmount = null;
       this.mixedCardAmount = null;
+      
       return;
     }
 
@@ -381,6 +419,7 @@ export class RepairDetailComponent implements OnInit {
 
     if (this.paymentType === 'cash') {
       const cashPaid = this.getNumericAmount(this.cashAmount);
+      
       return !this.cashAmount?.trim() || cashPaid < remaining;
     }
 
@@ -411,55 +450,6 @@ export class RepairDetailComponent implements OnInit {
     return false;
   }
 
-  get hasMixedCardPayment(): boolean {
-    return this.paymentType === 'mixed' && this.getNumericAmount(this.mixedCardAmount) > 0;
-  }
-
-  get hasPaidMixedCardPayment(): boolean {
-    return this.paidPaymentType === 'mixed' && this.getNumericAmount(this.paidMixedCardAmount) > 0;
-  }
-
-  closePaymentTicket(): void {
-    this.showPaymentTicket = false;
-  }
-
-  printPaymentTicket(): void {
-    this.ticketPrintService.simplePrint();
-  }
-
-  async generateTicket(): Promise<void> {
-    if (!this.repair) 
-      return;
-
-    try {
-      // Use the ticket print service to generate ticket data
-      const ticketData = await this.ticketPrintService.generateTicketData(this.repair);
-      this.qrCodeDataUrl = ticketData.qrCodeDataUrl;
-      this.showTicket = true;
-
-      // Wait for the modal to render before printing
-      setTimeout(() => {
-        this.ticketPrintService.simplePrint();
-        this.closeTicket();
-      }, 100);      
-    } catch (error) {
-      console.error('Error generating QR code:', error);
-    }
-  }
-
-  closeTicket(): void {
-    this.showTicket = false;
-  }
-
-  printTicket(): void {
-    // Use simple print for re-printing (no redirect)
-    this.ticketPrintService.simplePrint();
-  }
-
-  goBack(): void {
-    this.router.navigate(['/repairs']);
-  }
-
   onCashAmountInput(event: Event): void {
     this.cashAmount = this.sanitizeDecimalInput(event);
   }
@@ -475,6 +465,7 @@ export class RepairDetailComponent implements OnInit {
   getRemainingBalance(): number {
     const total = this.repair?.finalPrice ?? this.repair?.estimatedPrice ?? 0;
     const advance = this.repair?.advancePayment ?? 0;
+    
     return Math.round((total - advance) * 100) / 100;
   }
 
@@ -485,17 +476,33 @@ export class RepairDetailComponent implements OnInit {
       const cashPaid = this.getNumericAmount(this.paidMixedCashAmount);
       const cardPaid = this.getNumericAmount(this.paidMixedCardAmount);
       const change = cashPaid - Math.max(0, remaining - cardPaid);
+      
       return this.roundToTwo(Math.max(0, change));
     }
 
     if (this.paidPaymentType === 'cash') {
       const paid = this.getNumericAmount(this.paidCashAmount);
+      
       return this.roundToTwo(paid - remaining);
     }
 
     return 0;
   }
 
+  // ─── Payment Ticket ───────────────────────────────────────────
+  closePaymentTicket(): void {
+    this.showPaymentTicket.set(false);
+  }
+
+  printPaymentTicket(): void {
+    this.ticketPrintService.simplePrint();
+  }
+
+  goBack(): void {
+    this.router.navigate(['/repairs']);
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────
   private sanitizeDecimalInput(event: Event): string {
     const input = event.target as HTMLInputElement;
     const sanitizedValue = input.value
@@ -523,7 +530,7 @@ export class RepairDetailComponent implements OnInit {
       ? ['cash', 'efectivo']
       : ['card', 'tarjeta'];
 
-    return this.paymentTypes.find(type => {
+    return this.paymentTypes().find(type => {
       const code = type.code?.toLowerCase() || '';
       const name = type.name?.toLowerCase() || '';
       
@@ -533,6 +540,23 @@ export class RepairDetailComponent implements OnInit {
 
   private handleRepairUpdated(repair: Repair): void {
     this.repair = repair; // Store the created repair for ticket generation
-    this.isLoading = false;
+    this.isLoading.set(false);
+  }
+
+  get hasMixedCardPayment(): boolean {
+    return this.paymentType === 'mixed' && this.getNumericAmount(this.mixedCardAmount) > 0;
+  }
+
+  get hasPaidMixedCardPayment(): boolean {
+    return this.paidPaymentType === 'mixed' && this.getNumericAmount(this.paidMixedCardAmount) > 0;
+  }
+
+  private initializePaymentModal(): void {
+    this.paymentType = 'cash';
+    this.cardType = 'debit';
+    this.voucherId = '';
+    this.cashAmount = null;
+    this.mixedCashAmount = null;
+    this.mixedCardAmount = null;
   }
 }
