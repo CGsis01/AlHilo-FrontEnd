@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreUseCases } from '../../../domain/usecases/store.usecases';
@@ -6,6 +8,7 @@ import { UserUseCases } from '../../../domain/usecases/user.usecases';
 import { RoleUseCases } from '../../../domain/usecases/role.usecases';
 import { User, UserRole } from '../../../core/models/user.model';
 import { Store } from '../../../core/models/store.model';
+import { Role } from '@core/models/role.model';
 
 type EditableUser = Partial<Omit<User, 'role'>> & { role: UserRole; store: Partial<Store>; password?: string };
 
@@ -18,34 +21,46 @@ type EditableUser = Partial<Omit<User, 'role'>> & { role: UserRole; store: Parti
 })
 
 export class UsersComponent implements OnInit {
+  isLoading = signal(true);
+  isEditing = signal(false);
+  showModal = signal(false);
+
   users: User[] = [];
-  roles: UserRole[] = [];
-  stores: Store[] = [];
-  isLoading = true;
-  isEditing = false;
+  
   editingUser: EditableUser = this.createEmptyUser();
   selectedRole: UserRole | null = null;
   selectedStore: Store | null = null;
   selectedStoreFilter: string = '';
-  showModal = false;
   errorMessage = '';
+
+  roles = toSignal(this.roleUseCases.getAllRoles().pipe(
+    catchError(error => {
+      console.error('Error loading roles:', error);
+      return of([] as UserRole[]);})
+    ),
+    { initialValue: [] as UserRole[] }
+  );
+
+  stores = toSignal(this.storeUseCases.getActiveStores().pipe(
+    catchError(error => {
+      console.error('Error loading stores:', error);
+      return of([] as Store[]);})
+    ),
+    { initialValue: [] as Store[] }
+  );
+
+  // Modal to Add/Edit Users state
+  modalTitle = computed(() => this.isEditing() ? 'Editar Usuario' : 'Agregar Usuario');
+  saveButtonLabel = computed(() => this.isEditing() ? 'Actualizar' : 'Crear');
 
   constructor(private userUseCases: UserUseCases, private roleUseCases: RoleUseCases, private storeUseCases: StoreUseCases) {}
 
   ngOnInit(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
 
-    this.loadStores();
     this.loadUsers();
-    this.loadRoles();
-
-    this.isLoading = false;
-  }
-
-  loadStores(): void {
-    this.storeUseCases.getActiveStores().subscribe({
-      next: (stores) => { this.stores = stores; },
-      error: (error) => { console.error('Error loading stores:', error); }});
+    
+    this.isLoading.set(false);
   }
 
   loadUsers(): void {
@@ -56,12 +71,6 @@ export class UsersComponent implements OnInit {
     loadMethod.subscribe({
       next: (users) => { this.users = users; },
       error: (error) => { console.error('Error loading users:', error); }});
-  }
-
-  loadRoles(): void {
-      this.roleUseCases.getAllRoles().subscribe({
-      next: (roles) => { this.roles = roles; },
-      error: (error) => { console.error('Error loading roles:', error); }});
   }
 
   getRoleClass(role: string): string {
@@ -75,23 +84,28 @@ export class UsersComponent implements OnInit {
   }
 
   openAddModal(): void {
-    this.isEditing = false;
+    this.isEditing.set(false);
+    
     this.editingUser = this.createEmptyUser();
     this.selectedRole = null;
-    this.showModal = true;
+    
+    this.showModal.set(true);
     this.errorMessage = '';
   }
 
   openEditModal(user: User): void {
-    this.isEditing = true;
+    this.isEditing.set(true);
+    
     this.editingUser = { ...user, role: { ...user.role }, store: user.store ? { ...user.store } : { id: '', name: '' } as Store };
     this.selectedRole = user.role;
-    this.showModal = true;
+    
+    this.showModal.set(true);
     this.errorMessage = '';
   }
 
   closeModal(): void {
-    this.showModal = false;
+    this.showModal.set(false);
+    
     this.editingUser = this.createEmptyUser();
     this.selectedRole = null;
     this.errorMessage = '';
@@ -104,7 +118,7 @@ export class UsersComponent implements OnInit {
       return;
     }
 
-    if (this.isEditing && this.editingUser.id) {
+    if (this.isEditing() && this.editingUser.id) {
       this.userUseCases.updateUser(this.editingUser.id, this.editingUser).subscribe({
         next: () => {
           this.loadUsers();
@@ -140,7 +154,7 @@ export class UsersComponent implements OnInit {
       ? roleIdOrEvent
       : ((roleIdOrEvent.target as HTMLSelectElement | null)?.value ?? '');
 
-    this.selectedRole = this.roles.find(role => role.id === roleId) || null;
+    this.selectedRole = this.roles().find(role => role.id === roleId) || null;
     
     this.editingUser.role = this.selectedRole
       ? { id: this.selectedRole.id, name: this.selectedRole.name, code: this.selectedRole.code }
@@ -152,7 +166,7 @@ export class UsersComponent implements OnInit {
       ? storeIdOrEvent
       : ((storeIdOrEvent.target as HTMLSelectElement | null)?.value ?? '');
     
-      this.selectedStore = this.stores.find(store => store.id === storeId) || null;
+      this.selectedStore = this.stores().find(store => store.id === storeId) || null;
     
       this.editingUser.store = this.selectedStore
       ? { id: this.selectedStore.id, name: this.selectedStore.name } as Store
@@ -160,11 +174,11 @@ export class UsersComponent implements OnInit {
   }
 
   onStoreFilterChange(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
     
     this.loadUsers();
 
-    this.isLoading = false;
+    this.isLoading.set(false);
   }
 
   private createEmptyUser(): EditableUser {
