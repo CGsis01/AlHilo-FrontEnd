@@ -51,7 +51,7 @@ export const routes: Routes = [
   {
     path: 'materials',
     loadComponent: () => import('./presentation/pages/materials/materials.component').then(m => m.MaterialsComponent),
-    canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN])]
+    canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN, UserRoleCode.RECEPTIONIST])]
   },
   {
     path: 'repair-complexities',
@@ -61,12 +61,12 @@ export const routes: Routes = [
   {
     path: 'repair-types',
     loadComponent: () => import('./presentation/pages/repair-types/repair-types.component').then(m => m.RepairTypesComponent),
-    canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN])]
+    canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST])]
   },
   {
     path: 'garments',
     loadComponent: () => import('./presentation/pages/garments/garments.component').then(m => m.GarmentsComponent),
-    canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN])]
+    canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN, UserRoleCode.RECEPTIONIST])]
   },
   {
     path: 'customers',
