@@ -64,10 +64,10 @@ export class HeaderComponent implements OnChanges {
           roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST],
           children: [
             { label: 'Clientes', route: '/customers', icon: '👤', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
-            { label: 'Materiales', route: '/materials', icon: '📦', roles: [UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN] },
+            { label: 'Materiales', route: '/materials', icon: '📦', roles: [UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN, UserRoleCode.RECEPTIONIST] },
             { label: 'Complejidades', route: '/repair-complexities', icon: '⚙️', roles: [UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN] },
-            { label: 'Tipos de compostura', route: '/repair-types', icon: '📋', roles: [UserRoleCode.ADMIN] },
-            { label: 'Prendas', route: '/garments', icon: '👔', roles: [UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN] }
+            { label: 'Tipos de compostura', route: '/repair-types', icon: '📋', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
+            { label: 'Prendas', route: '/garments', icon: '👔', roles: [UserRoleCode.ADMIN, UserRoleCode.SUPERADMIN, UserRoleCode.RECEPTIONIST] }
           ]
         },
         { 
