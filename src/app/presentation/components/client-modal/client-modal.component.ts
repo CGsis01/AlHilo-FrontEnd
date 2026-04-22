@@ -59,6 +59,7 @@ export class ClientModalComponent implements OnInit, OnChanges {
 
     const clientData = {
       ...this.clientForm.value,
+      email: this.clientForm.value.email?.trim() || null,
       birthDate: this.clientForm.value.birthDate ? new Date(this.clientForm.value.birthDate) : undefined
     };
 
