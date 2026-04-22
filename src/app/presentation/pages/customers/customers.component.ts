@@ -136,7 +136,7 @@ export class CustomersComponent implements OnInit {
       return;
     }
 
-    if (!this.editingClient.contactPhone?.trim() || !/^\d{10}$/.test(this.editingClient.contactPhone)) {
+    if (this.editingClient.contactPhone && !/^\d{10}$/.test(this.editingClient.contactPhone)) {
       this.errorMessage = 'El teléfono de contacto debe tener 10 dígitos';
       
       return;
