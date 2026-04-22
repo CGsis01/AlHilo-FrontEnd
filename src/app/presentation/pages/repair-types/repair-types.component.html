@@ -46,7 +46,7 @@
             <span class="price">{{ repairType.estimatedPrice | currency:'MXN':'symbol-narrow':'1.2-2':'en-US' }}</span>
           </td>
           <td class="time-cell">
-            {{ repairType.estimatedTime }}h
+            {{ repairType.estimatedTime }} min
           </td>
           <td class="complexity-cell">
             <span class="complexity-badge" [ngClass]="{
@@ -128,7 +128,7 @@
         </div>
 
         <div class="form-group">
-          <label for="estimatedTime">Tiempo Estimado (horas) *</label>
+          <label for="estimatedTime">Tiempo Estimado</label>
           <input id="estimatedTime"
             type="text" 
             [(ngModel)]="editingRepairType.estimatedTime" 
