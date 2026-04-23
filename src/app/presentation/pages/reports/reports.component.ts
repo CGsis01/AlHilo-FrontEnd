@@ -63,6 +63,7 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   incomeEndDate: string = '';
   selectedSeamstress: string = 'all';
   seamstresses: User[] = [];
+  headSewing: User[] = [];
   incomeDetails: IncomeDetail[] = [];
   filteredIncomeDetails: IncomeDetail[] = [];
   totalFilteredIncome: number = 0;
@@ -113,7 +114,9 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private loadSeamstresses(): void {
     this.userRepository.getAll().subscribe((users: User[]) => {
-      this.seamstresses = users.filter(u => u.role.name.includes('Costurera'));});
+      this.seamstresses = users.filter(u => u.role.name.includes('Costurera'));
+      this.headSewing = users.filter(u => u.role.name.includes('Jefa de Costura'));});
+      
   }
 
   switchTab(tab: 'graphics' | 'income'): void {
