@@ -7,6 +7,7 @@ import { Repair } from '../../core/models/repair.model';
 import { RepairItem } from '../../core/models/repair-item.model';
 import { PaginatedResponse } from '../../core/interfaces/api-response.interface';
 import { User } from '@core/models/user.model';
+import { RepairComment } from '@core/models/repair-comment.model';
 
 export interface RepairItemRequest {
   repair_item_id?: string;
@@ -224,6 +225,15 @@ export class RepairApiService {
 
   removeRepairItem(repairId: string, itemId: string): Observable<void> {
     return this.apiService.delete<void>(`${this.endpoint}/${repairId}/items/${itemId}`);
+  }
+
+  addComment(repairId: string, comment: string, createdBy: string): Observable<RepairComment> {
+    return this.apiService.post<RepairComment>('/repair-comments/', { repair_id: repairId, comment, created_by: createdBy });
+  }
+
+  getComments(repairId: string): Observable<RepairComment[]> {
+    console.log('getComments called with repairId:', repairId);
+    return this.apiService.get<RepairComment[]>(`/repair-comments/${repairId}`);
   }
 
   private buildFilterParams(filters?: RepairFilters): HttpParams {

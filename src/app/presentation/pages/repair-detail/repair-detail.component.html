@@ -49,7 +49,7 @@
         </div>
       </div>
 
-      <div class="detail-card full-width">
+      <div class="detail-card">
         <h2>Detalles de la(s) Prenda(s)</h2>
 
         <!-- Multiple items view -->
@@ -118,6 +118,31 @@
         </div>
       </div>
 
+      <div class="detail-card full-width comments-card">
+        <h2>Comentarios de trabajo</h2>
+        <div class="comments-swiper-wrapper">
+          <swiper-container
+            slides-per-view="1"
+            space-between="10"
+            pagination="true"
+            pagination-clickable="true"
+            style="width:100%">
+            <swiper-slide *ngFor="let c of repairComment">
+              <div class="comment-item">
+                <div class="comment-header">
+                  <span class="comment-author">{{ c?.author?.name ?? 'Usuario' }}</span>
+                  <span class="comment-date">{{ c?.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+                <p class="comment-text">{{ c?.comment }}</p>
+                <p class="comment-updated" *ngIf="c?.updated_comment">
+                  <strong>Corrección:</strong> {{ c?.updated_comment }}
+                </p>
+              </div>
+            </swiper-slide>
+          </swiper-container>
+        </div>
+      </div>
+
       <div class="detail-card" *ngIf="repair.assignedTo">
         <h2>Asignación</h2>
         <div class="info-list">
@@ -132,26 +157,26 @@
         </div>
       </div>
 
-      <div class="detail-card" *ngIf="repair.notes">
-        <h2>Indicaciones importantes</h2>
-        <div class="info-list">
-          <div class="info-item full-width">
-            <span class="value notes">{{ repair.notes }}</span>
-          </div>
-        </div>
-      </div>
-
+      
       <div class="detail-card" *ngIf="userRole?.code !== UserRole.SEAMSTRESS && (userRole?.code !== UserRole.HEADSEWING || repair.repairStatus?.name !== RepairStatus.VALIDATED)">
         <h2>Acciones</h2>
         <div class="action-buttons">
           <!-- When status is PENDING, show only In Progress button -->
           <ng-container *ngIf="repair.repairStatus?.name === RepairStatus.PENDING">
             <button class="btn-action btn-in-progress"
-              (click)="openAssignModal()">
-              En Progreso
-            </button>
-          </ng-container>
-
+            (click)="openAssignModal()">
+            En Progreso
+          </button>
+        </ng-container>
+        
+        <div class="detail-card" *ngIf="repair.notes">
+          <h2>Indicaciones importantes</h2>
+          <div class="info-list">
+            <div class="info-item full-width">
+              <span class="value notes">{{ repair.notes }}</span>
+            </div>
+          </div>
+        </div>
           <!-- When status is IN_PROGRESS, show Pending and Completed buttons -->
           <ng-container *ngIf="repair.repairStatus?.name === RepairStatus.IN_PROGRESS">
             <button class="btn-action btn-pending"
@@ -167,7 +192,7 @@
           <!-- When status is IN_VALIDATION, show In Progres and Validated buttons -->
           <ng-container *ngIf="repair.repairStatus?.name === RepairStatus.IN_VALIDATION">
             <button class="btn-action btn-in-progress"
-              (click)="updateStatus(getRepairStatus(RepairStatus.IN_PROGRESS))">
+              (click)="openAssignModalJobReview()">
               Marcar en Progreso
             </button>
             <button class="btn-action btn-validated"
@@ -262,6 +287,29 @@
         Asignar y Comenzar
       </button>
     </div>
+  </div>
+</div>
+
+<!-- Modal de comentarios de trabajo -->
+ <div class="modal-overlay" *ngIf="showAssignModalJobReview()" (click)="closeAssignModalJobReview()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>Comentarios</h2>
+      <button class="modal-close" (click)="closeAssignModalJobReview()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <textarea [(ngModel)]="comment" placeholder="Escribe tu comentario" class="comment-box"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeAssignModalJobReview()">Cancelar</button>
+      <button class="btn-primary" (click)="confirmJobReview()">Envíar</button>
+    </div>
+
   </div>
 </div>
 

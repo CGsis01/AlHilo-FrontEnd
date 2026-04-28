@@ -78,6 +78,7 @@ export class ApiService {
     }
 
     console.error(errorMessage);
+    console.error('Detail:', JSON.stringify(error.error));
     
     return throwError(() => new Error(errorMessage));
   }
