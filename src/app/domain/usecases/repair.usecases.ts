@@ -6,6 +6,7 @@ import { RepairItem } from '../../core/models/repair-item.model';
 import { RepairStatus } from '../../core/models/repair-status.model';
 import { User } from '../../core/models/user.model';
 import { PaginatedResponse } from '../../core/interfaces/api-response.interface';
+import { RepairComment } from '@core/models/repair-comment.model';
 
 @Injectable({
   providedIn: 'root'
@@ -64,5 +65,13 @@ export class RepairUseCases {
 
   removeRepairItem(repairId: string, itemId: string): Observable<void> {
     return this.repairRepository.removeItem(repairId, itemId);
+  }
+
+  addComment(repairId: string, comment: string, createdBy: string): Observable<RepairComment> {
+    return this.repairRepository.addComment(repairId, comment, createdBy);
+  }
+
+  getComments(repairId: string): Observable<RepairComment[]> {
+    return this.repairRepository.getComments(repairId);
   }
 }

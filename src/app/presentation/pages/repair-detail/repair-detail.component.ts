@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -18,11 +18,14 @@ import { TicketPrintService } from '../../../core/services/ticket-print.service'
 import { WhatsappApiService } from '../../../core/services/whatsapp-api.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { forkJoin } from 'rxjs';
+import { RepairComment } from '@core/models/repair-comment.model';
+import { getStoredUserId } from '../../../shared/utils/userLocalData.utils';
 
 @Component({
   selector: 'app-repair-detail',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './repair-detail.component.html',
   styleUrls: ['./repair-detail.component.scss', './repair-detail.receipt.scss']
 })
@@ -36,6 +39,9 @@ export class RepairDetailComponent implements OnInit {
   userRole: UserRole | undefined;
   UserRole = UserRoleCode;
   RepairStatus = RepairStatusEnum;
+  repairComment: RepairComment[] = [];
+  showAssignModalJobReview = signal(false);
+  comment: string = '';
 
   // ─── Seamstresses ─────────────────────────────────────────────
   showAssignModal = signal(false);
@@ -100,7 +106,7 @@ export class RepairDetailComponent implements OnInit {
     private toastService: ToastService
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.userRole = this.authService.currentUser?.role;
     
     const repairId = this.route.snapshot.paramMap.get('id');
@@ -110,15 +116,29 @@ export class RepairDetailComponent implements OnInit {
     } else {
       this.router.navigate(['/repairs']);
     }
+
+    const { register } = await import('swiper/element/bundle');
+    register();
   }
 
   // ─── Repair ───────────────────────────────────────────────────
+  private async ensureSwiper(): Promise<void> {
+    if (typeof customElements === 'undefined') return;
+    if (customElements.get('swiper-container')) return;
+    const { register } = await import('swiper/element/bundle');
+    register();
+  }
+
   loadRepair(id: string): void {
     this.isLoading.set(true);
     
     this.repairUseCases.getRepairById(id).subscribe({
       next: (repair) => { this.repair = repair; },
       error: (error) => { this.errorMessage = error.message || 'Error al cargar la reparación'; }});
+
+    this.repairUseCases.getComments(id).subscribe({
+      next: (comments) => { this.repairComment = Array.isArray(comments) ? comments : []; },
+      error: () => { this.repairComment = []; }});
     
     this.isLoading.set(false);
   }
@@ -175,6 +195,14 @@ export class RepairDetailComponent implements OnInit {
     
     this.selectedSeamstress = null;
   }
+  // ─── Job Reviews ─────────────────────────────────────────────
+  openAssignModalJobReview(): void {
+        this.showAssignModalJobReview.set(true);
+    }
+
+    closeAssignModalJobReview(): void {
+        this.showAssignModalJobReview.set(false);
+    }
 
   loadSeamstresses(): void {
     this.isLoadingSeamstresses.set(true);
@@ -215,6 +243,31 @@ export class RepairDetailComponent implements OnInit {
 
         this.closeAssignModal();},
       error: (error) => { this.errorMessage = error.message || 'Error al asignar la costurera';}});
+  }
+
+  async confirmJobReview(): Promise<void> {
+    if (!this.comment.trim() || !this.repair) return;
+
+    const currentUserId = getStoredUserId() ?? '';
+
+    this.repairUseCases.addComment(
+      this.repair.id,
+      this.comment.trim(),
+      currentUserId,
+    ).subscribe({
+      next: (savedComment) => {
+        console.log(savedComment, "EL valor del c", this.comment);
+        this.repairComment = [savedComment, ...(Array.isArray(this.repairComment) ? this.repairComment : [])];
+        console.log(this.repairComment, "el repairComment")
+        this.comment = '';
+        this.updateStatus(this.repairStatuses().filter(s => s.name === RepairStatusEnum.IN_PROGRESS)[0]);
+        this.toastService.show('Comentario agregado exitosamente', 'success');
+        this.closeAssignModalJobReview();
+      },
+      error: (error) => {
+        this.toastService.show('Error al agregar el comentario: ' + error.message, 'error');
+      }
+    });
   }
 
   // ─── Repair Ticket ────────────────────────────────────────────

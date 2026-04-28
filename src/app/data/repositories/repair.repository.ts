@@ -8,6 +8,7 @@ import { PaginatedResponse } from '../../core/interfaces/api-response.interface'
 import { RepairApiService, RepairItemRequest } from '../../core/services/repair-api.service';
 import { getStoredUserId } from '../../shared/utils/userLocalData.utils';
 import { RepairStatus } from '@core/models/repair-status.model';
+import { RepairComment } from '@core/models/repair-comment.model';
 
 @Injectable({
   providedIn: 'root'
@@ -102,6 +103,14 @@ export class RepairRepository implements Repository<Repair> {
 
   getByStatus(status: string): Observable<Repair[]> {
     return this.repairApiService.getByStatus(status);
+  }
+
+  addComment(repairId: string, comment: string, createdBy: string): Observable<RepairComment> {
+    return this.repairApiService.addComment(repairId, comment, createdBy);
+  }
+  
+  getComments(repairId: string): Observable<RepairComment[]> {
+    return this.repairApiService.getComments(repairId);
   }
 
   getByAssignedUser(userId: string): Observable<Repair[]> {
