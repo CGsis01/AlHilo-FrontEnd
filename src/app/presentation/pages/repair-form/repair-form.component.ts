@@ -28,7 +28,7 @@ import { RepairItem } from '../../../core/models/repair-item.model';
 import { forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Repair, RepairStatusEnum } from '@core/models/repair.model';
-import { TicketPrintService } from '../../../core/services/ticket-print.service';
+import { repairImpressionTicket } from '../../../shared/utils/repairImpressionTicket.utils';
 import { WhatsappApiService } from '../../../core/services/whatsapp-api.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -130,7 +130,7 @@ export class RepairFormComponent implements OnInit {
     private repairStatusUseCases: RepairStatusUseCases,
     private paymentTypeUseCases: PaymentTypeUseCases,
     private paymentUseCases: PaymentUseCases,
-    private ticketPrintService: TicketPrintService,
+    private repairImpressionTicket: repairImpressionTicket,
     private whatsappApiService: WhatsappApiService,
     private toastService: ToastService,
     private authService: AuthService
@@ -504,7 +504,7 @@ export class RepairFormComponent implements OnInit {
   }
 
   printAdvancePaymentTicket(): void {
-    this.ticketPrintService.simplePrint();
+    this.repairImpressionTicket.simplePrint();
   }
 
   onDecimalInput(event: Event): string {
@@ -704,7 +704,7 @@ export class RepairFormComponent implements OnInit {
       return;
     
     try {
-      const ticketData = await this.ticketPrintService.generateTicketData(this.repair);
+      const ticketData = await this.repairImpressionTicket.generateTicketData(this.repair);
       this.qrCodeDataUrl = ticketData.qrCodeDataUrl;
       await this.triggerWorkOrderPrint(true);
     } catch (error) {
@@ -732,7 +732,7 @@ export class RepairFormComponent implements OnInit {
       await this.waitForTicketRender();
 
       try {
-        await this.ticketPrintService.simplePrintAndWait();
+        await this.repairImpressionTicket.simplePrintAndWait();
       } catch (error) {
         console.error('Error printing work order tickets:', error);
         this.toastService.show('No se pudieron imprimir todos los tickets', 'error');

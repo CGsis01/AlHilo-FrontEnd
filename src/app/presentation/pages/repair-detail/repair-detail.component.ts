@@ -2,7 +2,7 @@ import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormGroup, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { UserUseCases } from '../../../domain/usecases/user.usecases';
 import { RepairUseCases } from '../../../domain/usecases/repair.usecases';
@@ -14,12 +14,13 @@ import { PaymentType } from '@core/models/payment-type.model';
 import { PaymentUseCases } from '../../../domain/usecases/payment.usecases';
 import { AuthService } from '../../../core/services/auth.service';
 import { User, UserRole, UserRoleCode } from '../../../core/models/user.model';
-import { TicketPrintService } from '../../../core/services/ticket-print.service';
+import { repairImpressionTicket } from '../../../shared/utils/repairImpressionTicket.utils';
 import { WhatsappApiService } from '../../../core/services/whatsapp-api.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { forkJoin } from 'rxjs';
 import { RepairComment } from '@core/models/repair-comment.model';
 import { getStoredUserId } from '../../../shared/utils/userLocalData.utils';
+import { RepairItem } from '@core/models/repair-item.model';
 
 @Component({
   selector: 'app-repair-detail',
@@ -34,6 +35,10 @@ export class RepairDetailComponent implements OnInit {
   // ─── Repair ───────────────────────────────────────────────────
   isLoading = signal(true);
   errorMessage = '';
+
+   // ─── Advance Ticket ──────────────────────────────────────────
+  advancePaymentMinimum = 0;
+  advancePaymentMaximum = 0;
 
   repair: Repair | null = null;
   userRole: UserRole | undefined;
@@ -51,7 +56,18 @@ export class RepairDetailComponent implements OnInit {
 
   // ─── Repair Ticket ────────────────────────────────────────────
   showTicket = signal(false);
+  activeTicketItem: RepairItem | null = null;
+  activeTicketIndex = 0;
   qrCodeDataUrl = '';
+
+ // ─── Advance Ticket ───────────────────────────────────────────
+  showAdvancePaymentTicket = signal(false);
+  pendingAdvancePaymentTicket = signal(false);
+
+
+  // ─── Repair Items ─────────────────────────────────────────────
+  repairItems: RepairItem[] = [];
+  repairForm!: FormGroup;
 
   // ─── Payment Modal ────────────────────────────────────────────
   showPaymentModal = signal(false);
@@ -101,7 +117,7 @@ export class RepairDetailComponent implements OnInit {
     private paymentUseCases: PaymentUseCases,
     private userUseCases: UserUseCases,
     private authService: AuthService,
-    private ticketPrintService: TicketPrintService,
+    private repairImpressionTicket: repairImpressionTicket,
     private whatsappApiService: WhatsappApiService,
     private toastService: ToastService
   ) {}
@@ -276,17 +292,10 @@ export class RepairDetailComponent implements OnInit {
       return;
 
     try {
-      // Use the ticket print service to generate ticket data
-      const ticketData = await this.ticketPrintService.generateTicketData(this.repair);
+      const ticketData = await this.repairImpressionTicket.generateTicketData(this.repair);
       this.qrCodeDataUrl = ticketData.qrCodeDataUrl;
-      
-      this.showTicket.set(true);
 
-      // Wait for the modal to render before printing
-      setTimeout(() => {
-        this.ticketPrintService.simplePrint();
-        this.closeTicket();
-      }, 100);      
+      await this.triggerWorkOrderPrint();
     } catch (error) {
       console.error('Error generating QR code:', error);
     }
@@ -294,13 +303,12 @@ export class RepairDetailComponent implements OnInit {
 
   closeTicket(): void {
     this.showTicket.set(false);
+    this.activeTicketItem = null;
+    this.activeTicketIndex = 0;
+    if (this.pendingAdvancePaymentTicket()) {
+      this.openAdvancePaymentTicket();
+    }
   }
-
-  printTicket(): void {
-    // Use simple print for re-printing (no redirect)
-    this.ticketPrintService.simplePrint();
-  }
-
   // ─── Payment Modal ────────────────────────────────────────────
   openPaymentModal(): void {
     this.initializePaymentModal();
@@ -548,7 +556,7 @@ export class RepairDetailComponent implements OnInit {
   }
 
   printPaymentTicket(): void {
-    this.ticketPrintService.simplePrint();
+    this.repairImpressionTicket.simplePrint();
   }
 
   goBack(): void {
@@ -567,6 +575,39 @@ export class RepairDetailComponent implements OnInit {
     }
 
     return sanitizedValue;
+  }
+
+  private formatToTwoDecimals(value: number): string {
+    return value.toFixed(2);
+  }
+
+
+  private getAdvanceNumericValue(value: unknown): number {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : 0;
+  }
+
+  private getMixedAdvanceTotal(): number {
+    const cash = this.getAdvanceNumericValue(this.repairForm?.get('advancePaymentCash')?.value);
+    const card = this.getAdvanceNumericValue(this.repairForm?.get('advancePaymentCard')?.value);
+    return Math.round((cash + card) * 100) / 100;
+  }
+
+  private updateMixedAdvanceTotal(): void {
+    const total = this.getMixedAdvanceTotal();
+    const formattedTotal = this.formatToTwoDecimals(total);
+    this.repairForm.get('advancePayment')?.setValue(formattedTotal, { emitEvent: false });
+    this.repairForm.get('advancePayment')?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private calculateAdvancePaymentMinimum(items: RepairItem[] = this.repairItems): number {
+    const totalEstimated = items.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0);
+    return totalEstimated > 0 ? Math.round((totalEstimated / 2) * 100) / 100 : 0;
+  }
+
+  private calculateAdvancePaymentMaximum(items: RepairItem[] = this.repairItems): number {
+    const totalEstimated = items.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0);
+    return totalEstimated > 0 ? Math.round(totalEstimated * 100) / 100 : 0;
   }
 
   private getNumericAmount(value: string | null | undefined): number {
@@ -611,5 +652,102 @@ export class RepairDetailComponent implements OnInit {
     this.cashAmount = null;
     this.mixedCashAmount = null;
     this.mixedCardAmount = null;
+  }
+
+  onItemsChange(items: RepairItem[]): void {
+    this.repairItems = items;
+    this.advancePaymentMinimum = this.calculateAdvancePaymentMinimum(items);
+    this.advancePaymentMaximum = this.calculateAdvancePaymentMaximum(items);
+    
+    const formattedAdvance = this.formatToTwoDecimals(this.advancePaymentMinimum);
+    const paymentType = this.repairForm.get('advancePaymentType')?.value as 'cash' | 'card' | 'mixed';
+
+    if (paymentType === 'mixed') {
+      this.repairForm.patchValue({
+        advancePaymentCash: formattedAdvance,
+        advancePaymentCard: this.formatToTwoDecimals(0)
+      }, { emitEvent: false });
+      this.updateMixedAdvanceTotal();
+    } else {
+      this.repairForm.get('advancePayment')?.setValue(formattedAdvance, { emitEvent: false });
+    }
+
+    this.repairForm.get('advancePayment')?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  printTicket(): void {
+    void this.triggerWorkOrderPrint();
+  }
+
+  closeAdvancePaymentTicket(): void {
+    this.showAdvancePaymentTicket.set(false);
+    this.pendingAdvancePaymentTicket.set(false);
+    this.router.navigate(['/repairs']);
+  }
+
+  printAdvancePaymentTicket(): void {
+    this.repairImpressionTicket.simplePrint();
+  }
+
+  private openAdvancePaymentTicket(): void {
+    this.pendingAdvancePaymentTicket.set(false);
+    this.showAdvancePaymentTicket.set(true);
+  }
+
+  private async triggerWorkOrderPrint(redirectAfterPrint = false): Promise<void> {
+    if (!this.repair) {
+      return;
+    }
+
+    const items = this.repair.items?.length ? this.repair.items : [undefined];
+
+    for (let index = 0; index < items.length; index += 1) {
+      this.activeTicketItem = items[index] ?? null;
+      this.activeTicketIndex = index;
+      this.showTicket.set(true);
+
+      await this.waitForTicketRender();
+
+      try {
+        await this.repairImpressionTicket.simplePrintAndWait();
+      } catch (error) {
+        console.error('Error printing work order tickets:', error);
+        this.toastService.show('No se pudieron imprimir todos los tickets', 'error');
+        this.closeTicket();
+        return;
+      }
+    }
+
+    this.showTicket.set(false);
+    this.activeTicketItem = null;
+    this.activeTicketIndex = 0;
+
+    if (this.pendingAdvancePaymentTicket()) {
+      this.openAdvancePaymentTicket();
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.printAdvancePaymentTicket();
+          this.closeAdvancePaymentTicket();
+
+          if (redirectAfterPrint) {
+            void this.router.navigate(['/repairs']);
+          }
+        });
+      });
+
+      return;
+    }
+
+    if (redirectAfterPrint) {
+      void this.router.navigate(['/repairs']);
+    }
+  }
+  private waitForTicketRender(): Promise<void> {
+    return new Promise(resolve => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
   }
 }
