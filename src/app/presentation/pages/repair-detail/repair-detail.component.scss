@@ -602,6 +602,19 @@
   border-top: 2px solid #e5e7eb;
 }
 
+.ticket-page {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  border: 2px dashed #9ca3af;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  background: white;
+}
+
+.ticket-separator {
+  display: none;
+}
+
 // Print styles — work order ticket (3" thermal)
 @media print {
   @page {
@@ -618,14 +631,12 @@
   }
 
   .ticket-modal {
-    display: flex !important;
+    display: block !important;
     position: static !important;
     inset: auto;
     margin: 0;
     padding: 0;
     background: white !important;
-    align-items: flex-start !important;
-    justify-content: center !important;
   }
 
   .ticket-container {
@@ -636,8 +647,16 @@
     overflow: visible;
     box-shadow: none;
     border-radius: 0;
-    break-inside: avoid-page;
-    page-break-inside: avoid;
+  }
+
+  .ticket-page {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .ticket-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 
   .ticket-content {

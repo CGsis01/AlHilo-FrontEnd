@@ -519,6 +519,15 @@
   border-top: 2px solid #e5e7eb;
 }
 
+.ticket-page {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  border: 2px dashed #9ca3af;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  background: white;
+}
+
 // Payment receipt styles
 .receipt-overlay {
   position: fixed;
@@ -889,8 +898,8 @@
 // Print styles
 @media print {
   @page {
-    size: 3in auto;
-    margin: 3mm 4mm;
+    size: 80mm auto;
+    margin: 8mm 4mm 6mm;
   }
 
   .no-print {
@@ -902,30 +911,47 @@
   }
 
   .ticket-modal {
-    display: flex !important;
+    display: block !important;
     position: static !important;
     inset: auto;
     margin: 0;
     padding: 0;
     background: white !important;
-    align-items: flex-start !important;
-    justify-content: center !important;
   }
 
   .ticket-container {
-    width: 3in;
-    max-width: 3in;
+    display: block !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
     margin: 0 auto;
+    padding-top: 2mm;
+    box-sizing: border-box;
     max-height: none;
     overflow: visible;
     box-shadow: none;
     border-radius: 0;
-    break-inside: avoid-page;
-    page-break-inside: avoid;
+  }
+
+  .ticket-page {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 4mm;
+    padding-bottom: 4mm;
+    border: 0;
+    border-radius: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .ticket-page:last-child {
+    margin-bottom: 0;
+    break-after: auto;
+    page-break-after: auto;
   }
 
   .ticket-content {
-    padding: 0.35rem;
+    padding: 0.25rem;
   }
 
   .ticket-title {
@@ -943,22 +969,22 @@
   }
 
   .ticket-qr {
-    padding: 0.35rem;
+    padding: 0.25rem;
 
     .qr-code {
-      width: 130px;
-      height: 130px;
+      width: 118px;
+      height: 118px;
     }
   }
 
   .ticket-info {
-    margin: 0.35rem 0;
-    padding: 0.5rem 0;
+    margin: 0.25rem 0;
+    padding: 0.35rem 0;
   }
 
   .ticket-row {
     gap: 0.4rem;
-    padding: 0.1rem 0;
+    padding: 0.05rem 0;
   }
 
   .ticket-label,
@@ -967,7 +993,7 @@
   }
 
   .ticket-block {
-    margin: 0.3rem 0;
+    margin: 0.2rem 0;
 
     .ticket-block-label {
       font-size: 0.62rem !important;

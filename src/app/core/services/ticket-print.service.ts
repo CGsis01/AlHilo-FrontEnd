@@ -109,4 +109,62 @@ export class TicketPrintService {
   simplePrint(): void {
     window.print();
   }
+
+  simplePrintAndWait(timeoutMs = 30000): Promise<void> {
+    return new Promise(resolve => {
+      let finished = false;
+      const printMedia = typeof window.matchMedia === 'function' ? window.matchMedia('print') : null;
+
+      const finish = () => {
+        if (finished) {
+          return;
+        }
+
+        finished = true;
+        cleanup();
+        resolve();
+      };
+
+      const onAfterPrint = () => finish();
+
+      const onVisibilityChange = () => {
+        if (!document.hidden) {
+          window.setTimeout(() => finish(), 150);
+        }
+      };
+
+      const onPrintStateChange = (event: MediaQueryListEvent) => {
+        if (!event.matches) {
+          finish();
+        }
+      };
+
+      const cleanup = () => {
+        window.removeEventListener('afterprint', onAfterPrint);
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+
+        if (printMedia) {
+          if (typeof printMedia.removeEventListener === 'function') {
+            printMedia.removeEventListener('change', onPrintStateChange);
+          } else if (typeof printMedia.removeListener === 'function') {
+            printMedia.removeListener(onPrintStateChange);
+          }
+        }
+      };
+
+      window.addEventListener('afterprint', onAfterPrint, { once: true });
+      document.addEventListener('visibilitychange', onVisibilityChange);
+
+      if (printMedia) {
+        if (typeof printMedia.addEventListener === 'function') {
+          printMedia.addEventListener('change', onPrintStateChange);
+        } else if (typeof printMedia.addListener === 'function') {
+          printMedia.addListener(onPrintStateChange);
+        }
+      }
+
+      window.setTimeout(() => finish(), timeoutMs);
+      window.print();
+    });
+  }
 }

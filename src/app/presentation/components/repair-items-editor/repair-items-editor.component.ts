@@ -112,7 +112,6 @@ export class RepairItemsEditorComponent implements OnChanges {
   private emit(): void {
     const items: RepairItem[] = this.drafts.map(d => {
       const repairType = this.repairTypes.find(rt => rt.id === d.repairType.repairTypeId);
-
       return {
         id: d._id,
         garment: d.garment,

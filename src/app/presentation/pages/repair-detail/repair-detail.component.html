@@ -315,59 +315,91 @@
 
 <!-- Repair Reprint Ticket -->
 <div class="modal-overlay ticket-modal" *ngIf="showTicket()" (click)="closeTicket()">
-  <div class="ticket-container" (click)="$event.stopPropagation()">    
-    <div class="ticket-content">
-      <div class="ticket-title">
-        <h3>Al Hilo - Taller de Costura</h3>
-        <p class="ticket-subtitle">Orden de Trabajo</p>
-      </div>
+  <div class="ticket-container" (click)="$event.stopPropagation()">
 
-      <div class="ticket-qr">
-        <img [src]="qrCodeDataUrl" alt="QR Code" class="qr-code" />
-      </div>
-
-      <div class="ticket-info">
-        <div class="ticket-row">
-          <span class="ticket-label">Cliente:</span>
-          <span class="ticket-value">{{ repair?.customerName }}</span>
-        </div>
-        <ng-container *ngIf="repair?.items?.length; else noRepairItems">
-          <div class="ticket-block" *ngFor="let item of repair?.items; let i = index">
-            <span class="ticket-block-label">Prenda {{ i + 1 }}</span>
+    <!-- Un ticket por cada prenda/servicio -->
+    <ng-container *ngIf="repair?.items?.length; else singleTicket">
+      <div class="ticket-page" *ngFor="let item of repair?.items; let i = index; let last = last">
+        <div class="ticket-content">
+          <div class="ticket-title">
+            <h3>Al Hilo - Taller de Costura</h3>
+            <p class="ticket-subtitle">Orden de Trabajo</p>
+          </div>
+          <div class="ticket-qr">
+            <img [src]="qrCodeDataUrl" alt="QR Code" class="qr-code" />
+          </div>
+          <div class="ticket-info">
             <div class="ticket-row">
-              <span class="ticket-label">Tipo de prenda:</span>
-              <span class="ticket-value">{{ item.garment.name }}</span>
-            </div>
-            <div class="ticket-row">
-              <span class="ticket-label">Tipo de reparación:</span>
-              <span class="ticket-value">{{ item.repairType.name }}</span>
+              <span class="ticket-label">Cliente:</span>
+              <span class="ticket-value">{{ repair?.customerName }}</span>
             </div>
             <div class="ticket-block">
-              <span class="ticket-block-label">Descripción:</span>
-              <div class="ticket-block-value">{{ item.description }}</div>
+              <span class="ticket-block-label">Prenda {{ i + 1 }} de {{ repair?.items?.length }}</span>
+              <div class="ticket-row">
+                <span class="ticket-label">Tipo de prenda:</span>
+                <span class="ticket-value">{{ item.garment.name }}</span>
+              </div>
+              <div class="ticket-row">
+                <span class="ticket-label">Tipo de reparación:</span>
+                <span class="ticket-value">{{ item.repairType.name }}</span>
+              </div>
+              <div class="ticket-block">
+                <span class="ticket-block-label">Descripción:</span>
+                <div class="ticket-block-value">{{ item.description }}</div>
+              </div>
+            </div>
+            <div class="ticket-block" *ngIf="repair?.notes">
+              <span class="ticket-block-label">Indicaciones importantes</span>
+              <div class="ticket-block-value">{{ repair?.notes }}</div>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-label">Fecha de Recepción:</span>
+              <span class="ticket-value">{{ repair?.receivedDate | date:'short' }}</span>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-label">Entrega Estimada:</span>
+              <span class="ticket-value">{{ repair?.estimatedDeliveryDate | date:'short' }}</span>
             </div>
           </div>
-        </ng-container>
-        <ng-template #noRepairItems>
+        </div>
+        <div class="ticket-separator no-print" *ngIf="!last"></div>
+      </div>
+    </ng-container>
+
+    <!-- Ticket único sin items -->
+    <ng-template #singleTicket>
+      <div class="ticket-content">
+        <div class="ticket-title">
+          <h3>Al Hilo - Taller de Costura</h3>
+          <p class="ticket-subtitle">Orden de Trabajo</p>
+        </div>
+        <div class="ticket-qr">
+          <img [src]="qrCodeDataUrl" alt="QR Code" class="qr-code" />
+        </div>
+        <div class="ticket-info">
+          <div class="ticket-row">
+            <span class="ticket-label">Cliente:</span>
+            <span class="ticket-value">{{ repair?.customerName }}</span>
+          </div>
           <div class="ticket-block">
             <span class="ticket-block-label">Prenda</span>
             <div class="ticket-block-value">Sin detalles de servicios</div>
           </div>
-        </ng-template>
-        <div class="ticket-block" *ngIf="repair?.notes">
-          <span class="ticket-block-label">Indicaciones importantes</span>
-          <div class="ticket-block-value">{{ repair?.notes }}</div>
-        </div>
-        <div class="ticket-row">
-          <span class="ticket-label">Fecha de Recepción:</span>
-          <span class="ticket-value">{{ repair?.receivedDate | date:'short' }}</span>
-        </div>
-        <div class="ticket-row">
-          <span class="ticket-label">Entrega Estimada:</span>
-          <span class="ticket-value">{{ repair?.estimatedDeliveryDate | date:'short' }}</span>
+          <div class="ticket-block" *ngIf="repair?.notes">
+            <span class="ticket-block-label">Indicaciones importantes</span>
+            <div class="ticket-block-value">{{ repair?.notes }}</div>
+          </div>
+          <div class="ticket-row">
+            <span class="ticket-label">Fecha de Recepción:</span>
+            <span class="ticket-value">{{ repair?.receivedDate | date:'short' }}</span>
+          </div>
+          <div class="ticket-row">
+            <span class="ticket-label">Entrega Estimada:</span>
+            <span class="ticket-value">{{ repair?.estimatedDeliveryDate | date:'short' }}</span>
+          </div>
         </div>
       </div>
-    </div>
+    </ng-template>
 
     <div class="ticket-actions no-print">
       <button class="btn-secondary" (click)="closeTicket()">Cerrar</button>
