@@ -117,9 +117,9 @@ export class ClientApiService {
     const url = `${this.endpoint}/${id}`;
 
     if(storeId) {
-      let params = new HttpParams().set('store_id', storeId);
+      const params = new HttpParams().set('store_id', storeId);
       
-      return this.apiService.delete<void>(`${url}?${params}`);
+      return this.apiService.delete<void>(`${url}?${params.toString()}`);
     }
 
     return this.apiService.delete<void>(url);
