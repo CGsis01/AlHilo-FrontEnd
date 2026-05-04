@@ -22,6 +22,8 @@ export class CustomersComponent implements OnInit {
   isLoading = signal(true);
   isEditing = signal(false);
   showModal = signal(false);
+  showDeleteModal = signal(false);
+  clientToDelete: Client | null = null;
   
   clients: Client[] = [];
   filteredClients: Client[] = [];
@@ -185,14 +187,28 @@ export class CustomersComponent implements OnInit {
   }
 
   deleteClient(client: Client): void {
-    if (!confirm(`¿Estás seguro de que deseas eliminar a "${client.fullName}"?`)) return;
+    this.clientToDelete = client;
+    this.showDeleteModal.set(true);
+  }
 
-    this.clientUseCases.deleteClient(client.id).subscribe({
+  confirmDelete(): void {
+    if (!this.clientToDelete) return;
+
+    this.clientUseCases.deleteClient(this.clientToDelete.id).subscribe({
       next: () => {
         this.toastService.show('Cliente eliminado correctamente', 'success');
-        this.loadClients();},
+        
+        this.loadClients();
+        this.cancelDelete();},
       error: () => {
-        this.toastService.show('Error al eliminar el cliente', 'error');}});
+        this.toastService.show('Error al eliminar el cliente', 'error');
+        
+        this.cancelDelete();}});
+  }
+
+  cancelDelete(): void {
+    this.clientToDelete = null;
+    this.showDeleteModal.set(false);
   }
 
   onPhoneInput(event: Event, field: 'personalPhone' | 'contactPhone'): void {
