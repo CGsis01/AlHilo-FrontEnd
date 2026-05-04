@@ -28,7 +28,7 @@ import { RepairItem } from '../../../core/models/repair-item.model';
 import { forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Repair, RepairStatusEnum } from '@core/models/repair.model';
-import { TicketPrintService } from '../../../core/services/ticket-print.service';
+import { repairImpressionTicket } from '../../../shared/utils/repairImpressionTicket.utils';
 import { WhatsappApiService } from '../../../core/services/whatsapp-api.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -66,6 +66,8 @@ export class RepairFormComponent implements OnInit {
 
   // ─── Repair Ticket ────────────────────────────────────────────
   showTicket = signal(false);
+  activeTicketItem: RepairItem | null = null;
+  activeTicketIndex = 0;
 
   qrCodeDataUrl = '';
 
@@ -128,7 +130,7 @@ export class RepairFormComponent implements OnInit {
     private repairStatusUseCases: RepairStatusUseCases,
     private paymentTypeUseCases: PaymentTypeUseCases,
     private paymentUseCases: PaymentUseCases,
-    private ticketPrintService: TicketPrintService,
+    private repairImpressionTicket: repairImpressionTicket,
     private whatsappApiService: WhatsappApiService,
     private toastService: ToastService,
     private authService: AuthService
@@ -429,13 +431,15 @@ export class RepairFormComponent implements OnInit {
   // ─── Repair Ticket ────────────────────────────────────────────
   closeTicket(): void {
     this.showTicket.set(false);
+    this.activeTicketItem = null;
+    this.activeTicketIndex = 0;
     if (this.pendingAdvancePaymentTicket()) {
       this.openAdvancePaymentTicket();
     }
   }
 
   printTicket(): void {
-    this.triggerWorkOrderPrint();
+    void this.triggerWorkOrderPrint();
   }
 
   // ─── Advance Ticket ───────────────────────────────────────────
@@ -500,7 +504,7 @@ export class RepairFormComponent implements OnInit {
   }
 
   printAdvancePaymentTicket(): void {
-    this.ticketPrintService.simplePrint();
+    this.repairImpressionTicket.simplePrint();
   }
 
   onDecimalInput(event: Event): string {
@@ -700,14 +704,9 @@ export class RepairFormComponent implements OnInit {
       return;
     
     try {
-      const ticketData = await this.ticketPrintService.generateTicketData(this.repair);
-      
+      const ticketData = await this.repairImpressionTicket.generateTicketData(this.repair);
       this.qrCodeDataUrl = ticketData.qrCodeDataUrl;
-      this.showTicket.set(true);
-
-      setTimeout(() => {
-        this.triggerWorkOrderPrint();
-      }, 100);
+      await this.triggerWorkOrderPrint(true);
     } catch (error) {
       console.error('Error generating ticket:', error);
     }
@@ -718,23 +717,62 @@ export class RepairFormComponent implements OnInit {
     this.showAdvancePaymentTicket.set(true);
   }
 
-  private triggerWorkOrderPrint(): void {
-    if ((this.pendingAdvancePaymentTicket())) {
-      this.ticketPrintService.simplePrint();
+  private async triggerWorkOrderPrint(redirectAfterPrint = false): Promise<void> {
+    if (!this.repair) {
+      return;
+    }
 
-      this.showTicket.set(false);
+    const items = this.repair.items?.length ? this.repair.items : [undefined];
 
+    for (let index = 0; index < items.length; index += 1) {
+      this.activeTicketItem = items[index] ?? null;
+      this.activeTicketIndex = index;
+      this.showTicket.set(true);
+
+      await this.waitForTicketRender();
+
+      try {
+        await this.repairImpressionTicket.simplePrintAndWait();
+      } catch (error) {
+        console.error('Error printing work order tickets:', error);
+        this.toastService.show('No se pudieron imprimir todos los tickets', 'error');
+        this.closeTicket();
+        return;
+      }
+    }
+
+    this.showTicket.set(false);
+    this.activeTicketItem = null;
+    this.activeTicketIndex = 0;
+
+    if (this.pendingAdvancePaymentTicket()) {
       this.openAdvancePaymentTicket();
 
-      setTimeout(() => {        
-        this.printAdvancePaymentTicket();
-        this.closeAdvancePaymentTicket()
-      }, 100);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.printAdvancePaymentTicket();
+          this.closeAdvancePaymentTicket();
+
+          if (redirectAfterPrint) {
+            void this.router.navigate(['/repairs']);
+          }
+        });
+      });
 
       return;
     }
 
-    this.ticketPrintService.printTicket('/repairs');
+    if (redirectAfterPrint) {
+      void this.router.navigate(['/repairs']);
+    }
+  }
+
+  private waitForTicketRender(): Promise<void> {
+    return new Promise(resolve => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
   }
 
   private prepareAdvancePaymentTicket(
