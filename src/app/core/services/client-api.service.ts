@@ -114,10 +114,15 @@ export class ClientApiService {
   }
 
   delete(id: string, storeId?: string): Observable<void> {
-     let params = new HttpParams()
-      .set('store_id', storeId || '');
-    
-    return this.apiService.delete<void>(`${this.endpoint}/${id}?${params}`);
+    const url = `${this.endpoint}/${id}`;
+
+    if(storeId) {
+      let params = new HttpParams().set('store_id', storeId);
+      
+      return this.apiService.delete<void>(`${url}?${params}`);
+    }
+
+    return this.apiService.delete<void>(url);
   }
 
   getRepairHistory(id: string): Observable<any[]> {
