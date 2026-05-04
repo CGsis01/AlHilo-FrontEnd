@@ -113,8 +113,11 @@ export class ClientApiService {
     .pipe(map((response: Client) => this.mapClient(response)));
   }
 
-  delete(id: string): Observable<void> {
-    return this.apiService.delete<void>(`${this.endpoint}/${id}`);
+  delete(id: string, storeId?: string): Observable<void> {
+     let params = new HttpParams()
+      .set('store_id', storeId || '');
+    
+    return this.apiService.delete<void>(`${this.endpoint}/${id}?${params}`);
   }
 
   getRepairHistory(id: string): Observable<any[]> {

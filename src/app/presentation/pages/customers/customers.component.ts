@@ -194,7 +194,7 @@ export class CustomersComponent implements OnInit {
   confirmDelete(): void {
     if (!this.clientToDelete) return;
 
-    this.clientUseCases.deleteClient(this.clientToDelete.id).subscribe({
+    this.clientUseCases.deleteClient(this.clientToDelete.id, this.clientToDelete.store?.id).subscribe({
       next: () => {
         this.toastService.show('Cliente eliminado correctamente', 'success');
         

@@ -77,20 +77,20 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal-backdrop" *ngIf="showDeleteModal()" (click)="cancelDelete()">
+<div class="modal-backdrop" *ngIf="showDeleteModal()" (click)="cancelDelete()" (keydown.escape)="cancelDelete()">
   <div class="modal-content modal-confirm" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>Eliminar Cliente</h2>
-      <button class="btn-close" (click)="cancelDelete()">✕</button>
+      <h2 id="delete-client-modal-title">Eliminar Cliente</h2>
+      <button class="btn-close" (click)="cancelDelete()" aria-label="Cerrar diálogo de eliminación">✕</button>
     </div>
     <div class="modal-body">
-      <p class="confirm-message">
+      <p class="confirm-message" id="delete-client-modal-description">
         ¿Estás seguro de que deseas eliminar a <strong>{{ clientToDelete?.fullName }}</strong>?
         Esta acción no se puede deshacer.
       </p>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
+      <button class="btn-secondary" (click)="cancelDelete()" autofocus>Cancelar</button>
       <button class="btn-danger" (click)="confirmDelete()">Eliminar</button>
     </div>
   </div>
