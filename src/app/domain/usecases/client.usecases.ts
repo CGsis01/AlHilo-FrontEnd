@@ -30,8 +30,8 @@ export class ClientUseCases {
     return this.clientRepository.update(id, client);
   }
 
-  deleteClient(id: string): Observable<boolean> {
-    return this.clientRepository.delete(id);
+  deleteClient(id: string, storeId?: string): Observable<boolean> {
+    return this.clientRepository.delete(id, storeId);
   }
 
   searchByPhone(phone: string): Observable<Client | undefined> {

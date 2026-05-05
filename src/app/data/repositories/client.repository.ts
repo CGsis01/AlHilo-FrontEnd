@@ -61,9 +61,9 @@ export class ClientRepository implements Repository<Client> {
     return this.clientApiService.update(id, updateRequest);
   }
 
-  delete(id: string): Observable<boolean> {
+  delete(id: string, storeId?: string): Observable<boolean> {
     return new Observable(observer => {
-      this.clientApiService.delete(id).subscribe({
+      this.clientApiService.delete(id, storeId).subscribe({
         next: () => {
           observer.next(true);
           observer.complete();},

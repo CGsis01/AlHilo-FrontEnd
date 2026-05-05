@@ -40,8 +40,6 @@
           <th>Teléfono Personal</th>
           <th>Teléfono Contacto</th>
           <th>Email</th>
-          <th>Dirección</th>
-          <th>Cumpleaños</th>
           <th>Sucursal</th>
           <th>Creado</th>
           <th>Acciones</th>
@@ -53,8 +51,6 @@
           <td>{{ client.personalPhone }}</td>
           <td>{{ client.contactPhone }}</td>
           <td class="client-email">{{ client.email || '—' }}</td>
-          <td class="client-address">{{ client.address }}</td>
-          <td>{{ client.birthDate ? (client.birthDate | date:'dd/MM/yyyy') : '—' }}</td>
           <td class="client-store">{{ client.store?.name || '—' }}</td>
           <td class="date-cell">{{ client.createdAt | date:'shortDate' }}</td>
           <td class="actions-cell">
@@ -77,6 +73,26 @@
   <div class="loading-state" *ngIf="isLoading()">
     <div class="spinner"></div>
     <p>Cargando clientes...</p>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-backdrop" *ngIf="showDeleteModal()" (click)="cancelDelete()">
+  <div class="modal-content modal-confirm" role="dialog" aria-modal="true" aria-labelledby="delete-client-modal-title" aria-describedby="delete-client-modal-description" tabindex="-1" (keydown.escape)="cancelDelete()" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 id="delete-client-modal-title">Eliminar Cliente</h2>
+      <button class="btn-close" (click)="cancelDelete()" aria-label="Cerrar diálogo de eliminación">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="confirm-message" id="delete-client-modal-description">
+        ¿Estás seguro de que deseas eliminar a <strong>{{ clientToDelete?.fullName }}</strong>?
+        Esta acción no se puede deshacer.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cancelDelete()" autofocus>Cancelar</button>
+      <button class="btn-danger" (click)="confirmDelete()">Eliminar</button>
+    </div>
   </div>
 </div>
 
