@@ -33,6 +33,7 @@ import { WhatsappApiService } from '../../../core/services/whatsapp-api.service'
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DateFormatDirective } from '../../../shared/directives/date-format.directive';
+import { GarmentTicketData } from '../../components/garment-selector-modal/garment-selector-modal.component';
 
 @Component({
   selector: 'app-repair-form',
@@ -49,7 +50,8 @@ export class RepairFormComponent implements OnInit {
 
   errorMessage = '';
 
-  repair: Repair | null = null;  
+  repair: Repair | null = null;
+  repairId: string = "";
 
   // ─── Customer ─────────────────────────────────────────────────
   isSearching = signal(false);
@@ -70,6 +72,10 @@ export class RepairFormComponent implements OnInit {
   activeTicketIndex = 0;
 
   qrCodeDataUrl = '';
+
+  // ─── Garment Print Ticket ─────────────────────────────────────
+  showGarmentPrintTicket = false;
+  garmentTicketData: GarmentTicketData | null = null;
 
   // ─── Advance Ticket ───────────────────────────────────────────
   showAdvancePaymentTicket = signal(false);
@@ -137,6 +143,8 @@ export class RepairFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.repairId = crypto.randomUUID();
+
     this.repairForm = this.fb.group({
       customerName: ['', Validators.required],
       customerPhone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
@@ -156,18 +164,6 @@ export class RepairFormComponent implements OnInit {
       isExpress: [false],
       estimatedDeliveryDate: ['', Validators.required],
       notes: ['']});
-
-    // this.repairTypeUseCases.getAllRepairTypes().subscribe({
-    //   next: (repairTypes) => { this.repairTypes = repairTypes; },
-    //   error: (error) => { console.error('Error fetching repair types:', error); }});
-
-    // this.repairStatusUseCases.getAllRepairStatuses().subscribe({
-    //   next: (repairStatuses) => { this.repairStatuses = repairStatuses;}, 
-    //   error: (error) => { console.error('Error fetching repair statuses:', error);}});
-
-    // this.paymentTypeUseCases.getAllPaymentTypes().subscribe({
-    //   next: (paymentTypes) => { this.paymentTypes = paymentTypes;},
-    //   error: (error) => { console.error('Error fetching payment types:', error);}});
   
     this.repairForm.get('customerPhone')?.valueChanges.pipe(
       debounceTime(500),
@@ -262,6 +258,7 @@ export class RepairFormComponent implements OnInit {
     
     const repairData = {
       ...repairFormData,
+      repairId: this.repairId,
       customerId: this.selectedClient.id,
       customerName: this.selectedClient.fullName,
       customerPhone: this.selectedClient.personalPhone,
@@ -335,6 +332,7 @@ export class RepairFormComponent implements OnInit {
                 advanceCashAmount,
                 advanceCardAmount
               );
+
               this.handleRepairCreated(repair);
             },
             error: () => {
@@ -440,6 +438,28 @@ export class RepairFormComponent implements OnInit {
 
   printTicket(): void {
     void this.triggerWorkOrderPrint();
+  }
+
+  // ─── Garment Print Ticket ─────────────────────────────────────
+  async onPrintTicketRequest(data: GarmentTicketData): Promise<void> {
+    console.log('Received print ticket request with data:', data);
+    this.garmentTicketData = data;
+    this.showGarmentPrintTicket = true;
+
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
+
+    window.addEventListener(
+      "afterprint",
+      () => {
+        this.showGarmentPrintTicket = false;
+        this.garmentTicketData = null;
+      },
+      { once: true },
+    );
+
+    window.print();
   }
 
   // ─── Advance Ticket ───────────────────────────────────────────
@@ -721,30 +741,6 @@ export class RepairFormComponent implements OnInit {
     if (!this.repair) {
       return;
     }
-
-    const items = this.repair.items?.length ? this.repair.items : [undefined];
-
-    for (let index = 0; index < items.length; index += 1) {
-      this.activeTicketItem = items[index] ?? null;
-      this.activeTicketIndex = index;
-      this.showTicket.set(true);
-
-      await this.waitForTicketRender();
-
-      try {
-        await this.repairImpressionTicket.simplePrintAndWait();
-      } catch (error) {
-        console.error('Error printing work order tickets:', error);
-        this.toastService.show('No se pudieron imprimir todos los tickets', 'error');
-        this.closeTicket();
-        return;
-      }
-    }
-
-    this.showTicket.set(false);
-    this.activeTicketItem = null;
-    this.activeTicketIndex = 0;
-
     if (this.pendingAdvancePaymentTicket()) {
       this.openAdvancePaymentTicket();
 
@@ -765,14 +761,6 @@ export class RepairFormComponent implements OnInit {
     if (redirectAfterPrint) {
       void this.router.navigate(['/repairs']);
     }
-  }
-
-  private waitForTicketRender(): Promise<void> {
-    return new Promise(resolve => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => resolve());
-      });
-    });
   }
 
   private prepareAdvancePaymentTicket(

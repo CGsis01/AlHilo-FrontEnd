@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RepairItem } from '../../../core/models/repair-item.model';
 import { RepairType } from '../../../core/models/repair-type.model';
 import { Garment, GarmentRepairType } from '../../../core/models/garment.model';
-import { GarmentSelection, GarmentSelectorModalComponent } from '../garment-selector-modal/garment-selector-modal.component';
+import { GarmentSelection, GarmentSelectorModalComponent, GarmentTicketData } from '../garment-selector-modal/garment-selector-modal.component';
 
 /** Partial item used while editing inside the form */
 export interface RepairItemDraft {
@@ -27,7 +27,13 @@ export class RepairItemsEditorComponent implements OnChanges {
   @Input() repairTypes: RepairType[] = [];
   @Input() items: RepairItem[] = [];
   @Input() garments: Garment[] = [];
+  @Input() repairId: string = '';
+  @Input() customerName: string = '';
+  @Input() customerPhone: string = '';
+  @Input() estimatedDeliveryDate: string = '';
+  
   @Output() itemsChange = new EventEmitter<RepairItem[]>();
+  @Output() printTicketRequest = new EventEmitter<GarmentTicketData>();
   
   private _draftCounter = 0;
   
@@ -57,7 +63,7 @@ export class RepairItemsEditorComponent implements OnChanges {
       _id: `draft-${++this._draftCounter}`,
       garment: selection.garment,
       repairType: selection.repairType,
-      description: '',
+      description: selection.comment,
       estimatedPrice: selection.repairType.estimatedPriceOverride
         ? selection.repairType.estimatedPriceOverride.toString()
         : ''});
@@ -65,6 +71,10 @@ export class RepairItemsEditorComponent implements OnChanges {
     this.showGarmentModal.set(false);
     
     this.emit();
+  }
+
+  onPrintTicketRequest(data: GarmentTicketData): void {
+    this.printTicketRequest.emit(data);
   }
 
   addItem(): void {
@@ -107,6 +117,12 @@ export class RepairItemsEditorComponent implements OnChanges {
       d.repairType.repairTypeId.trim() &&
       d.description.trim() &&
       parseFloat(d.estimatedPrice) > 0);
+  }
+
+  get canAddService(): boolean {
+    return this.customerName.trim().length > 0 
+      && this.customerPhone.trim().length > 0
+      && this.estimatedDeliveryDate.trim().length > 0;
   }
 
   private emit(): void {

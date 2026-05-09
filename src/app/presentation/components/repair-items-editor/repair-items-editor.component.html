@@ -1,13 +1,17 @@
 <div class="items-editor">
   <div class="items-header">
     <span class="items-label">Servicios</span>
-    <button type="button" class="btn-add-item" (click)="openGarmentModal()">+ Agregar servicio</button>
+    <button type="button" class="btn-add-item" (click)="openGarmentModal()" [disabled]="!canAddService">+ Agregar servicio</button>
   </div>
 
   <app-garment-selector-modal
     [isOpen]="showGarmentModal()"
     [garments]="garments"
+    [repairId]="repairId"
+    [customerName]="customerName"
+    [estimatedDeliveryDate]="estimatedDeliveryDate"
     (garmentSelected)="onGarmentSelected($event)"
+    (printTicketRequest)="onPrintTicketRequest($event)"
     (closed)="closeGarmentModal()">
   </app-garment-selector-modal>
 

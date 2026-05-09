@@ -75,3 +75,31 @@
 
   </div>
 </div>
+
+<!-- ── Modal Comentario ── -->
+<div class="comment-modal-overlay" *ngIf="showModalAddServices()" (click)="closeGarmentModal()">
+  <div class="comment-modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="step2-title">
+          <h2>Descripcion</h2>
+          <span class="step2-subtitle" *ngIf="selectedGarment && selectedRepairType">{{ selectedGarment.name }} - {{ selectedRepairType.repairTypeName }}</span>
+        </div>
+      </div>
+      <button type="button" class="close-btn" (click)="closeGarmentModal()" aria-label="Cerrar">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <textarea [(ngModel)]="commentAddService" placeholder="Escribe tu comentario" class="comment-box"></textarea>
+      </div>
+    </div>
+    <div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeGarmentModal()">Cancelar</button>
+        <button type="button" class="btn-primary" (click)="confirmSelection()" [disabled]="!commentAddService || commentAddService.length <= 5" >Aceptar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
