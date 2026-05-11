@@ -47,6 +47,7 @@ export class RepairFormComponent implements OnInit {
   // ─── Repair ───────────────────────────────────────────────────
   repairForm!: FormGroup;
   isLoading = signal(false);
+  estimatedDeliveryDate = signal<Date | null>(null);
 
   errorMessage = '';
 
@@ -164,6 +165,12 @@ export class RepairFormComponent implements OnInit {
       isExpress: [false],
       estimatedDeliveryDate: ['', Validators.required],
       notes: ['']});
+
+    this.repairUseCases.getRepairsEstimatedTime().subscribe(estimatedTime => {
+      this.estimatedDeliveryDate.set(this.addWorkMinutes(new Date(), estimatedTime));
+      this.repairForm.get('estimatedDeliveryDate')?.setValue(this.estimatedDeliveryDate()?.toISOString().split('T')[0]);
+    });
+
   
     this.repairForm.get('customerPhone')?.valueChanges.pipe(
       debounceTime(500),
@@ -409,7 +416,14 @@ export class RepairFormComponent implements OnInit {
     this.repairItems = items;
     this.advancePaymentMinimum = this.calculateAdvancePaymentMinimum(items);
     this.advancePaymentMaximum = this.calculateAdvancePaymentMaximum(items);
-    
+
+    // Calculate total estimated time from repair items
+    const totalEstimatedTime = items.reduce((sum, item) => sum + (item.repairType?.estimatedTime || 0), 0);
+
+    // Calculate and set estimated delivery date using work schedule
+    const deliveryDate = this.addWorkMinutes(new Date(this.estimatedDeliveryDate() || new Date()), totalEstimatedTime);
+    this.repairForm.get('estimatedDeliveryDate')?.setValue(deliveryDate.toISOString().split('T')[0]);
+
     const formattedAdvance = this.formatToTwoDecimals(this.advancePaymentMinimum);
     const paymentType = this.repairForm.get('advancePaymentType')?.value as 'cash' | 'card' | 'mixed';
 
@@ -442,7 +456,6 @@ export class RepairFormComponent implements OnInit {
 
   // ─── Garment Print Ticket ─────────────────────────────────────
   async onPrintTicketRequest(data: GarmentTicketData): Promise<void> {
-    console.log('Received print ticket request with data:', data);
     this.garmentTicketData = data;
     this.showGarmentPrintTicket = true;
 
@@ -643,6 +656,93 @@ export class RepairFormComponent implements OnInit {
   private calculateAdvancePaymentMaximum(items: RepairItem[] = this.repairItems): number {
     const totalEstimated = items.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0);
     return totalEstimated > 0 ? Math.round(totalEstimated * 100) / 100 : 0;
+  }
+
+  private addWorkMinutes(start: Date, minutes: number): Date {
+    let current = this.normalizeToWorkStart(start);
+    let remaining = Math.max(0, Math.floor(minutes));
+
+    while (remaining > 0) {
+      const period = this.getWorkPeriod(current);
+      if (!period) {
+        current = this.moveToNextWorkStart(current);
+        continue;
+      }
+
+      const periodEnd = new Date(current);
+      periodEnd.setHours(period.endHour, period.endMinute, 0, 0);
+      const availableMinutes = Math.max(0, Math.ceil((periodEnd.getTime() - current.getTime()) / 60000));
+
+      if (availableMinutes <= 0) {
+        current = this.moveToNextWorkStart(current);
+        continue;
+      }
+
+      const consume = Math.min(remaining, availableMinutes);
+      current = new Date(current.getTime() + consume * 60000);
+      remaining -= consume;
+
+      if (remaining > 0) {
+        current = this.moveToNextWorkStart(current);
+      }
+    }
+
+    return current;
+  }
+
+  private normalizeToWorkStart(date: Date): Date {
+    const normalized = new Date(date.getTime());
+    const period = this.getWorkPeriod(normalized);
+
+    if (!period) {
+      return this.moveToNextWorkStart(normalized);
+    }
+
+    const start = new Date(normalized);
+    start.setHours(period.startHour, period.startMinute, 0, 0);
+    const end = new Date(normalized);
+    end.setHours(period.endHour, period.endMinute, 0, 0);
+
+    if (normalized < start) {
+      return start;
+    }
+
+    if (normalized >= end) {
+      return this.moveToNextWorkStart(normalized);
+    }
+
+    return normalized;
+  }
+
+  private getWorkPeriod(date: Date): { startHour: number; startMinute: number; endHour: number; endMinute: number } | null {
+    const day = date.getDay();
+
+    if (day >= 1 && day <= 5) {
+      return { startHour: 8, startMinute: 0, endHour: 17, endMinute: 0 };
+    }
+
+    if (day === 6) {
+      return { startHour: 10, startMinute: 0, endHour: 14, endMinute: 0 };
+    }
+
+    return null;
+  }
+
+  private moveToNextWorkStart(date: Date): Date {
+    const next = new Date(date.getTime());
+    next.setHours(0, 0, 0, 0);
+
+    do {
+      next.setDate(next.getDate() + 1);
+      
+      const period = this.getWorkPeriod(next);
+      
+      if (period) {
+        next.setHours(period.startHour, period.startMinute, 0, 0);
+        
+        return next;
+      }
+    } while (true);
   }
 
   private advancePaymentMinValidator(): ValidatorFn {

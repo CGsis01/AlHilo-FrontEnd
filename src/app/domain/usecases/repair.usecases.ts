@@ -47,6 +47,10 @@ export class RepairUseCases {
     return this.repairRepository.getByAssignedUser(userId);
   }
 
+  getRepairsEstimatedTime(): Observable<number> {
+    return this.repairRepository.getEstimatedTime();
+  }
+
   assignRepairToSeamstress(repairId: string, seamstress: User): Observable<Repair> {
     return this.repairRepository.assignToSeamstress(repairId, seamstress);
   }

@@ -128,6 +128,10 @@ export class RepairApiService {
     return this.getAll({ repair_status_id: status });
   }
 
+  getEstimatedTime(): Observable<number> {
+    return this.apiService.get<number>(`${this.endpoint}/estimated-time`);
+  }
+
   getByAssignedUser(userId: string): Observable<Repair[]> {
     return this.getAll({ assigned_to_id: userId });
   }
