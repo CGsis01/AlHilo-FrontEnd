@@ -105,6 +105,10 @@ export class RepairRepository implements Repository<Repair> {
     return this.repairApiService.getByStatus(status);
   }
 
+  getEstimatedTime(): Observable<number> {
+    return this.repairApiService.getEstimatedTime();
+  }
+
   addComment(repairId: string, comment: string, createdBy: string): Observable<RepairComment> {
     return this.repairApiService.addComment(repairId, comment, createdBy);
   }
