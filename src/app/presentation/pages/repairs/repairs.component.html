@@ -38,6 +38,10 @@
           <span class="label">Teléfono:</span>
           <span class="value">{{ repair.customerPhone }}</span>
         </div>
+        <div class="info-row" *ngIf="repair.items?.length">
+          <span class="label">Prendas:</span>
+          <span class="value">{{ repair.items?.length || 0 }}</span>
+        </div>
         <div class="info-row" *ngIf="userRole?.code !== UserRole.SEAMSTRESS && userRole?.code !== UserRole.HEADSEWING">
           <span class="label">Precio:</span>
           <span class="value price">${{ repair.estimatedPrice }}</span>
