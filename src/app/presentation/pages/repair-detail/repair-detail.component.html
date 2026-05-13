@@ -454,11 +454,7 @@
 </div>
 
 <!-- Repair Reprint Ticket -->
-<div
-  class="modal-overlay ticket-modal"
-  *ngIf="showTicket()"
-  (click)="closeTicket()"
->
+<div class="modal-overlay ticket-modal" *ngIf="showTicket()" (click)="closeTicket()">
   <div class="ticket-container" (click)="$event.stopPropagation()">
     <ng-container *ngIf="activeTicketItem as item; else singleTicket">
       <div class="ticket-page">
