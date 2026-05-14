@@ -195,11 +195,6 @@
   }
 }
 
-// Ticket Modal Styles
-.ticket-modal {
-  z-index: 1001;
-}
-
 // Payment Modal Styles
 .payment-modal-overlay {
   z-index: 1002;
@@ -439,6 +434,11 @@
   }
 }
 
+// Ticket Modal Styles
+.ticket-modal {
+  z-index: 1001;
+}
+
 .ticket-container {
   background: white;
   border-radius: 12px;
@@ -482,15 +482,15 @@
   }
   
   .ticket-subtitle {
+    font-size: 0.72rem;
+    font-weight: 700;
     margin: 0;
-    font-size: 0.875rem;
-    color: #6b7280;
+    color: #000;
   }
 }
 
 .ticket-qr {
   text-align: center;
-  // margin: 0;
   padding: 1rem;
   background: #f9fafb;
   border-radius: 8px;
@@ -500,12 +500,11 @@
     margin: 0 auto;
     width: 200px;
     height: 200px;
-    border: 4px solid #fff;
+    border: 1px solid #fff;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
   
   .qr-label {
-    // margin: 0.5rem 0 0 0;
     font-size: 0.75rem;
     color: #6b7280;
   }
@@ -525,15 +524,15 @@
   gap: 1rem;
   
   .ticket-label {
-    font-weight: 600;
-    color: #4b5563;
-    font-size: 0.875rem;
+    font-weight: 700;
+    color: #000;
+    font-size: 0.74rem;
     white-space: nowrap;
   }
   
   .ticket-value {
-    color: #1f2937;
-    font-size: 0.875rem;
+    color: #000;
+    font-size: 0.74rem;
     text-align: right;
     
     &.status {
@@ -618,7 +617,13 @@
 @media print {
   @page {
     size: 3in auto;
-    margin: 3mm 4mm;
+    margin: 0;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .no-print {
@@ -648,7 +653,7 @@
   .ticket-container {
     width: 3in;
     max-width: 3in;
-    margin: 0 auto;
+    margin: 0 !important;
     max-height: none;
     overflow: visible;
     box-shadow: none;
@@ -661,7 +666,6 @@
   .ticket-page {
     break-after: page;
     page-break-after: always;
-    border: 1px solid #000;
     background: white;
     page-break-inside: avoid;
   }
@@ -672,9 +676,13 @@
   }
 
   .ticket-content {
+    width: 40%;
+    margin: 0 auto;
     padding: 0.35rem;
     color: #000;
     page-break-inside: avoid;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .ticket-title {
@@ -708,7 +716,8 @@
       width: 130px;
       height: 130px;
       margin: 0 auto;
-      border: 2px solid #000;
+      border: 1px solid #000;
+      border-radius: 6px;
       image-rendering: crisp-edges;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -719,8 +728,8 @@
   .ticket-info {
     margin: 0.35rem 0;
     padding: 0.5rem 0;
-    border-top: 3px solid #000;
-    border-bottom: 3px solid #000;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
     page-break-inside: avoid;
   }
 
@@ -762,8 +771,8 @@
       font-weight: 600;
       color: #000;
       padding: 0.25rem 0.35rem;
-      border: 2px solid #000;
-      border-radius: 0;
+      border: 1px solid #000;
+      border-radius: 6px;
       background: white;
       line-height: 1.35;
       white-space: pre-wrap;
@@ -775,14 +784,6 @@
   .detail-container,
   .modal-overlay {
     display: none;
-  }
-
-  .receipt-overlay {
-    display: none;
-  }
-
-  .receipt-topbar {
-    display: none !important;
   }
 }
 

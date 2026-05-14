@@ -198,16 +198,18 @@
 </div>
 
 <!-- Ticket de Prenda (fuera del form-container para evitar el media print) -->
-<div class="garment-ticket-overlay" *ngIf="showGarmentPrintTicket" (click)="$event.stopPropagation()">
+<div class="ticket-modal" *ngIf="showGarmentPrintTicket" (click)="$event.stopPropagation()">
   <div class="ticket-page-service">
     <div class="ticket-content">
       <div class="ticket-title">
         <h3>Al Hilo - Taller de Costura</h3>
         <p class="ticket-subtitle">Orden de Trabajo</p>
       </div>
+      
       <div class="ticket-qr">
         <img [src]="garmentTicketData!.qrCodeDataUrl" alt="QR Code" class="qr-code" />
       </div>
+      
       <div class="ticket-info">
         <div class="ticket-row">
           <span class="ticket-label">Cliente:</span>
