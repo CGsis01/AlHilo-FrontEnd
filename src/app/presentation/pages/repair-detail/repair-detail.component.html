@@ -755,11 +755,7 @@
 </div>
 
 <!-- Payment Receipt Ticket -->
-<div
-  class="receipt-overlay"
-  *ngIf="showPaymentTicket()"
-  (click)="closePaymentTicket()"
->
+<div class="receipt-overlay" *ngIf="showPaymentTicket()" (click)="closePaymentTicket()">
   <div class="receipt-wrapper" (click)="$event.stopPropagation()">
     <!-- Screen-only actions bar -->
     <div class="receipt-topbar no-print">
@@ -779,7 +775,6 @@
       <!-- Header -->
       <div class="receipt-brand">
         <div class="receipt-brand-headline">
-          <span class="receipt-brand-logo">🧵</span>
           <h1 class="receipt-brand-name">Al Hilo</h1>
         </div>
         <p class="receipt-brand-sub">Taller de Costura Profesional</p>
@@ -957,15 +952,6 @@
       <div class="receipt-section">
         <h3 class="receipt-section-title">FORMA DE PAGO</h3>
         <div class="receipt-payment-method">
-          <span class="receipt-payment-icon">
-            {{
-              paidPaymentType === "cash"
-                ? "💵"
-                : paidPaymentType === "card"
-                  ? "💳"
-                  : "💵💳"
-            }}
-          </span>
           <div class="receipt-payment-info">
             <span class="receipt-payment-name">
               {{
