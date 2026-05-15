@@ -742,14 +742,16 @@
   }
 
   .ticket-label {
-    font-size: 0.74rem;
+    // font-size: 0.74rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #000;
     white-space: nowrap;
   }
 
   .ticket-value {
-    font-size: 0.74rem;
+    // font-size: 0.74rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #000;
     text-align: right;
@@ -760,7 +762,8 @@
     page-break-inside: avoid;
 
     .ticket-block-label {
-      font-size: 0.68rem;
+      // font-size: 0.68rem;
+      font-size: 1rem;
       font-weight: 700;
       color: #000;
       margin-bottom: 0.15rem;
@@ -768,7 +771,8 @@
     }
 
     .ticket-block-value {
-      font-size: 0.72rem;
+      // font-size: 0.72rem;
+      font-size: 1rem;
       font-weight: 600;
       color: #000;
       padding: 0.25rem 0.35rem;
