@@ -35,6 +35,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DateFormatDirective } from '../../../shared/directives/date-format.directive';
 import { GarmentTicketData } from '../../components/garment-selector-modal/garment-selector-modal.component';
+import html2pdf from 'html2pdf.js';
 
 @Component({
   selector: 'app-repair-form',
@@ -876,9 +877,31 @@ export class RepairFormComponent implements OnInit {
     }
   }
 
-  private openAdvancePaymentTicket(): void {
+  private openAdvancePaymentTicket(): Promise<void> {
     this.pendingAdvancePaymentTicket.set(false);
     this.showAdvancePaymentTicket.set(true);
+
+    return new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(async () => {
+          try {
+            const blob = await this.convertirHtmlAPdf();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'AdvancePayment.pdf';
+            document.body.appendChild(a);
+            a.click()
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          } catch (error) {
+            console.error('Error al generar PDF del anticipo:', error);
+          } finally {
+            resolve();
+          }
+        });
+      });
+    });
   }
 
   private async triggerWorkOrderPrint(redirectAfterPrint = false): Promise<void> {
@@ -886,18 +909,14 @@ export class RepairFormComponent implements OnInit {
       return;
     }
     if (this.pendingAdvancePaymentTicket()) {
-      this.openAdvancePaymentTicket();
+      await this.openAdvancePaymentTicket();
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          this.printAdvancePaymentTicket();
-          this.closeAdvancePaymentTicket();
+      this.printAdvancePaymentTicket();
+      this.closeAdvancePaymentTicket();
 
-          if (redirectAfterPrint) {
-            void this.router.navigate(['/repairs']);
-          }
-        });
-      });
+      if (redirectAfterPrint) {
+        void this.router.navigate(['/repairs']);
+      }
 
       return;
     }
@@ -927,5 +946,68 @@ export class RepairFormComponent implements OnInit {
     this.advancePaymentDate = Number.isFinite(createdAt.getTime()) ? createdAt : new Date();
 
     this.pendingAdvancePaymentTicket.set(true);
+  }
+
+  async convertirHtmlAPdf(): Promise<Blob> {
+    const elemento = document.getElementById('AdvancePayment') as HTMLElement;
+
+    if (!elemento) {
+      throw new Error('No se encontró el elemento #AdvancePayment en el DOM');
+    }
+
+    // Pre-fetchear y parchear los CSS — html2canvas parsea los <link> ANTES de onclone
+    // y se rompe con oklch (DaisyUI v4). Los reemplazamos con #000000 como fallback.
+    const patchedCSSMap = new Map<string, string>();
+    await Promise.all(
+      Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')).map(async link => {
+        try {
+          const css = await fetch(link.href).then(r => r.text());
+          patchedCSSMap.set(link.href, css.replace(/oklch\([^)]*\)/g, '#000000'));
+        } catch { /* skip */ }
+      })
+    );
+
+    // Capturar colores computados (browser ya resolvió oklch → rgb)
+    const origEls = [elemento, ...Array.from(elemento.querySelectorAll<HTMLElement>('*'))];
+    const computedStyles = origEls.map(el => {
+      const cs = window.getComputedStyle(el);
+      return { bg: cs.backgroundColor, color: cs.color, borderColor: cs.borderColor };
+    });
+
+    const opciones = {
+      margin: 20,
+      filename: 'AdvancePayment.pdf',
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        onclone: (clonedDoc: Document, clonedEl: HTMLElement) => {
+          // Sustituir <link> por <style> con CSS parchado (sin oklch)
+          clonedDoc.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]').forEach(link => {
+            const patched = patchedCSSMap.get(link.href);
+            if (patched) {
+              const style = clonedDoc.createElement('style');
+              style.textContent = patched;
+              link.replaceWith(style);
+            }
+          });
+
+          // Aplicar colores rgb() como inline styles en el receipt
+          const clonedEls = [clonedEl, ...Array.from(clonedEl.querySelectorAll<HTMLElement>('*'))];
+          clonedEls.forEach((el, i) => {
+            const s = computedStyles[i];
+            if (s) {
+              el.style.backgroundColor = s.bg;
+              el.style.color = s.color;
+              el.style.borderColor = s.borderColor;
+            }
+          });
+        }
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }as const;
+
+    const blob = await html2pdf().set(opciones).from(elemento).outputPdf('blob').then();
+    return blob;
   }
 }
