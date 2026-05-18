@@ -373,31 +373,33 @@ export class RepairFormComponent implements OnInit {
       next: (result) => {
         const clients = this.normalizeClientSearchResult(result);
 
-        if (clients.length === 1) {
-          this.matchingClients = [];
-          this.showClientSelectionModal.set(false);
-          this.selectedClient = clients[0];
-          this.fillClientData(clients[0]);
-        } else if (clients.length > 1) {
-          this.selectedClient = null;
-          this.matchingClients = clients;
-          this.clearClientData();
-          this.showClientSelectionModal.set(true);
-        } else {
+        const existClientMainPhone = clients.filter(c => c.personalPhone === phone);
+
+        if(existClientMainPhone.length === 0){
           this.selectedClient = null;
           this.matchingClients = [];
           this.showClientSelectionModal.set(false);
           this.clearClientData();
+
           // Auto-open modal when client not found
           setTimeout(() => this.openClientModal(), 300);
+        } else {
+          if (clients.length === 1) {
+            this.matchingClients = [];
+            this.showClientSelectionModal.set(false);
+            this.selectedClient = clients[0];
+            this.fillClientData(clients[0]);
+          } else if (clients.length > 1) {
+            this.selectedClient = null;
+            this.matchingClients = clients;
+            this.clearClientData();
+            this.showClientSelectionModal.set(true);
+          }
         }
-
-        this.isSearching.set(false);
       },
-      error: () => {
-        this.searchMessage = 'Error al buscar cliente';
-        this.isSearching.set(false);
-      }});
+      error: () => { this.searchMessage = 'Error al buscar cliente'; }});
+    
+    this.isSearching.set(false);
   }
 
   fillClientData(client: Client): void {
