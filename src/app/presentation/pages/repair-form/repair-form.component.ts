@@ -22,6 +22,7 @@ import { PaymentUseCases } from '../../../domain/usecases/payment.usecases';
 import { ClientUseCases } from '../../../domain/usecases/client.usecases';
 import { Client } from '../../../core/models/client.model';
 import { ClientModalComponent } from '../../components/client-modal/client-modal.component';
+import { ClientSelectionModalComponent } from '../../components/client-selection-modal/client-selection-modal.component';
 
 import { RepairItemsEditorComponent } from '../../components/repair-items-editor/repair-items-editor.component';
 import { RepairItem } from '../../../core/models/repair-item.model';
@@ -38,7 +39,7 @@ import { GarmentTicketData } from '../../components/garment-selector-modal/garme
 @Component({
   selector: 'app-repair-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ClientModalComponent, RepairItemsEditorComponent, DateFormatDirective],
+  imports: [CommonModule, ReactiveFormsModule, ClientModalComponent, ClientSelectionModalComponent, RepairItemsEditorComponent, DateFormatDirective],
   templateUrl: './repair-form.component.html',
   styleUrls: ['./repair-form.component.scss']
 })
@@ -57,10 +58,12 @@ export class RepairFormComponent implements OnInit {
   // ─── Customer ─────────────────────────────────────────────────
   isSearching = signal(false);
   showClientModal = signal(false);
+  showClientSelectionModal = signal(false);
 
   searchMessage = '';
 
   selectedClient: Client | null = null;
+  matchingClients: Client[] = [];
 
   // ─── Repair Items ─────────────────────────────────────────────
   selectedRepairType: RepairType | null = null;
@@ -367,18 +370,34 @@ export class RepairFormComponent implements OnInit {
     this.searchMessage = '';
     
     this.clientUseCases.searchByPhone(phone).subscribe({
-      next: (client) => {
-        if (client) {
-          this.selectedClient = client;
-          this.fillClientData(client);
+      next: (result) => {
+        const clients = this.normalizeClientSearchResult(result);
+
+        if (clients.length === 1) {
+          this.matchingClients = [];
+          this.showClientSelectionModal.set(false);
+          this.selectedClient = clients[0];
+          this.fillClientData(clients[0]);
+        } else if (clients.length > 1) {
+          this.selectedClient = null;
+          this.matchingClients = clients;
+          this.clearClientData();
+          this.showClientSelectionModal.set(true);
         } else {
           this.selectedClient = null;
+          this.matchingClients = [];
+          this.showClientSelectionModal.set(false);
+          this.clearClientData();
           // Auto-open modal when client not found
           setTimeout(() => this.openClientModal(), 300);
-        }},
-      error: () => { this.searchMessage = 'Error al buscar cliente';}});
-    
-    this.isSearching.set(false);
+        }
+
+        this.isSearching.set(false);
+      },
+      error: () => {
+        this.searchMessage = 'Error al buscar cliente';
+        this.isSearching.set(false);
+      }});
   }
 
   fillClientData(client: Client): void {
@@ -397,10 +416,19 @@ export class RepairFormComponent implements OnInit {
 
   onClientCreated(client: Client): void {
     this.selectedClient = client;
+    this.matchingClients = [];
     this.fillClientData(client);
     this.searchMessage = '✓ Cliente creado exitosamente';
     
     this.showClientModal.set(false);
+  }
+
+  onClientSelected(client: Client): void {
+    this.selectedClient = client;
+    this.matchingClients = [];
+    this.fillClientData(client);
+    this.searchMessage = '✓ Cliente seleccionado';
+    this.showClientSelectionModal.set(false);
   }
 
   openClientModal(): void {
@@ -409,6 +437,11 @@ export class RepairFormComponent implements OnInit {
 
   closeClientModal(): void {
     this.showClientModal.set(false);
+  }
+
+  closeClientSelectionModal(): void {
+    this.showClientSelectionModal.set(false);
+    this.matchingClients = [];
   }
 
   // ─── Repair Items ─────────────────────────────────────────────
@@ -797,6 +830,14 @@ export class RepairFormComponent implements OnInit {
       const name = type.name?.toLowerCase() || '';
       
       return aliases.some(alias => code.includes(alias) || name.includes(alias));});
+  }
+
+  private normalizeClientSearchResult(result: Client | Client[] | null | undefined): Client[] {
+    if (!result) {
+      return [];
+    }
+
+    return Array.isArray(result) ? result : [result];
   }
 
   private handleRepairCreated(repair: Repair): void {

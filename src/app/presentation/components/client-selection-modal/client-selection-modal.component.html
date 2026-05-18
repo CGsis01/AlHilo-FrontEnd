@@ -1,0 +1,36 @@
+<div class="modal-backdrop" *ngIf="isOpen" (click)="onBackdropClick($event)">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div>
+        <h2>Seleccionar Cliente</h2>
+        <p class="modal-subtitle" *ngIf="phoneNumber">Se encontraron varios clientes con el teléfono {{ phoneNumber }}</p>
+      </div>
+      <button type="button" class="close-btn" (click)="close.emit()" aria-label="Cerrar">
+        <span>×</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="client-list" *ngIf="clients.length > 0; else emptyState">
+        <button type="button" class="client-card" *ngFor="let client of clients" (click)="selectClient(client)">
+          <div class="client-card__header">
+            <span class="client-card__name">{{ client.fullName }}</span>
+            <span class="client-card__phone">{{ client.personalPhone }}</span>
+          </div>
+          <span class="client-card__meta" *ngIf="client.email">{{ client.email }}</span>
+          <span class="client-card__meta">Contacto: {{ client.contactPhone ?? '-' }}</span>
+        </button>
+      </div>
+
+      <ng-template #emptyState>
+        <div class="empty-state">No hay clientes para mostrar.</div>
+      </ng-template>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" (click)="close.emit()">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,6 +1,7 @@
 import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { register as registerSwiperElements } from 'swiper/element/bundle';
 import { RepairUseCases } from '../../../domain/usecases/repair.usecases';
 import { Repair, RepairStatusEnum } from '../../../core/models/repair.model';
 import { AuthService } from '../../../core/services/auth.service';
@@ -61,8 +62,7 @@ export class RepairsComponent implements OnInit {
       return;
     }
 
-    const { register } = await import('swiper/element/bundle');
-    register();
+    registerSwiperElements();
   }
 
   loadRepairs(): void {

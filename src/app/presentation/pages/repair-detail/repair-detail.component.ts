@@ -4,6 +4,7 @@ import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { register as registerSwiperElements } from 'swiper/element/bundle';
 import { UserUseCases } from '../../../domain/usecases/user.usecases';
 import { RepairUseCases } from '../../../domain/usecases/repair.usecases';
 import { RepairStatusUseCases } from '../../../domain/usecases/repair-status.usecases';
@@ -133,16 +134,14 @@ export class RepairDetailComponent implements OnInit {
       this.router.navigate(['/repairs']);
     }
 
-    const { register } = await import('swiper/element/bundle');
-    register();
+    await this.ensureSwiper();
   }
 
   // ─── Repair ───────────────────────────────────────────────────
   private async ensureSwiper(): Promise<void> {
     if (typeof customElements === 'undefined') return;
     if (customElements.get('swiper-container')) return;
-    const { register } = await import('swiper/element/bundle');
-    register();
+    registerSwiperElements();
   }
 
   loadRepair(id: string): void {
