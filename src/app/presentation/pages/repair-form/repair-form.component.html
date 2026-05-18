@@ -195,6 +195,14 @@
     (close)="closeClientModal()"
     (clientCreated)="onClientCreated($event)">
   </app-client-modal>
+
+  <app-client-selection-modal
+    [isOpen]="showClientSelectionModal()"
+    [clients]="matchingClients"
+    [phoneNumber]="repairForm.get('customerPhone')?.value || ''"
+    (close)="closeClientSelectionModal()"
+    (clientSelected)="onClientSelected($event)">
+  </app-client-selection-modal>
 </div>
 
 <!-- Ticket de Prenda (fuera del form-container para evitar el media print) -->
