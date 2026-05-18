@@ -107,7 +107,7 @@
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-group full-width">
-          <label for="fullName">Nombre Completo *</label>
+          <label for="fullName">Nombre Completo* <p class="text-gray-500">¿A nombre de quién quiere que quede registrado su servicio?</p></label>
           <input id="fullName"
             type="text"
             [(ngModel)]="editingClient.fullName"
@@ -115,8 +115,8 @@
             class="form-input" />
         </div>
 
-        <div class="form-group">
-          <label for="personalPhone">Teléfono Personal *</label>
+        <div class="form-group full-width">
+          <label for="personalPhone">Teléfono Personal* <p class="text-gray-500">¿Qué número podemos dejar registrado para comunicarnos con usted?</p></label>
           <input id="personalPhone"
             type="tel"
             [value]="editingClient.personalPhone || ''"
@@ -126,8 +126,8 @@
             class="form-input" />
         </div>
 
-        <div class="form-group">
-          <label for="contactPhone">Teléfono de Contacto</label>
+        <div class="form-group full-width">
+          <label for="contactPhone">Teléfono de Contacto <p class="text-gray-500">¿Desearía dejar algún otro número en caso de no localizarle?</p></label>
           <input id="contactPhone"
             type="tel"
             [value]="editingClient.contactPhone || ''"
@@ -138,7 +138,7 @@
         </div>
 
         <div class="form-group full-width">
-          <label for="address">Dirección *</label>
+          <label for="address">Dirección* <p class="text-gray-500">¿Para futuras entregas a domicilio, quisiera dejarnos su dirección?</p></label>
           <input id="address"
             type="text"
             [(ngModel)]="editingClient.address"
@@ -146,8 +146,8 @@
             class="form-input" />
         </div>
 
-        <div class="form-group">
-          <label for="email">Email</label>
+        <div class="form-group full-width">
+          <label for="email">Email <p class="text-gray-500">¿Qué correo le registramos para seguimiento y promociones?</p></label>
           <input id="email"
             type="email"
             [(ngModel)]="editingClient.email"
@@ -155,12 +155,16 @@
             class="form-input" />
         </div>
 
-        <div class="form-group">
-          <label for="birthDate">Fecha de Nacimiento</label>
+        <div class="form-group full-width">
+          <label for="birthDate">Fecha de Nacimiento <p class="text-gray-500">Contamos con promociones especiales en cumpleaños, ¿quisiera dejarme su fecha de nacimiento?</p></label>
           <input appDateFormat
             id="birthDate"
             [(ngModel)]="birthDateStr"
             class="form-input" />
+        </div>
+
+        <div class="form-group full-width text-center">
+          <label for="redes"><p class="text-gray-500">¿Me podría regalar el usuario de la red social que más frecuenta?</p></label>
         </div>
 
         <div class="form-group">
@@ -168,7 +172,7 @@
           <input id="facebook"
             type="text"
             [(ngModel)]="editingClient.facebook"
-            placeholder="usuario.facebook"
+            placeholder="@usuario"
             class="form-input" />
         </div>
 
@@ -182,7 +186,7 @@
         </div>
 
         <div class="form-group full-width">
-          <label for="customerStore">Sucursal *</label>
+          <label for="customerStore">Sucursal*</label>
           <select id="customerStore" [(ngModel)]="editingClient.store.id" (ngModelChange)="onStoreChange($event)" class="form-select">
             <option value="">Seleccione la sucursal</option>
             <option *ngFor="let store of stores()" [value]="store.id">{{ store.name }}</option>
