@@ -34,7 +34,7 @@ export class ClientUseCases {
     return this.clientRepository.delete(id, storeId);
   }
 
-  searchByPhone(phone: string): Observable<Client | undefined> {
+  searchByPhone(phone: string): Observable<Client[]> {
     return this.clientRepository.searchByPhone(phone);
   }
 }
