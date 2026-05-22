@@ -71,10 +71,10 @@ export class ClientRepository implements Repository<Client> {
           observer.error(error);}});});
   }
 
-  searchByPhone(phone: string): Observable<Client | undefined> {
+  searchByPhone(phone: string): Observable<Client[]> {
     const storeId = getStoredStoreId();
 
     return this.clientApiService.searchByPhone(phone, storeId)
-    .pipe(map(client => client || undefined));
+    .pipe(map(clients => clients || []));
   }
 }

@@ -389,25 +389,23 @@
 
 .ticket-title {
   text-align: center;
-  // margin-bottom: 0.5rem;
   
   h3 {
-    // margin: 0 0 0.25rem 0;
     font-size: 1.5rem;
     font-weight: 700;
     color: #1f2937;
   }
   
   .ticket-subtitle {
+    font-size: 0.72rem;
+    font-weight: 700;
     margin: 0;
-    font-size: 0.875rem;
-    color: #6b7280;
+    color: #000;
   }
 }
 
 .ticket-qr {
   text-align: center;
-  // margin: 0;
   padding: 1rem;
   background: #f9fafb;
   border-radius: 8px;
@@ -417,12 +415,11 @@
     margin: 0 auto;
     width: 200px;
     height: 200px;
-    border: 4px solid #fff;
+    border: 1px solid #fff;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
   
   .qr-label {
-    // margin: 0.5rem 0 0 0;
     font-size: 0.75rem;
     color: #6b7280;
   }
@@ -442,15 +439,15 @@
   gap: 1rem;
   
   .ticket-label {
-    font-weight: 600;
-    color: #4b5563;
-    font-size: 0.875rem;
+    font-weight: 700;
+    color: #000;
+    font-size: 0.74rem;
     white-space: nowrap;
   }
   
   .ticket-value {
-    color: #1f2937;
-    font-size: 0.875rem;
+    color: #000;
+    font-size: 0.74rem;
     text-align: right;
     
     &.status {
@@ -898,8 +895,14 @@
 // Print styles
 @media print {
   @page {
-    size: 80mm auto;
-    margin: 8mm 4mm 6mm;
+    size: 3in auto;
+    margin: 0;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .no-print {
@@ -917,43 +920,48 @@
     margin: 0;
     padding: 0;
     background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  img {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .ticket-container {
-    display: block !important;
-    width: 80mm !important;
-    max-width: 80mm !important;
-    margin: 0 auto;
-    padding-top: 2mm;
-    box-sizing: border-box;
+    width: 3in;
+    max-width: 3in;
+    margin: 0 !important;
     max-height: none;
     overflow: visible;
     box-shadow: none;
     border-radius: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: white;
+    color: #000;
   }
 
   .ticket-page-service {
-    display: block;
-    width: 100%;
-    max-width: 100%;
-    margin: 0 0 4mm;
-    padding-bottom: 4mm;
-    border: 0;
-    border-radius: 0;
     break-after: page;
     page-break-after: always;
+    background: white;
+    page-break-inside: avoid;
   }
 
   .ticket-page:last-child {
-    margin-bottom: 0;
     break-after: auto;
     page-break-after: auto;
   }
 
   .ticket-content {
-    padding: 0.25rem;
     width: 40%;
     margin: 0 auto;
+    padding: 0.35rem;
+    color: #000;
+    page-break-inside: avoid;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .ticket-title {
@@ -961,65 +969,110 @@
 
     h3 {
       margin: 0 0 0.1rem;
-      font-size: 1rem;
+      font-size: 1.08rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #000;
     }
   }
 
   .ticket-subtitle {
-    font-size: 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 700;
     margin: 0;
+    color: #000;
   }
 
   .ticket-qr {
-    padding: 0.25rem;
+    padding: 0.35rem;
+    background: white;
+    border: none;
+    display: block;
+    text-align: center;
 
     .qr-code {
-      width: 118px;
-      height: 118px;
+      display: block;
+      width: 130px;
+      height: 130px;
+      margin: 0 auto;
+      border: 1px solid #000;
+      border-radius: 6px;
+      image-rendering: crisp-edges;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      page-break-inside: avoid;
     }
   }
 
   .ticket-info {
-    margin: 0.25rem 0;
-    padding: 0.35rem 0;
+    margin: 0.35rem 0;
+    padding: 0.5rem 0;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+    page-break-inside: avoid;
   }
 
   .ticket-row {
     gap: 0.4rem;
-    padding: 0.05rem 0;
+    padding: 0.15rem 0;
+    color: #000;
+    page-break-inside: avoid;
   }
 
-  .ticket-label,
+  .ticket-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #000;
+    white-space: nowrap;
+  }
+
   .ticket-value {
-    font-size: 0.68rem !important;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #000;
+    text-align: right;
   }
 
   .ticket-block {
-    margin: 0.2rem 0;
+    margin: 0.3rem 0;
+    page-break-inside: avoid;
 
     .ticket-block-label {
-      font-size: 0.62rem !important;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #000;
       margin-bottom: 0.15rem;
+      display: block;
     }
 
     .ticket-block-value {
-      font-size: 0.65rem !important;
-      padding: 0.25rem 0.35rem !important;
-      border-radius: 0 !important;
-      background: none !important;
-      border-color: #000 !important;
-      line-height: 1.35 !important;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #000;
+      padding: 0.25rem 0.35rem;
+      border: 1px solid #000;
+      border-radius: 6px;
+      background: white;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      min-height: 1.5rem;
+      display: block;
     }
   }
 }
 
 // Print: payment receipt
 @media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
   .receipt-overlay {
     display: flex !important;
     position: static !important;
     align-items: flex-start !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     background: white !important;
     padding: 0 !important;
     overflow: visible !important;
@@ -1030,7 +1083,7 @@
   .receipt-wrapper {
     width: 80mm !important;
     max-width: 80mm !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
   }
 
   .receipt-topbar { display: none !important; }
@@ -1041,86 +1094,96 @@
     padding: 0.35rem !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    page-break-inside: avoid;
+    font-family: Arial, Helvetica, sans-serif;
+    background: white;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .receipt-brand          { gap: 0.25rem !important; margin-bottom: 0.5rem !important; }
   .receipt-brand-headline { gap: 0.35rem !important; }
-  .receipt-brand-logo     { font-size: 1.2rem !important; }
-  .receipt-brand-name     { font-size: 1rem !important; }
-  .receipt-brand-sub      { font-size: 0.58rem !important; margin-top: 0.1rem !important; }
+
+  .receipt-brand-name     { font-size: 1rem !important; font-weight: 800; color: #000; }
+  .receipt-brand-sub      { font-size: 0.58rem !important; margin-top: 0.1rem !important; font-weight: 700; color: #000; }
 
   .receipt-title-block    { margin: 0.4rem 0 0.6rem !important; }
-  .receipt-title          { font-size: 0.85rem !important; }
-  .receipt-subtitle       { font-size: 0.6rem !important; }
+  .receipt-title          { font-size: 0.85rem !important; color:#000; }
+  .receipt-subtitle       { font-size: 0.6rem !important; color:#000; }
 
-  .receipt-divider-thick  { border-top: 2px solid #000 !important; margin: 0.4rem 0 !important; }
-  .receipt-divider        { border-top: 1px dashed #555 !important; margin: 0.6rem 0 !important; }
+  .receipt-divider-thick  { border-top: 1px solid #000 !important; margin: 0.4rem 0 !important; }
+  .receipt-divider        { border-top: 1px dashed #000 !important; margin: 0.6rem 0 !important; }
 
   .receipt-meta {
     grid-template-columns: 1fr 1fr !important;
     gap: 0.25rem 0.5rem !important;
-    background: none !important;
+    background: white !important;
     border: 1px solid #000 !important;
-    border-radius: 0 !important;
+    border-radius: 6px;
     padding: 0.4rem 0.5rem !important;
   }
-  .receipt-meta-label     { font-size: 0.55rem !important; }
-  .receipt-meta-value     { font-size: 0.7rem !important; }
+  .receipt-meta-label     { font-size: 0.55rem !important; font-weight: 700; color: #000; }
+  .receipt-meta-value     { font-size: 0.7rem !important; font-weight: 600; color: #000; }
 
-  .receipt-section-title  { font-size: 0.58rem !important; margin-bottom: 0.3rem !important; }
+  .receipt-section-title  { font-size: 0.58rem !important; margin-bottom: 0.3rem !important; font-weight: 800; color: #000; }
 
   .receipt-row            { padding: 0.15rem 0 !important; }
-  .receipt-row-label      { font-size: 0.7rem !important; }
-  .receipt-row-value      { font-size: 0.7rem !important; }
+  .receipt-row-label      { font-size: 0.7rem !important; font-weight: 700; color: #000; }
+  .receipt-row-value      { font-size: 0.7rem !important; font-weight: 600; color: #000; }
 
-  .receipt-service-table  { border: 1px solid #000 !important; border-radius: 0 !important; }
+  .receipt-service-table  { background: white; border: 1px solid #000 !important; border-radius: 6px; }
   .receipt-service-header {
-    background: none !important;
+    background: white !important;
     border-bottom: 1px solid #000 !important;
     padding: 0.25rem 0.5rem !important;
     font-size: 0.58rem !important;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   .receipt-service-row    { padding: 0.35rem 0.5rem !important; gap: 0.4rem !important; }
-  .receipt-service-name   { font-size: 0.7rem !important; }
-  .receipt-service-desc   { font-size: 0.62rem !important; }
-  .receipt-service-price  { font-size: 0.75rem !important; }
+  .receipt-service-name   { font-size: 0.7rem !important; color: #000; }
+  .receipt-service-desc   { font-size: 0.62rem !important; color: #000; }
+  .receipt-service-price  { font-size: 0.75rem !important; color: #000; }
 
   .receipt-totals {
-    background: none !important;
+    background: white;
     border: 1px solid #000 !important;
-    border-radius: 0 !important;
+    border-radius: 6px;
     padding: 0.4rem 0.5rem !important;
   }
   .receipt-total-row          { font-size: 0.7rem !important; padding: 0.1rem 0 !important; }
-  .receipt-total-final        { border-top-color: #000 !important; padding-top: 0.3rem !important; margin-top: 0.25rem !important; }
+  .receipt-total-label        { font-size: 0.55rem !important; padding: 0.1rem 0 !important; font-weight: 700; color: #000; }
+  .receipt-total-value        { font-size: 0.7rem !important; padding: 0.1rem 0 !important; font-weight: 600; color: #000; }
+  .receipt-total-final        { border-top: 1px solid #000 !important; padding-top: 0.3rem !important; margin-top: 0.25rem !important; }
   .receipt-total-final-row    { gap: 0.6rem !important; }
   .receipt-total-final-row.main-total { padding-bottom: 0.2rem !important; margin-bottom: 0.1rem !important; border-bottom: 1px dashed #000 !important; }
-  .receipt-total-final-label  { font-size: 0.78rem !important; }
-  .receipt-total-final-value  { font-size: 1.1rem !important; }
-  .receipt-total-sub-label    { font-size: 0.66rem !important; }
-  .receipt-total-sub-value    { font-size: 0.8rem !important; }
+  .receipt-total-final-label  { font-size: 0.78rem !important; font-weight: 700; color: #000; }
+  .receipt-total-final-value  { font-size: 1.1rem !important; font-weight: 600; color: #000; }
+  .receipt-total-sub-label    { font-size: 0.66rem !important; font-weight: 700; color: #000; }
+  .receipt-total-sub-value    { font-size: 0.8rem !important; font-weight: 600; color: #000; }
 
   .receipt-payment-method {
-    background: none !important;
+    background: white !important;
     border: 1px solid #000 !important;
-    border-radius: 0 !important;
+    border-radius: 6px;
     padding: 0.4rem 0.5rem !important;
     gap: 0.5rem !important;
   }
-  .receipt-payment-icon   { font-size: 1rem !important; }
-  .receipt-payment-name   { font-size: 0.7rem !important; }
-  .receipt-payment-voucher { font-size: 0.62rem !important; }
+  .receipt-payment-name   { font-size: 0.7rem !important; font-weight: 700; color: #000; }
+  .receipt-payment-voucher { font-size: 0.62rem !important; font-weight: 600; color: #000; }
   .receipt-payment-status {
     font-size: 0.6rem !important;
-    background: none !important;
+    background: white !important;
     color: #000 !important;
     border: 1px solid #000 !important;
-    border-radius: 0 !important;
+    border-radius: 6px;
     padding: 0.1rem 0.3rem !important;
   }
 
   .receipt-footer         { margin-top: 0.4rem !important; }
-  .receipt-footer-thanks  { font-size: 0.78rem !important; margin-top: 0.5rem !important; }
-  .receipt-footer-slogan  { font-size: 0.68rem !important; }
-  .receipt-footer-note    { font-size: 0.58rem !important; }
+  .receipt-footer-thanks  { font-size: 0.78rem !important; margin-top: 0.5rem !important; font-weight: 700; color: #000; }
+  .receipt-footer-slogan  { font-size: 0.68rem !important; font-weight: 600; color: #000; }
+  .receipt-footer-note    { font-size: 0.58rem !important; font-weight: 600; color: #000; }
 }

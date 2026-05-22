@@ -72,10 +72,12 @@ export class RepairFormComponent implements OnInit {
   // ─── Customer ─────────────────────────────────────────────────
   isSearching = signal(false);
   showClientModal = signal(false);
+  showClientSelectionModal = signal(false);
 
   searchMessage = "";
 
   selectedClient: Client | null = null;
+  matchingClients: Client[] = [];
 
   // ─── Repair Items ─────────────────────────────────────────────
   selectedRepairType: RepairType | null = null;
@@ -493,12 +495,17 @@ export class RepairFormComponent implements OnInit {
     this.searchMessage = "";
 
     this.clientUseCases.searchByPhone(phone).subscribe({
-      next: (client) => {
-        if (client) {
-          this.selectedClient = client;
-          this.fillClientData(client);
-        } else {
+      next: (result) => {
+        const clients = this.normalizeClientSearchResult(result);
+
+        const existClientMainPhone = clients.filter(c => c.personalPhone === phone);
+
+        if(existClientMainPhone.length === 0){
           this.selectedClient = null;
+          this.matchingClients = [];
+          this.showClientSelectionModal.set(false);
+          this.clearClientData();
+
           // Auto-open modal when client not found
           setTimeout(() => this.openClientModal(), 300);
         }
@@ -529,10 +536,19 @@ export class RepairFormComponent implements OnInit {
 
   onClientCreated(client: Client): void {
     this.selectedClient = client;
+    this.matchingClients = [];
     this.fillClientData(client);
     this.searchMessage = "✓ Cliente creado exitosamente";
 
     this.showClientModal.set(false);
+  }
+
+  onClientSelected(client: Client): void {
+    this.selectedClient = client;
+    this.matchingClients = [];
+    this.fillClientData(client);
+    this.searchMessage = '✓ Cliente seleccionado';
+    this.showClientSelectionModal.set(false);
   }
 
   openClientModal(): void {
@@ -541,6 +557,11 @@ export class RepairFormComponent implements OnInit {
 
   closeClientModal(): void {
     this.showClientModal.set(false);
+  }
+
+  closeClientSelectionModal(): void {
+    this.showClientSelectionModal.set(false);
+    this.matchingClients = [];
   }
 
   // ─── Repair Items ─────────────────────────────────────────────
@@ -1032,6 +1053,14 @@ export class RepairFormComponent implements OnInit {
         (alias) => code.includes(alias) || name.includes(alias),
       );
     });
+  }
+
+  private normalizeClientSearchResult(result: Client | Client[] | null | undefined): Client[] {
+    if (!result) {
+      return [];
+    }
+
+    return Array.isArray(result) ? result : [result];
   }
 
   private handleRepairCreated(repair: Repair): void {
