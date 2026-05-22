@@ -44,6 +44,7 @@ import { AuthService } from "../../../core/services/auth.service";
 import { DateFormatDirective } from "../../../shared/directives/date-format.directive";
 import { ConvertHtmlAPdf } from "../../../shared/utils/convertHtmlAPdf";
 import { GarmentTicketData } from "../../components/garment-selector-modal/garment-selector-modal.component";
+import { ClientSelectionModalComponent } from 'src/app/presentation/components/client-selection-modal/client-selection-modal.component';
 
 @Component({
   selector: "app-repair-form",
@@ -52,6 +53,7 @@ import { GarmentTicketData } from "../../components/garment-selector-modal/garme
     CommonModule,
     ReactiveFormsModule,
     ClientModalComponent,
+    ClientSelectionModalComponent,
     RepairItemsEditorComponent,
     DateFormatDirective,
   ],
