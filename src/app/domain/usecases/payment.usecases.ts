@@ -17,4 +17,20 @@ export class PaymentUseCases {
   getAllPayments(): Observable<Payment[]> {
     return this.paymentRepository.getAll();
   }
+
+  uploadAdvancePaymentPdf(repairId: string, pdf: Blob): Observable<void> {
+    return this.paymentRepository.uploadAdvancePaymentPdf(repairId, pdf);
+  }
+
+  saveAdvancePaymentPdfUrl(repairId: string, pdfUrl: string): Observable<void> {
+    return this.paymentRepository.saveAdvancePaymentPdfUrl(repairId, pdfUrl);
+  }
+
+  uploadFinalPaymentPdf(repairId: string, pdf: Blob): Observable<void> {
+    return this.paymentRepository.uploadFinalPaymentPdf(repairId, pdf);
+  }
+  
+  saveFinalPaymentPdfUrl(repairId: string, pdfUrl: string): Observable<void> {
+    return this.paymentRepository.saveFinalPaymentPdfUrl(repairId, pdfUrl);
+  }
 }

@@ -1,56 +1,70 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, of } from 'rxjs';
-import { CommonModule } from '@angular/common';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { RepairUseCases } from '../../../domain/usecases/repair.usecases';
+import { Component, OnInit, signal } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
+import { catchError, of } from "rxjs";
+import { CommonModule } from "@angular/common";
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from "@angular/forms";
+import { environment } from "../../../../environments/environment";
+import { Router } from "@angular/router";
+import { RepairUseCases } from "../../../domain/usecases/repair.usecases";
 
-import { GarmentUseCases } from '../../../domain/usecases/garment.usecases';
-import { Garment } from '@core/models/garment.model';
+import { GarmentUseCases } from "../../../domain/usecases/garment.usecases";
+import { Garment } from "@core/models/garment.model";
 
-import { RepairTypeUseCases } from '../../../domain/usecases/repair-type.usecases';
-import { RepairType } from '../../../core/models/repair-type.model';
+import { RepairTypeUseCases } from "../../../domain/usecases/repair-type.usecases";
+import { RepairType } from "../../../core/models/repair-type.model";
 
-import { RepairStatusUseCases } from '../../../domain/usecases/repair-status.usecases';
-import { RepairStatus } from '../../../core/models/repair-status.model';
+import { RepairStatusUseCases } from "../../../domain/usecases/repair-status.usecases";
+import { RepairStatus } from "../../../core/models/repair-status.model";
 
-import { PaymentTypeUseCases } from '../../../domain/usecases/payment-type.usecases';
-import { PaymentType } from '../../../core/models/payment-type.model';
-import { PaymentUseCases } from '../../../domain/usecases/payment.usecases';
+import { PaymentTypeUseCases } from "../../../domain/usecases/payment-type.usecases";
+import { PaymentType } from "../../../core/models/payment-type.model";
+import { PaymentUseCases } from "../../../domain/usecases/payment.usecases";
 
-import { ClientUseCases } from '../../../domain/usecases/client.usecases';
-import { Client } from '../../../core/models/client.model';
-import { ClientModalComponent } from '../../components/client-modal/client-modal.component';
+import { ClientUseCases } from "../../../domain/usecases/client.usecases";
+import { Client } from "../../../core/models/client.model";
+import { ClientModalComponent } from "../../components/client-modal/client-modal.component";
 
-import { RepairItemsEditorComponent } from '../../components/repair-items-editor/repair-items-editor.component';
-import { RepairItem } from '../../../core/models/repair-item.model';
-import { forkJoin } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { Repair, RepairStatusEnum } from '@core/models/repair.model';
-import { repairImpressionTicket } from '../../../shared/utils/repairImpressionTicket.utils';
-import { WhatsappApiService } from '../../../core/services/whatsapp-api.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { DateFormatDirective } from '../../../shared/directives/date-format.directive';
-import { GarmentTicketData } from '../../components/garment-selector-modal/garment-selector-modal.component';
-import html2pdf from 'html2pdf.js';
+import { RepairItemsEditorComponent } from "../../components/repair-items-editor/repair-items-editor.component";
+import { RepairItem } from "../../../core/models/repair-item.model";
+import { forkJoin } from "rxjs";
+import { debounceTime, distinctUntilChanged } from "rxjs/operators";
+import { Repair, RepairStatusEnum } from "@core/models/repair.model";
+import { repairImpressionTicket } from "../../../shared/utils/repairImpressionTicket.utils";
+import { WhatsappApiService } from "../../../core/services/whatsapp-api.service";
+import { ToastService } from "../../../core/services/toast.service";
+import { AuthService } from "../../../core/services/auth.service";
+import { DateFormatDirective } from "../../../shared/directives/date-format.directive";
+import { ConvertHtmlAPdf } from "../../../shared/utils/convertHtmlAPdf";
+import { GarmentTicketData } from "../../components/garment-selector-modal/garment-selector-modal.component";
 
 @Component({
-  selector: 'app-repair-form',
+  selector: "app-repair-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ClientModalComponent, RepairItemsEditorComponent, DateFormatDirective],
-  templateUrl: './repair-form.component.html',
-  styleUrls: ['./repair-form.component.scss']
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ClientModalComponent,
+    RepairItemsEditorComponent,
+    DateFormatDirective,
+  ],
+  templateUrl: "./repair-form.component.html",
+  styleUrls: ["./repair-form.component.scss"],
 })
-
 export class RepairFormComponent implements OnInit {
   // ─── Repair ───────────────────────────────────────────────────
   repairForm!: FormGroup;
   isLoading = signal(false);
   estimatedDeliveryDate = signal<Date | null>(null);
 
-  errorMessage = '';
+  errorMessage = "";
 
   repair: Repair | null = null;
   repairId: string = "";
@@ -59,7 +73,7 @@ export class RepairFormComponent implements OnInit {
   isSearching = signal(false);
   showClientModal = signal(false);
 
-  searchMessage = '';
+  searchMessage = "";
 
   selectedClient: Client | null = null;
 
@@ -73,7 +87,7 @@ export class RepairFormComponent implements OnInit {
   activeTicketItem: RepairItem | null = null;
   activeTicketIndex = 0;
 
-  qrCodeDataUrl = '';
+  qrCodeDataUrl = "";
 
   // ─── Garment Print Ticket ─────────────────────────────────────
   showGarmentPrintTicket = false;
@@ -83,49 +97,58 @@ export class RepairFormComponent implements OnInit {
   showAdvancePaymentTicket = signal(false);
   pendingAdvancePaymentTicket = signal(false);
 
-  advanceVoucherId = '';
-  
+  advanceVoucherId = "";
+
   advancePaymentAmount = 0;
   advancePaymentCashAmount = 0;
   advancePaymentCardAmount = 0;
   advancePaymentMinimum = 0;
   advancePaymentMaximum = 0;
   advancePaymentDate: Date = new Date();
-  
-  advancePaymentType: 'cash' | 'card' | 'mixed' = 'cash';
-  advanceCardType: 'debit' | 'credit' = 'debit';
-  
+
+  advancePaymentType: "cash" | "card" | "mixed" = "cash";
+  advanceCardType: "debit" | "credit" = "debit";
+
   garments = toSignal(
-    this.garmentUseCases.getActiveGarments(this.authService.currentUser?.store?.id).pipe(
-      catchError(err => {
-        console.error('Error loading available garments: ', err);
-        return of([] as Garment[]);})
+    this.garmentUseCases
+      .getActiveGarments(this.authService.currentUser?.store?.id)
+      .pipe(
+        catchError((err) => {
+          console.error("Error loading available garments: ", err);
+          return of([] as Garment[]);
+        }),
       ),
-      { initialValue: [] as Garment[] }
-    );
-
-  repairTypes = toSignal(this.repairTypeUseCases.getAllRepairTypes().pipe(
-    catchError(err => {
-      console.error('Error loading available repair types: ', err);
-      return of([] as RepairType[]);})
-    ),
-    { initialValue: [] as RepairType[] }
+    { initialValue: [] as Garment[] },
   );
 
-  repairStatuses = toSignal(this.repairStatusUseCases.getAllRepairStatuses().pipe(
-    catchError(err => {
-      console.error('Error loading available repair statuses: ', err);
-      return of([] as RepairStatus[]);})
+  repairTypes = toSignal(
+    this.repairTypeUseCases.getAllRepairTypes().pipe(
+      catchError((err) => {
+        console.error("Error loading available repair types: ", err);
+        return of([] as RepairType[]);
+      }),
     ),
-    { initialValue: [] as RepairStatus[] }
+    { initialValue: [] as RepairType[] },
   );
 
-  paymentTypes = toSignal(this.paymentTypeUseCases.getAllPaymentTypes().pipe(
-    catchError(err => {
-      console.error('Error loading available payment types: ', err);
-      return of([] as PaymentType[]);})
+  repairStatuses = toSignal(
+    this.repairStatusUseCases.getAllRepairStatuses().pipe(
+      catchError((err) => {
+        console.error("Error loading available repair statuses: ", err);
+        return of([] as RepairStatus[]);
+      }),
     ),
-    { initialValue: [] as PaymentType[] }
+    { initialValue: [] as RepairStatus[] },
+  );
+
+  paymentTypes = toSignal(
+    this.paymentTypeUseCases.getAllPaymentTypes().pipe(
+      catchError((err) => {
+        console.error("Error loading available payment types: ", err);
+        return of([] as PaymentType[]);
+      }),
+    ),
+    { initialValue: [] as PaymentType[] },
   );
 
   constructor(
@@ -141,94 +164,142 @@ export class RepairFormComponent implements OnInit {
     private repairImpressionTicket: repairImpressionTicket,
     private whatsappApiService: WhatsappApiService,
     private toastService: ToastService,
-    private authService: AuthService
+    private authService: AuthService,
+    private convertHtmlAPdfService: ConvertHtmlAPdf,
   ) {}
 
   ngOnInit(): void {
     this.repairId = crypto.randomUUID();
 
     this.repairForm = this.fb.group({
-      customerName: ['', Validators.required],
-      customerPhone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
-      customerEmail: ['', Validators.email],
-      customerId: ['', Validators.required],
-      advancePayment: ['', [
-        Validators.pattern(/^\d+(\.\d+)?$/),
-        Validators.min(0),
-        this.advancePaymentMinValidator(),
-        this.advancePaymentMaxValidator()
-      ]],
-      advancePaymentCash: ['', [Validators.pattern(/^\d+(\.\d+)?$/), Validators.min(0)]],
-      advancePaymentCard: ['', [Validators.pattern(/^\d+(\.\d+)?$/), Validators.min(0)]],
-      advancePaymentType: ['cash'],
-      advanceVoucherId: [''],
-      advanceCardType: ['debit'],
+      customerName: ["", Validators.required],
+      customerPhone: [
+        "",
+        [Validators.required, Validators.pattern(/^\d{10}$/)],
+      ],
+      customerEmail: ["", Validators.email],
+      customerId: ["", Validators.required],
+      advancePayment: [
+        "",
+        [
+          Validators.pattern(/^\d+(\.\d+)?$/),
+          Validators.min(0),
+          this.advancePaymentMinValidator(),
+          this.advancePaymentMaxValidator(),
+        ],
+      ],
+      advancePaymentCash: [
+        "",
+        [Validators.pattern(/^\d+(\.\d+)?$/), Validators.min(0)],
+      ],
+      advancePaymentCard: [
+        "",
+        [Validators.pattern(/^\d+(\.\d+)?$/), Validators.min(0)],
+      ],
+      advancePaymentType: ["cash"],
+      advanceVoucherId: [""],
+      advanceCardType: ["debit"],
       isExpress: [false],
-      estimatedDeliveryDate: ['', Validators.required],
-      notes: ['']});
-
-    this.repairUseCases.getRepairsEstimatedTime().subscribe(estimatedTime => {
-      this.estimatedDeliveryDate.set(this.addWorkMinutes(new Date(), estimatedTime));
-      this.repairForm.get('estimatedDeliveryDate')?.setValue(this.estimatedDeliveryDate()?.toISOString().split('T')[0]);
+      estimatedDeliveryDate: ["", Validators.required],
+      notes: [""],
     });
 
-  
-    this.repairForm.get('customerPhone')?.valueChanges.pipe(
-      debounceTime(500),
-      distinctUntilChanged())
-    .subscribe(phone => {
-      if (phone && phone.length === 10) {
-        this.searchClientByPhone(phone);
-      } else {
-        this.selectedClient = null;
-        this.searchMessage = '';
-      }});
-
-    this.repairForm.get('advancePaymentType')?.valueChanges.subscribe(type => {
-      this.syncAdvancePaymentByType(type as 'cash' | 'card' | 'mixed');
+    this.repairUseCases.getRepairsEstimatedTime().subscribe((estimatedTime) => {
+      this.estimatedDeliveryDate.set(
+        this.addWorkMinutes(new Date(), estimatedTime),
+      );
+      this.repairForm
+        .get("estimatedDeliveryDate")
+        ?.setValue(this.estimatedDeliveryDate()?.toISOString().split("T")[0]);
     });
+
+    this.repairForm
+      .get("customerPhone")
+      ?.valueChanges.pipe(debounceTime(500), distinctUntilChanged())
+      .subscribe((phone) => {
+        if (phone && phone.length === 10) {
+          this.searchClientByPhone(phone);
+        } else {
+          this.selectedClient = null;
+          this.searchMessage = "";
+        }
+      });
+
+    this.repairForm
+      .get("advancePaymentType")
+      ?.valueChanges.subscribe((type) => {
+        this.syncAdvancePaymentByType(type as "cash" | "card" | "mixed");
+      });
   }
 
   // ─── Repair ───────────────────────────────────────────────────
   onSubmit(): void {
-    const itemsValid = this.repairItems.length > 0 &&
-      this.repairItems.every(i => i.garment.name?.trim() && i.repairType && i.description?.trim() && i.estimatedPrice > 0);
+    const itemsValid =
+      this.repairItems.length > 0 &&
+      this.repairItems.every(
+        (i) =>
+          i.garment.name?.trim() &&
+          i.repairType &&
+          i.description?.trim() &&
+          i.estimatedPrice > 0,
+      );
 
-    const advanceControl = this.repairForm.get('advancePayment');
+    const advanceControl = this.repairForm.get("advancePayment");
     advanceControl?.markAsTouched();
 
     if (this.repairForm.invalid || !this.selectedClient || !itemsValid) {
       if (!itemsValid) {
-        this.errorMessage = 'Agrega al menos una prenda con todos sus datos.';
-      } else if (advanceControl?.hasError('minAdvance')) {
-        this.errorMessage = 'El anticipo debe ser al menos el 50% del total estimado.';
-      } else if (advanceControl?.hasError('maxAdvance')) {
-        this.errorMessage = 'El anticipo no puede ser mayor al total estimado.';
+        this.errorMessage = "Agrega al menos una prenda con todos sus datos.";
+      } else if (advanceControl?.hasError("minAdvance")) {
+        this.errorMessage =
+          "El anticipo debe ser al menos el 50% del total estimado.";
+      } else if (advanceControl?.hasError("maxAdvance")) {
+        this.errorMessage = "El anticipo no puede ser mayor al total estimado.";
       }
 
       return;
     }
 
     this.isLoading.set(true);
-    this.errorMessage = '';
+    this.errorMessage = "";
 
     const formValue = this.repairForm.value;
-    const selectedAdvancePaymentType = (formValue.advancePaymentType || 'cash') as 'cash' | 'card' | 'mixed';
-    const cashAdvance = this.getAdvanceNumericValue(formValue.advancePaymentCash);
-    const cardAdvance = this.getAdvanceNumericValue(formValue.advancePaymentCard);
-    const rawAdvance = selectedAdvancePaymentType === 'mixed'
-      ? Math.round((cashAdvance + cardAdvance) * 100) / 100
-      : this.getAdvanceNumericValue(formValue.advancePayment);
-    const totalPrice = this.repairItems.reduce((s, i) => s + i.estimatedPrice, 0);
-    const advanceVoucherId = (formValue.advanceVoucherId || '').trim();
-    const selectedAdvanceCardType = (formValue.advanceCardType || 'debit') as 'debit' | 'credit';
+    const selectedAdvancePaymentType = (formValue.advancePaymentType ||
+      "cash") as "cash" | "card" | "mixed";
+    const cashAdvance = this.getAdvanceNumericValue(
+      formValue.advancePaymentCash,
+    );
+    const cardAdvance = this.getAdvanceNumericValue(
+      formValue.advancePaymentCard,
+    );
+    const rawAdvance =
+      selectedAdvancePaymentType === "mixed"
+        ? Math.round((cashAdvance + cardAdvance) * 100) / 100
+        : this.getAdvanceNumericValue(formValue.advancePayment);
+    const totalPrice = this.repairItems.reduce(
+      (s, i) => s + i.estimatedPrice,
+      0,
+    );
+    const advanceVoucherId = (formValue.advanceVoucherId || "").trim();
+    const selectedAdvanceCardType = (formValue.advanceCardType || "debit") as
+      | "debit"
+      | "credit";
     const minimumAdvance = this.advancePaymentMinimum;
 
-    if (selectedAdvancePaymentType === 'mixed' && Number.isFinite(rawAdvance) && minimumAdvance > 0 && rawAdvance < minimumAdvance) {
+    if (
+      selectedAdvancePaymentType === "mixed" &&
+      Number.isFinite(rawAdvance) &&
+      minimumAdvance > 0 &&
+      rawAdvance < minimumAdvance
+    ) {
       const existingErrors = advanceControl?.errors ?? {};
-      advanceControl?.setErrors({ ...existingErrors, minAdvance: { min: minimumAdvance, actual: rawAdvance } });
+      advanceControl?.setErrors({
+        ...existingErrors,
+        minAdvance: { min: minimumAdvance, actual: rawAdvance },
+      });
       advanceControl?.markAsTouched();
-      this.errorMessage = 'El anticipo debe ser al menos el 50% del total estimado.';
+      this.errorMessage =
+        "El anticipo debe ser al menos el 50% del total estimado.";
       this.isLoading.set(false);
 
       return;
@@ -236,34 +307,47 @@ export class RepairFormComponent implements OnInit {
 
     if (Number.isFinite(rawAdvance) && rawAdvance > totalPrice) {
       const existingErrors = advanceControl?.errors ?? {};
-      
-      advanceControl?.setErrors({ ...existingErrors, maxAdvance: { max: totalPrice, actual: rawAdvance } });
+
+      advanceControl?.setErrors({
+        ...existingErrors,
+        maxAdvance: { max: totalPrice, actual: rawAdvance },
+      });
       advanceControl?.markAsTouched();
-      this.errorMessage = 'El anticipo no puede ser mayor al total estimado.';
+      this.errorMessage = "El anticipo no puede ser mayor al total estimado.";
       this.isLoading.set(false);
 
       return;
     }
 
-    if (rawAdvance > 0 && selectedAdvancePaymentType === 'card' && !advanceVoucherId) {
-      this.errorMessage = 'Ingresa el ID del voucher para registrar el anticipo con tarjeta.';
+    if (
+      rawAdvance > 0 &&
+      selectedAdvancePaymentType === "card" &&
+      !advanceVoucherId
+    ) {
+      this.errorMessage =
+        "Ingresa el ID del voucher para registrar el anticipo con tarjeta.";
       this.isLoading.set(false);
-      
+
       return;
     }
 
-    if (selectedAdvancePaymentType === 'mixed' && cardAdvance > 0 && !advanceVoucherId) {
-      this.errorMessage = 'Ingresa el ID del voucher para registrar el anticipo con tarjeta.';
+    if (
+      selectedAdvancePaymentType === "mixed" &&
+      cardAdvance > 0 &&
+      !advanceVoucherId
+    ) {
+      this.errorMessage =
+        "Ingresa el ID del voucher para registrar el anticipo con tarjeta.";
       this.isLoading.set(false);
 
       return;
     }
 
     const repairFormData = { ...formValue };
-    
+
     delete repairFormData.advancePaymentCash;
     delete repairFormData.advancePaymentCard;
-    
+
     const repairData = {
       ...repairFormData,
       repairId: this.repairId,
@@ -272,31 +356,61 @@ export class RepairFormComponent implements OnInit {
       customerPhone: this.selectedClient.personalPhone,
       customerEmail: this.selectedClient.email,
       estimatedPrice: totalPrice,
-      repairStatus: this.repairStatuses().find(status => status.name === RepairStatusEnum.PENDING),
+      repairStatus: this.repairStatuses().find(
+        (status) => status.name === RepairStatusEnum.PENDING,
+      ),
       advancePayment: rawAdvance > 0 ? rawAdvance : undefined,
-      items: this.repairItems};
+      items: this.repairItems,
+    };
 
     this.repairUseCases.createRepair(repairData).subscribe({
       next: (repair) => {
         if (rawAdvance > 0) {
-          const advanceCashAmount = selectedAdvancePaymentType === 'mixed'
-            ? cashAdvance
-            : selectedAdvancePaymentType === 'cash' ? rawAdvance : 0;
-          const advanceCardAmount = selectedAdvancePaymentType === 'mixed'
-            ? cardAdvance
-            : selectedAdvancePaymentType === 'card' ? rawAdvance : 0;
+          const advanceCashAmount =
+            selectedAdvancePaymentType === "mixed"
+              ? cashAdvance
+              : selectedAdvancePaymentType === "cash"
+                ? rawAdvance
+                : 0;
+          const advanceCardAmount =
+            selectedAdvancePaymentType === "mixed"
+              ? cardAdvance
+              : selectedAdvancePaymentType === "card"
+                ? rawAdvance
+                : 0;
           const needsCash = advanceCashAmount > 0;
           const needsCard = advanceCardAmount > 0;
-          const paymentTypeCash = needsCash ? this.resolveSelectedAdvancePaymentType('cash') : undefined;
-          const paymentTypeCard = needsCard ? this.resolveSelectedAdvancePaymentType('card') : undefined;
+          const paymentTypeCash = needsCash
+            ? this.resolveSelectedAdvancePaymentType("cash")
+            : undefined;
+          const paymentTypeCard = needsCard
+            ? this.resolveSelectedAdvancePaymentType("card")
+            : undefined;
 
-          if ((needsCash && !paymentTypeCash) || (needsCard && !paymentTypeCard)) {
-            if (needsCash && !paymentTypeCash && needsCard && !paymentTypeCard) {
-              this.toastService.show('La reparación se creó, pero no se pudieron mapear los tipos de pago del anticipo.', 'error');
+          if (
+            (needsCash && !paymentTypeCash) ||
+            (needsCard && !paymentTypeCard)
+          ) {
+            if (
+              needsCash &&
+              !paymentTypeCash &&
+              needsCard &&
+              !paymentTypeCard
+            ) {
+              this.toastService.show(
+                "La reparación se creó, pero no se pudieron mapear los tipos de pago del anticipo.",
+                "error",
+              );
             } else if (needsCash && !paymentTypeCash) {
-              this.toastService.show('La reparación se creó, pero no se pudo mapear el tipo de pago del anticipo en efectivo.', 'error');
+              this.toastService.show(
+                "La reparación se creó, pero no se pudo mapear el tipo de pago del anticipo en efectivo.",
+                "error",
+              );
             } else {
-              this.toastService.show('La reparación se creó, pero no se pudo mapear el tipo de pago del anticipo con tarjeta.', 'error');
+              this.toastService.show(
+                "La reparación se creó, pero no se pudo mapear el tipo de pago del anticipo con tarjeta.",
+                "error",
+              );
             }
             this.handleRepairCreated(repair);
             return;
@@ -305,28 +419,32 @@ export class RepairFormComponent implements OnInit {
           const paymentRequests = [];
 
           if (needsCash && paymentTypeCash) {
-            paymentRequests.push(this.paymentUseCases.createPayment({
-              repair: repair,
-              paymentType: paymentTypeCash,
-              amount: advanceCashAmount,
-              isDebit: false,
-              isAdvance: true,
-              createdBy: repair.createdBy,
-              paymentDate: repair.createdAt
-            }));
+            paymentRequests.push(
+              this.paymentUseCases.createPayment({
+                repair: repair,
+                paymentType: paymentTypeCash,
+                amount: advanceCashAmount,
+                isDebit: false,
+                isAdvance: true,
+                createdBy: repair.createdBy,
+                paymentDate: repair.createdAt,
+              }),
+            );
           }
 
           if (needsCard && paymentTypeCard) {
-            paymentRequests.push(this.paymentUseCases.createPayment({
-              repair: repair,
-              paymentType: paymentTypeCard,
-              amount: advanceCardAmount,
-              isDebit: selectedAdvanceCardType === 'debit',
-              voucherId: advanceVoucherId || undefined,
-              isAdvance: true,
-              createdBy: repair.createdBy,
-              paymentDate: repair.createdAt
-            }));
+            paymentRequests.push(
+              this.paymentUseCases.createPayment({
+                repair: repair,
+                paymentType: paymentTypeCard,
+                amount: advanceCardAmount,
+                isDebit: selectedAdvanceCardType === "debit",
+                voucherId: advanceVoucherId || undefined,
+                isAdvance: true,
+                createdBy: repair.createdBy,
+                paymentDate: repair.createdAt,
+              }),
+            );
           }
 
           forkJoin(paymentRequests).subscribe({
@@ -338,35 +456,42 @@ export class RepairFormComponent implements OnInit {
                 selectedAdvanceCardType,
                 advanceVoucherId,
                 advanceCashAmount,
-                advanceCardAmount
+                advanceCardAmount,
               );
 
               this.handleRepairCreated(repair);
             },
             error: () => {
-              this.toastService.show('La reparación se creó, pero no se pudo registrar el anticipo.', 'error');
+              this.toastService.show(
+                "La reparación se creó, pero no se pudo registrar el anticipo.",
+                "error",
+              );
               this.handleRepairCreated(repair);
-            }
+            },
           });
 
           return;
         }
 
-        this.handleRepairCreated(repair);},
+        this.handleRepairCreated(repair);
+      },
       error: (error) => {
-        this.errorMessage = error.message || 'Failed to create repair. Please try again.';
-        this.isLoading.set(false);}});
+        this.errorMessage =
+          error.message || "Failed to create repair. Please try again.";
+        this.isLoading.set(false);
+      },
+    });
   }
 
   onCancel(): void {
-    this.router.navigate(['/repairs']);
+    this.router.navigate(["/repairs"]);
   }
 
   // ─── Customer ─────────────────────────────────────────────────
   searchClientByPhone(phone: string): void {
     this.isSearching.set(true);
-    this.searchMessage = '';
-    
+    this.searchMessage = "";
+
     this.clientUseCases.searchByPhone(phone).subscribe({
       next: (client) => {
         if (client) {
@@ -376,9 +501,13 @@ export class RepairFormComponent implements OnInit {
           this.selectedClient = null;
           // Auto-open modal when client not found
           setTimeout(() => this.openClientModal(), 300);
-        }},
-      error: () => { this.searchMessage = 'Error al buscar cliente';}});
-    
+        }
+      },
+      error: () => {
+        this.searchMessage = "Error al buscar cliente";
+      },
+    });
+
     this.isSearching.set(false);
   }
 
@@ -387,20 +516,22 @@ export class RepairFormComponent implements OnInit {
       customerId: client.id,
       customerName: client.fullName,
       customerPhone: client.personalPhone,
-      customerEmail: client.email || ''});
+      customerEmail: client.email || "",
+    });
   }
 
   clearClientData(): void {
     this.repairForm.patchValue({
-      customerName: '',
-      customerEmail: ''});
+      customerName: "",
+      customerEmail: "",
+    });
   }
 
   onClientCreated(client: Client): void {
     this.selectedClient = client;
     this.fillClientData(client);
-    this.searchMessage = '✓ Cliente creado exitosamente';
-    
+    this.searchMessage = "✓ Cliente creado exitosamente";
+
     this.showClientModal.set(false);
   }
 
@@ -419,26 +550,46 @@ export class RepairFormComponent implements OnInit {
     this.advancePaymentMaximum = this.calculateAdvancePaymentMaximum(items);
 
     // Calculate total estimated time from repair items
-    const totalEstimatedTime = items.reduce((sum, item) => sum + (item.repairType?.estimatedTime || 0), 0);
+    const totalEstimatedTime = items.reduce(
+      (sum, item) => sum + (item.repairType?.estimatedTime || 0),
+      0,
+    );
 
     // Calculate and set estimated delivery date using work schedule
-    const deliveryDate = this.addWorkMinutes(new Date(this.estimatedDeliveryDate() || new Date()), totalEstimatedTime);
-    this.repairForm.get('estimatedDeliveryDate')?.setValue(deliveryDate.toISOString().split('T')[0]);
+    const deliveryDate = this.addWorkMinutes(
+      new Date(this.estimatedDeliveryDate() || new Date()),
+      totalEstimatedTime,
+    );
+    this.repairForm
+      .get("estimatedDeliveryDate")
+      ?.setValue(deliveryDate.toISOString().split("T")[0]);
 
-    const formattedAdvance = this.formatToTwoDecimals(this.advancePaymentMinimum);
-    const paymentType = this.repairForm.get('advancePaymentType')?.value as 'cash' | 'card' | 'mixed';
+    const formattedAdvance = this.formatToTwoDecimals(
+      this.advancePaymentMinimum,
+    );
+    const paymentType = this.repairForm.get("advancePaymentType")?.value as
+      | "cash"
+      | "card"
+      | "mixed";
 
-    if (paymentType === 'mixed') {
-      this.repairForm.patchValue({
-        advancePaymentCash: formattedAdvance,
-        advancePaymentCard: this.formatToTwoDecimals(0)
-      }, { emitEvent: false });
+    if (paymentType === "mixed") {
+      this.repairForm.patchValue(
+        {
+          advancePaymentCash: formattedAdvance,
+          advancePaymentCard: this.formatToTwoDecimals(0),
+        },
+        { emitEvent: false },
+      );
       this.updateMixedAdvanceTotal();
     } else {
-      this.repairForm.get('advancePayment')?.setValue(formattedAdvance, { emitEvent: false });
+      this.repairForm
+        .get("advancePayment")
+        ?.setValue(formattedAdvance, { emitEvent: false });
     }
 
-    this.repairForm.get('advancePayment')?.updateValueAndValidity({ emitEvent: false });
+    this.repairForm
+      .get("advancePayment")
+      ?.updateValueAndValidity({ emitEvent: false });
   }
 
   // ─── Repair Ticket ────────────────────────────────────────────
@@ -479,53 +630,56 @@ export class RepairFormComponent implements OnInit {
   // ─── Advance Ticket ───────────────────────────────────────────
   getAdvanceRemainingBalance(): number {
     const total = this.repair?.estimatedPrice ?? 0;
-    const advance = this.advancePaymentAmount > 0
-      ? this.advancePaymentAmount
-      : (this.repair?.advancePayment ?? 0);
-    
-      return Math.max(0, Math.round((total - advance) * 100) / 100);
+    const advance =
+      this.advancePaymentAmount > 0
+        ? this.advancePaymentAmount
+        : (this.repair?.advancePayment ?? 0);
+
+    return Math.max(0, Math.round((total - advance) * 100) / 100);
   }
 
   onAdvancePaymentInput(event: Event): void {
-    if (this.repairForm.get('advancePaymentType')?.value === 'mixed') {
+    if (this.repairForm.get("advancePaymentType")?.value === "mixed") {
       return;
     }
 
     const sanitizedValue = this.onDecimalInput(event);
-    
-    this.repairForm.get('advancePayment')?.setValue(sanitizedValue);
+
+    this.repairForm.get("advancePayment")?.setValue(sanitizedValue);
   }
 
   onAdvancePaymentCashInput(event: Event): void {
     const sanitizedValue = this.onDecimalInput(event);
-    
-    this.repairForm.get('advancePaymentCash')?.setValue(sanitizedValue);
+
+    this.repairForm.get("advancePaymentCash")?.setValue(sanitizedValue);
     this.updateMixedAdvanceTotal();
   }
 
   onAdvancePaymentCardInput(event: Event): void {
     const sanitizedValue = this.onDecimalInput(event);
-    
-    this.repairForm.get('advancePaymentCard')?.setValue(sanitizedValue);
+
+    this.repairForm.get("advancePaymentCard")?.setValue(sanitizedValue);
     this.updateMixedAdvanceTotal();
   }
 
-  onAdvancePaymentBlur(controlName: 'advancePayment' | 'advancePaymentCash' | 'advancePaymentCard'): void {
+  onAdvancePaymentBlur(
+    controlName: "advancePayment" | "advancePaymentCash" | "advancePaymentCard",
+  ): void {
     const control = this.repairForm.get(controlName);
-    
+
     if (!control) {
       return;
     }
 
     const formattedValue = this.formatToTwoDecimals(control.value);
-    
+
     control.setValue(formattedValue);
 
-    if (controlName !== 'advancePayment') {
+    if (controlName !== "advancePayment") {
       this.updateMixedAdvanceTotal();
-      
-      const totalControl = this.repairForm.get('advancePayment');
-      
+
+      const totalControl = this.repairForm.get("advancePayment");
+
       totalControl?.markAsTouched();
       totalControl?.updateValueAndValidity({ emitEvent: false });
     }
@@ -534,7 +688,7 @@ export class RepairFormComponent implements OnInit {
   closeAdvancePaymentTicket(): void {
     this.showAdvancePaymentTicket.set(false);
     this.pendingAdvancePaymentTicket.set(false);
-    this.router.navigate(['/repairs']);
+    this.router.navigate(["/repairs"]);
   }
 
   printAdvancePaymentTicket(): void {
@@ -543,10 +697,10 @@ export class RepairFormComponent implements OnInit {
 
   onDecimalInput(event: Event): string {
     const input = event.target as HTMLInputElement;
-    
+
     const sanitizedValue = input.value
-      .replace(/[^0-9.]/g, '')
-      .replace(/(\..*)\./g, '$1');
+      .replace(/[^0-9.]/g, "")
+      .replace(/(\..*)\./g, "$1");
 
     if (input.value !== sanitizedValue) {
       input.value = sanitizedValue;
@@ -558,39 +712,57 @@ export class RepairFormComponent implements OnInit {
   // ─── Helepers ─────────────────────────────────────────────────
 
   get itemsValid(): boolean {
-    return this.repairItems.length > 0 &&
-      this.repairItems.every(i =>
-        i.garment?.name?.trim() && i.repairType && i.description?.trim() && i.estimatedPrice > 0);
+    return (
+      this.repairItems.length > 0 &&
+      this.repairItems.every(
+        (i) =>
+          i.garment?.name?.trim() &&
+          i.repairType &&
+          i.description?.trim() &&
+          i.estimatedPrice > 0,
+      )
+    );
   }
 
   get hasAdvancePayment(): boolean {
-    const paymentType = this.repairForm?.get('advancePaymentType')?.value as 'cash' | 'card' | 'mixed';
-    const amount = paymentType === 'mixed'
-      ? this.getMixedAdvanceTotal()
-      : Number(this.repairForm?.get('advancePayment')?.value);
-    
+    const paymentType = this.repairForm?.get("advancePaymentType")?.value as
+      | "cash"
+      | "card"
+      | "mixed";
+    const amount =
+      paymentType === "mixed"
+        ? this.getMixedAdvanceTotal()
+        : Number(this.repairForm?.get("advancePayment")?.value);
+
     return Number.isFinite(amount) && amount > 0;
   }
 
   get hasCardAdvancePayment(): boolean {
-    const paymentType = this.repairForm?.get('advancePaymentType')?.value as 'cash' | 'card' | 'mixed';
-    if (paymentType === 'card') {
+    const paymentType = this.repairForm?.get("advancePaymentType")?.value as
+      | "cash"
+      | "card"
+      | "mixed";
+    if (paymentType === "card") {
       return this.hasAdvancePayment;
     }
-    if (paymentType === 'mixed') {
-      return this.getAdvanceNumericValue(this.repairForm?.get('advancePaymentCard')?.value) > 0;
+    if (paymentType === "mixed") {
+      return (
+        this.getAdvanceNumericValue(
+          this.repairForm?.get("advancePaymentCard")?.value,
+        ) > 0
+      );
     }
     return false;
   }
 
   private formatToTwoDecimals(value: unknown): string {
-    if (value === null || value === undefined || value === '') {
-      return '';
+    if (value === null || value === undefined || value === "") {
+      return "";
     }
 
     const numericValue = Number(value);
     if (!Number.isFinite(numericValue)) {
-      return '';
+      return "";
     }
 
     return numericValue.toFixed(2);
@@ -602,60 +774,104 @@ export class RepairFormComponent implements OnInit {
   }
 
   private getMixedAdvanceTotal(): number {
-    const cash = this.getAdvanceNumericValue(this.repairForm?.get('advancePaymentCash')?.value);
-    const card = this.getAdvanceNumericValue(this.repairForm?.get('advancePaymentCard')?.value);
+    const cash = this.getAdvanceNumericValue(
+      this.repairForm?.get("advancePaymentCash")?.value,
+    );
+    const card = this.getAdvanceNumericValue(
+      this.repairForm?.get("advancePaymentCard")?.value,
+    );
     return Math.round((cash + card) * 100) / 100;
   }
 
   private updateMixedAdvanceTotal(): void {
     const total = this.getMixedAdvanceTotal();
     const formattedTotal = this.formatToTwoDecimals(total);
-    this.repairForm.get('advancePayment')?.setValue(formattedTotal, { emitEvent: false });
-    this.repairForm.get('advancePayment')?.updateValueAndValidity({ emitEvent: false });
+    this.repairForm
+      .get("advancePayment")
+      ?.setValue(formattedTotal, { emitEvent: false });
+    this.repairForm
+      .get("advancePayment")
+      ?.updateValueAndValidity({ emitEvent: false });
   }
 
-  private syncAdvancePaymentByType(paymentType: 'cash' | 'card' | 'mixed'): void {
-    if (paymentType === 'mixed') {
-      const cashControl = this.repairForm.get('advancePaymentCash');
-      const cardControl = this.repairForm.get('advancePaymentCard');
+  private syncAdvancePaymentByType(
+    paymentType: "cash" | "card" | "mixed",
+  ): void {
+    if (paymentType === "mixed") {
+      const cashControl = this.repairForm.get("advancePaymentCash");
+      const cardControl = this.repairForm.get("advancePaymentCard");
       const cashValue = cashControl?.value;
       const cardValue = cardControl?.value;
 
-      if ((cashValue === null || cashValue === undefined || cashValue === '') &&
-          (cardValue === null || cardValue === undefined || cardValue === '')) {
-        const currentTotal = this.getAdvanceNumericValue(this.repairForm.get('advancePayment')?.value);
-        cashControl?.setValue(this.formatToTwoDecimals(currentTotal), { emitEvent: false });
-        cardControl?.setValue(this.formatToTwoDecimals(0), { emitEvent: false });
+      if (
+        (cashValue === null || cashValue === undefined || cashValue === "") &&
+        (cardValue === null || cardValue === undefined || cardValue === "")
+      ) {
+        const currentTotal = this.getAdvanceNumericValue(
+          this.repairForm.get("advancePayment")?.value,
+        );
+        cashControl?.setValue(this.formatToTwoDecimals(currentTotal), {
+          emitEvent: false,
+        });
+        cardControl?.setValue(this.formatToTwoDecimals(0), {
+          emitEvent: false,
+        });
       }
 
       this.updateMixedAdvanceTotal();
       return;
     }
 
-    if (paymentType === 'cash') {
-      const cashAmount = this.getAdvanceNumericValue(this.repairForm.get('advancePaymentCash')?.value);
+    if (paymentType === "cash") {
+      const cashAmount = this.getAdvanceNumericValue(
+        this.repairForm.get("advancePaymentCash")?.value,
+      );
       if (cashAmount > 0) {
-        this.repairForm.get('advancePayment')?.setValue(this.formatToTwoDecimals(cashAmount), { emitEvent: false });
+        this.repairForm
+          .get("advancePayment")
+          ?.setValue(this.formatToTwoDecimals(cashAmount), {
+            emitEvent: false,
+          });
       }
     }
 
-    if (paymentType === 'card') {
-      const cardAmount = this.getAdvanceNumericValue(this.repairForm.get('advancePaymentCard')?.value);
+    if (paymentType === "card") {
+      const cardAmount = this.getAdvanceNumericValue(
+        this.repairForm.get("advancePaymentCard")?.value,
+      );
       if (cardAmount > 0) {
-        this.repairForm.get('advancePayment')?.setValue(this.formatToTwoDecimals(cardAmount), { emitEvent: false });
+        this.repairForm
+          .get("advancePayment")
+          ?.setValue(this.formatToTwoDecimals(cardAmount), {
+            emitEvent: false,
+          });
       }
     }
 
-    this.repairForm.get('advancePayment')?.updateValueAndValidity({ emitEvent: false });
+    this.repairForm
+      .get("advancePayment")
+      ?.updateValueAndValidity({ emitEvent: false });
   }
 
-  private calculateAdvancePaymentMinimum(items: RepairItem[] = this.repairItems): number {
-    const totalEstimated = items.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0);
-    return totalEstimated > 0 ? Math.round((totalEstimated / 2) * 100) / 100 : 0;
+  private calculateAdvancePaymentMinimum(
+    items: RepairItem[] = this.repairItems,
+  ): number {
+    const totalEstimated = items.reduce(
+      (sum, item) => sum + (item.estimatedPrice || 0),
+      0,
+    );
+    return totalEstimated > 0
+      ? Math.round((totalEstimated / 2) * 100) / 100
+      : 0;
   }
 
-  private calculateAdvancePaymentMaximum(items: RepairItem[] = this.repairItems): number {
-    const totalEstimated = items.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0);
+  private calculateAdvancePaymentMaximum(
+    items: RepairItem[] = this.repairItems,
+  ): number {
+    const totalEstimated = items.reduce(
+      (sum, item) => sum + (item.estimatedPrice || 0),
+      0,
+    );
     return totalEstimated > 0 ? Math.round(totalEstimated * 100) / 100 : 0;
   }
 
@@ -672,7 +888,10 @@ export class RepairFormComponent implements OnInit {
 
       const periodEnd = new Date(current);
       periodEnd.setHours(period.endHour, period.endMinute, 0, 0);
-      const availableMinutes = Math.max(0, Math.ceil((periodEnd.getTime() - current.getTime()) / 60000));
+      const availableMinutes = Math.max(
+        0,
+        Math.ceil((periodEnd.getTime() - current.getTime()) / 60000),
+      );
 
       if (availableMinutes <= 0) {
         current = this.moveToNextWorkStart(current);
@@ -715,7 +934,14 @@ export class RepairFormComponent implements OnInit {
     return normalized;
   }
 
-  private getWorkPeriod(date: Date): { startHour: number; startMinute: number; endHour: number; endMinute: number } | null {
+  private getWorkPeriod(
+    date: Date,
+  ): {
+    startHour: number;
+    startMinute: number;
+    endHour: number;
+    endMinute: number;
+  } | null {
     const day = date.getDay();
 
     if (day >= 1 && day <= 5) {
@@ -735,12 +961,12 @@ export class RepairFormComponent implements OnInit {
 
     do {
       next.setDate(next.getDate() + 1);
-      
+
       const period = this.getWorkPeriod(next);
-      
+
       if (period) {
         next.setHours(period.startHour, period.startMinute, 0, 0);
-        
+
         return next;
       }
     } while (true);
@@ -749,7 +975,7 @@ export class RepairFormComponent implements OnInit {
   private advancePaymentMinValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const rawValue = control.value;
-      if (rawValue === null || rawValue === undefined || rawValue === '') {
+      if (rawValue === null || rawValue === undefined || rawValue === "") {
         return null;
       }
 
@@ -763,14 +989,16 @@ export class RepairFormComponent implements OnInit {
         return null;
       }
 
-      return advance < minimum ? { minAdvance: { min: minimum, actual: advance } } : null;
+      return advance < minimum
+        ? { minAdvance: { min: minimum, actual: advance } }
+        : null;
     };
   }
 
   private advancePaymentMaxValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const rawValue = control.value;
-      if (rawValue === null || rawValue === undefined || rawValue === '') {
+      if (rawValue === null || rawValue === undefined || rawValue === "") {
         return null;
       }
 
@@ -784,52 +1012,67 @@ export class RepairFormComponent implements OnInit {
         return null;
       }
 
-      return advance > maximum ? { maxAdvance: { max: maximum, actual: advance } } : null;
+      return advance > maximum
+        ? { maxAdvance: { max: maximum, actual: advance } }
+        : null;
     };
   }
 
-  private resolveSelectedAdvancePaymentType(paymentType: 'cash' | 'card'): PaymentType | undefined {
-    const aliases = paymentType === 'cash'
-      ? ['cash', 'efectivo']
-      : ['card', 'tarjeta'];
+  private resolveSelectedAdvancePaymentType(
+    paymentType: "cash" | "card",
+  ): PaymentType | undefined {
+    const aliases =
+      paymentType === "cash" ? ["cash", "efectivo"] : ["card", "tarjeta"];
 
-    return this.paymentTypes().find(type => {
-      const code = type.code?.toLowerCase() || '';
-      const name = type.name?.toLowerCase() || '';
-      
-      return aliases.some(alias => code.includes(alias) || name.includes(alias));});
+    return this.paymentTypes().find((type) => {
+      const code = type.code?.toLowerCase() || "";
+      const name = type.name?.toLowerCase() || "";
+
+      return aliases.some(
+        (alias) => code.includes(alias) || name.includes(alias),
+      );
+    });
   }
 
   private handleRepairCreated(repair: Repair): void {
-    this.repair = repair; 
+    this.repair = repair;
     this.isLoading.set(false);
 
     void this.openTicketAndPrint();
 
-    this.whatsappApiService.sendNotification({
-      phone: repair.customerPhone,
-      customer_name: repair.customerName,
-      repair_id: repair.id.substring(0, 8),
-      event: 'received'
-    }).subscribe(result => {
-      if (result.success) {
-        this.toastService.show('Notificación WhatsApp enviada al cliente', 'success');
-      } else {
-        this.toastService.show('No se pudo enviar la notificación WhatsApp', 'error');
-      }
-    });
+    this.whatsappApiService
+      .sendNotification({
+        phone: repair.customerPhone,
+        customer_name: repair.customerName,
+        repair_id: repair.id.substring(0, 8),
+        event: "received",
+      })
+      .subscribe((result) => {
+        if (result.success) {
+          this.toastService.show(
+            "Notificación WhatsApp enviada al cliente",
+            "success",
+          );
+        } else {
+          this.toastService.show(
+            "No se pudo enviar la notificación WhatsApp",
+            "error",
+          );
+        }
+      });
   }
 
   private async openTicketAndPrint(): Promise<void> {
-    if (!this.repair) 
-      return;
-    
+    if (!this.repair) return;
+
     try {
-      const ticketData = await this.repairImpressionTicket.generateTicketData(this.repair);
+      const ticketData = await this.repairImpressionTicket.generateTicketData(
+        this.repair,
+      );
       this.qrCodeDataUrl = ticketData.qrCodeDataUrl;
       await this.triggerWorkOrderPrint(true);
     } catch (error) {
-      console.error('Error generating ticket:', error);
+      console.error("Error generating ticket:", error);
     }
   }
 
@@ -841,17 +1084,28 @@ export class RepairFormComponent implements OnInit {
       requestAnimationFrame(() => {
         requestAnimationFrame(async () => {
           try {
-            const blob = await this.convertirHtmlAPdf();
+            const blob = await this.convertHtmlAPdfService.convertirHtmlAPdf(
+              "AdvancePaymentTicket",
+              "AdvancePayment",
+            );
+
+            this.paymentUseCases
+              .uploadAdvancePaymentPdf(this.repair!.id, blob)
+              .subscribe({
+                next: () => console.log("PDF enviado al backend"),
+                error: (err) => console.error("Error enviando PDF:", err),
+              });
+
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            const a = document.createElement("a");
             a.href = url;
-            a.download = 'AdvancePayment.pdf';
+            a.download = "AdvancePayment.pdf";
             document.body.appendChild(a);
-            a.click()
+            a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
           } catch (error) {
-            console.error('Error al generar PDF del anticipo:', error);
+            console.error("Error al generar PDF del anticipo:", error);
           } finally {
             resolve();
           }
@@ -860,7 +1114,9 @@ export class RepairFormComponent implements OnInit {
     });
   }
 
-  private async triggerWorkOrderPrint(redirectAfterPrint = false): Promise<void> {
+  private async triggerWorkOrderPrint(
+    redirectAfterPrint = false,
+  ): Promise<void> {
     if (!this.repair) {
       return;
     }
@@ -871,25 +1127,25 @@ export class RepairFormComponent implements OnInit {
       this.closeAdvancePaymentTicket();
 
       if (redirectAfterPrint) {
-        void this.router.navigate(['/repairs']);
+        void this.router.navigate(["/repairs"]);
       }
 
       return;
     }
 
     if (redirectAfterPrint) {
-      void this.router.navigate(['/repairs']);
+      void this.router.navigate(["/repairs"]);
     }
   }
 
   private prepareAdvancePaymentTicket(
     repair: Repair,
     amount: number,
-    paymentType: 'cash' | 'card' | 'mixed',
-    cardType: 'debit' | 'credit',
+    paymentType: "cash" | "card" | "mixed",
+    cardType: "debit" | "credit",
     voucherId: string,
     cashAmount = 0,
-    cardAmount = 0
+    cardAmount = 0,
   ): void {
     this.advancePaymentAmount = repair.advancePayment ?? amount;
     this.advancePaymentType = paymentType;
@@ -898,72 +1154,13 @@ export class RepairFormComponent implements OnInit {
     this.advancePaymentCashAmount = cashAmount;
     this.advancePaymentCardAmount = cardAmount;
 
-    const createdAt = repair.createdAt ? new Date(repair.createdAt) : new Date();
-    this.advancePaymentDate = Number.isFinite(createdAt.getTime()) ? createdAt : new Date();
+    const createdAt = repair.createdAt
+      ? new Date(repair.createdAt)
+      : new Date();
+    this.advancePaymentDate = Number.isFinite(createdAt.getTime())
+      ? createdAt
+      : new Date();
 
     this.pendingAdvancePaymentTicket.set(true);
-  }
-
-  async convertirHtmlAPdf(): Promise<Blob> {
-    const elemento = document.getElementById('AdvancePayment') as HTMLElement;
-
-    if (!elemento) {
-      throw new Error('No se encontró el elemento #AdvancePayment en el DOM');
-    }
-
-    // Pre-fetchear y parchear los CSS — html2canvas parsea los <link> ANTES de onclone
-    // y se rompe con oklch (DaisyUI v4). Los reemplazamos con #000000 como fallback.
-    const patchedCSSMap = new Map<string, string>();
-    await Promise.all(
-      Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')).map(async link => {
-        try {
-          const css = await fetch(link.href).then(r => r.text());
-          patchedCSSMap.set(link.href, css.replace(/oklch\([^)]*\)/g, '#000000'));
-        } catch { /* skip */ }
-      })
-    );
-
-    // Capturar colores computados (browser ya resolvió oklch → rgb)
-    const origEls = [elemento, ...Array.from(elemento.querySelectorAll<HTMLElement>('*'))];
-    const computedStyles = origEls.map(el => {
-      const cs = window.getComputedStyle(el);
-      return { bg: cs.backgroundColor, color: cs.color, borderColor: cs.borderColor };
-    });
-
-    const opciones = {
-      margin: 20,
-      filename: 'AdvancePayment.pdf',
-      image: { type: 'jpeg', quality: 1 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        onclone: (clonedDoc: Document, clonedEl: HTMLElement) => {
-          // Sustituir <link> por <style> con CSS parchado (sin oklch)
-          clonedDoc.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]').forEach(link => {
-            const patched = patchedCSSMap.get(link.href);
-            if (patched) {
-              const style = clonedDoc.createElement('style');
-              style.textContent = patched;
-              link.replaceWith(style);
-            }
-          });
-
-          // Aplicar colores rgb() como inline styles en el receipt
-          const clonedEls = [clonedEl, ...Array.from(clonedEl.querySelectorAll<HTMLElement>('*'))];
-          clonedEls.forEach((el, i) => {
-            const s = computedStyles[i];
-            if (s) {
-              el.style.backgroundColor = s.bg;
-              el.style.color = s.color;
-              el.style.borderColor = s.borderColor;
-            }
-          });
-        }
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }as const;
-
-    const blob = await html2pdf().set(opciones).from(elemento).outputPdf('blob').then();
-    return blob;
   }
 }

@@ -236,7 +236,6 @@ export class RepairApiService {
   }
 
   getComments(repairId: string): Observable<RepairComment[]> {
-    console.log('getComments called with repairId:', repairId);
     return this.apiService.get<RepairComment[]>(`/repair-comments/${repairId}`);
   }
 
