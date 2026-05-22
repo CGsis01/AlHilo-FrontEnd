@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
+import { environment } from '../../../environments/environment';
 import { User } from '@core/models/user.model';
 import { Payment } from '@core/models/payment.model';
 
@@ -30,7 +31,10 @@ export interface PaymentFilters {
 export class PaymentApiService {
   private readonly endpoint = '/payments';
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private http: HttpClient
+  ) {}
 
   getAll(filters?: PaymentFilters): Observable<Payment[]> {
     let params = this.buildFilterParams(filters);
@@ -55,6 +59,55 @@ export class PaymentApiService {
     }
 
     return params;
+  }
+
+  uploadAdvancePaymentPdf(repairId: string, pdf: Blob): Observable<void> {
+    const token = localStorage.getItem(environment.tokenKey);
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}`});
+
+    const formData = new FormData();
+    formData.append('file', pdf, 'advance-payment.pdf');
+
+    console.log("form data", headers)
+    console.log("Token" ,token)
+    console.log("Id de orden " ,repairId )
+
+    return this.http.post<void>(
+      `${environment.apiUrl}${this.endpoint}/${repairId}/Alhilo/anticipo.pdf`,
+      formData,
+      { headers }
+    );
+  }
+
+  saveAdvancePaymentPdfUrl(repairId: string, pdfUrl: string): Observable<void> {
+    return this.apiService.post<void>(
+      `${this.endpoint}/${repairId}/Alhilo/anticipo.pdf`,
+      { pdf_url: pdfUrl }
+    );
+  }
+
+  uploadFinalPaymentPdf(repairId: string, pdf: Blob): Observable<void> {
+    const token = localStorage.getItem(environment.tokenKey);
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}`});
+    
+    const formData = new FormData();
+    formData.append('file', pdf, 'final-payment.pdf');
+    console.log("ide de ticket final", repairId)
+    console.log("Token" ,token)
+    console.log("Id de orden " ,repairId )
+
+    return this.http.post<void>(
+      `${environment.apiUrl}${this.endpoint}/${repairId}/Alhilo/pago-completo.pdf`,
+      formData,
+      { headers }
+    );
+  }
+
+  saveFinalPaymentPdfUrl(repairId: string, pdfUrl: string): Observable<void> {
+    return this.apiService.post<void>(
+      `${this.endpoint}/${repairId}/Alhilo/pago-completo  .pdf`,
+      { pdf_url: pdfUrl }
+    );
   }
 
   private mapPayment(payment: any): Payment {
