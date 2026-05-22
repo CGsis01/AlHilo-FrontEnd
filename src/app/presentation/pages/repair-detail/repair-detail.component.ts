@@ -28,12 +28,12 @@ import { RepairComment } from "@core/models/repair-comment.model";
 import { getStoredUserId } from "../../../shared/utils/userLocalData.utils";
 import { RepairItem } from "@core/models/repair-item.model";
 import { ConvertHtmlAPdf } from "src/app/shared/utils/convertHtmlAPdf";
-import html2pdf from "html2pdf.js";
+import { ClientModalComponent } from "../../components/client-modal/client-modal.component";
 
 @Component({
   selector: "app-repair-detail",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, ClientModalComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: "./repair-detail.component.html",
   styleUrls: ["./repair-detail.component.scss", "./repair-detail.receipt.scss"],
@@ -328,12 +328,10 @@ export class RepairDetailComponent implements OnInit {
       .addComment(this.repair.id, this.comment.trim(), currentUserId)
       .subscribe({
         next: (savedComment) => {
-          console.log(savedComment, "EL valor del c", this.comment);
           this.repairComment = [
             savedComment,
             ...(Array.isArray(this.repairComment) ? this.repairComment : []),
           ];
-          console.log(this.repairComment, "el repairComment");
           this.comment = "";
           this.updateStatus(
             this.repairStatuses().filter(
@@ -937,19 +935,4 @@ export class RepairDetailComponent implements OnInit {
       });
     });
   }
-
-  // async convertirHtmlAPdf(): Promise<Blob> {
-  // const elemento = document.getElementById('PaymentTicket') as HTMLElement;
-
-  //   const opciones = {
-  //     margin: 5,
-  //     filename: `PaymentTicket.pdf`,
-  //     image: { type: 'jpeg', quality: 1 },
-  //     html2canvas: { scale: 2 },
-  //     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  //   } as const;
-
-  //   const blob = await html2pdf().set(opciones).from(elemento).outputPdf('blob');
-  //   return blob;
-  // }
 }
