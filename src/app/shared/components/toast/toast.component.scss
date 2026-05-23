@@ -1,1 +1,8 @@
-// Toast positioning is handled by DaisyUI classes
+.toast {
+  &.toast-top-left { @apply toast-top toast-start; }
+  &.toast-top-center { @apply toast-top; justify-content: center; }
+  &.toast-top-right { @apply toast-top toast-end; }
+  &.toast-bottom-left { @apply toast-bottom toast-start; }
+  &.toast-bottom-center { @apply toast-bottom; justify-content: center; }
+  &.toast-bottom-right { @apply toast-bottom toast-end; }
+}

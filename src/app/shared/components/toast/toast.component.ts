@@ -39,4 +39,10 @@ export class ToastComponent implements OnInit, OnDestroy {
     };
     return map[type] ?? 'alert-info';
   }
+
+  getPositionClass(): string {
+    if (this.toasts.length === 0) return '';
+    const position = this.toasts[0].position || 'top-right';
+    return `toast-${position}`;
+  }
 }

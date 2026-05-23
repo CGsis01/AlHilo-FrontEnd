@@ -1,0 +1,25 @@
+<!-- Modal de comentarios de trabajo -->
+<div class="modal-overlay" *ngIf="open" (click)="close.emit()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Comentarios</h2>
+      <button class="modal-close" (click)="close.emit()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <textarea
+          [ngModel]="comment"
+          (ngModelChange)="commentChange.emit($event)"
+          placeholder="Escribe tu comentario"
+          class="comment-box">
+        </textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="close.emit()">Cancelar</button>
+      <button class="btn-primary" (click)="confirm.emit()">Aceptar</button>
+    </div>
+  </div>
+</div>

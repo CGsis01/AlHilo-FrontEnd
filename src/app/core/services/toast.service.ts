@@ -2,11 +2,13 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 export type ToastType = 'success' | 'error' | 'info';
+export type ToastPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
 
 export interface ToastMessage {
   id: number;
   message: string;
   type: ToastType;
+  position: ToastPosition;
 }
 
 @Injectable({
@@ -19,9 +21,9 @@ export class ToastService {
 
   private nextId = 0;
 
-  show(message: string, type: ToastType = 'info', durationMs = 4000): void {
+  show(message: string, type: ToastType = 'info', position: ToastPosition = 'bottom-right', durationMs = 4000): void {
     const id = this.nextId++;
-    const toast: ToastMessage = { id, message, type };
+    const toast: ToastMessage = { id, message, type, position };
     
     this._toasts.next([...this._toasts.value, toast]);
     

@@ -38,6 +38,10 @@ export class UserUseCases {
     return this.userRepository.getByStore(storeId);
   }
 
+  getUnassignedSeamstressesAndHeadSewing(): Observable<User[]> {
+    return this.userRepository.getUnassignedSeamstressesAndHeadSewing();
+  }
+
   changePassword(userId: string, oldPassword: string, newPassword: string): Observable<boolean> {
     return this.userRepository.updatePassword(userId, oldPassword, newPassword);
   }

@@ -1,0 +1,58 @@
+<!-- Modal de Asignación de Costurera a Prenda Individual -->
+<div class="modal-overlay" *ngIf="open" (click)="close.emit()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Asignar Costurera</h2>
+      <button class="modal-close" (click)="close.emit()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="current-garment-info" *ngIf="selectedGarmentItem">
+        <p class="garment-detail-title">{{ selectedGarmentItem.garment.name }}</p>
+        <p class="garment-detail-subtitle">{{ selectedGarmentItem.repairType.name }}</p>
+        <p class="garment-detail-description">{{ selectedGarmentItem.description }}</p>
+      </div>
+
+      <ng-container *ngIf="!(selectedGarmentItem?.assignedToId || selectedGarmentItem?.assignedTo)">
+        <div class="loading-seamstresses" *ngIf="isLoadingSeamstresses">
+          <div class="spinner-small"></div>
+          <span>Cargando costureras...</span>
+        </div>
+
+        <div class="seamstress-list" *ngIf="!isLoadingSeamstresses && seamstresses.length > 0">
+          <p class="seamstress-list-label">Selecciona una costurera:</p>
+          <div class="seamstress-options">
+            <button *ngFor="let seamstress of seamstresses"
+              class="seamstress-option"
+              [class.selected]="selectedSeamstress?.id === seamstress.id"
+              [class.disabled]="isSeamstressAlreadyAssigned(seamstress)"
+              [disabled]="isSeamstressAlreadyAssigned(seamstress)"
+              (click)="selectSeamstress.emit(seamstress)">
+              <span class="seamstress-avatar">👤</span>
+              <span class="seamstress-name">{{ seamstress.name }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="no-seamstresses" *ngIf="!isLoadingSeamstresses && seamstresses.length === 0">
+          <p>No hay costureras disponibles</p>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="close.emit()">Cancelar</button>
+      <button class="btn-secondary"
+        *ngIf="selectedGarmentItem?.assignedToId || selectedGarmentItem?.assignedTo"
+        (click)="openUnassign.emit()">
+        Quitar asignación
+      </button>
+      <button class="btn-primary"
+        *ngIf="!(selectedGarmentItem?.assignedToId || selectedGarmentItem?.assignedTo)"
+        (click)="assignSeamstress.emit()"
+        [disabled]="!selectedSeamstress">
+        Asignar Costurera
+      </button>
+    </div>
+  </div>
+</div>

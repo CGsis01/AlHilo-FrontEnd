@@ -16,6 +16,8 @@ export interface RepairItemRequest {
   repair_type_id: string;
   description: string;
   estimated_price: number;
+  repair_status_id?: string;
+  assigned_to_id?: string;
   final_price?: number;
   sort_order?: number;
 }
@@ -29,7 +31,6 @@ export interface CreateRepairRequest {
   estimated_price: number;
   final_price?: number;
   items?: RepairItemRequest[];
-  assigned_to_id?: string;
   received_date: string;
   estimated_delivery_date: string;
   actual_delivery_date?: string;
@@ -46,7 +47,6 @@ export interface UpdateRepairRequest {
   estimated_price?: number;
   final_price?: number;
   items?: RepairItemRequest[];
-  assigned_to_id?: string;
   received_date?: string;
   estimated_delivery_date?: string;
   actual_delivery_date?: string;
@@ -54,9 +54,27 @@ export interface UpdateRepairRequest {
   updated_by: string;
 }
 
+export interface AssignRepairItem {
+  repair_item_id: string;
+  assigned_to_id?: string;
+  updated_by: string;
+}
+
+export interface AssignRepairGarments {
+  repair_id: string;
+  assignments: AssignRepairItem[];
+  updated_by: string;
+}
+
 export interface AssignRepairRequest {
   repair_id: string;
   assigned_to_id: string;
+}
+
+export interface UpdateRepairItemStatusRequest {
+  repair_item_id: string;
+  repair_status_id: string;
+  updated_by: string;
 }
   
 export interface UpdateStatusRequest {
@@ -99,7 +117,10 @@ export class RepairApiService {
     let params = this.buildFilterParams(filters);
 
     if (filters) {
-      if (filters.search) params = params.set('search', filters.search);
+      if (filters.search) 
+        params = params.set('search', filters.search);
+      if(filters.assigned_to_id)
+        params = params.set('assigned_to_id', filters.assigned_to_id);
     }
 
     return this.apiService.get<Repair[]>(this.endpoint, params)
@@ -168,7 +189,23 @@ export class RepairApiService {
     .pipe(map(r => this.mapRepair(r)));
   }
 
+  assignRepairGarments(assign_params: AssignRepairGarments): Observable<Repair> {
+    return this.apiService.post<Repair>(`${this.endpoint}/${assign_params.repair_id}/assign-garments`, assign_params)
+    .pipe(map(r => this.mapRepair(r)));
+  }
+
+  assignSingleRepairItem(assign_params: AssignRepairItem): Observable<RepairItem> {
+    return this.apiService.post<any>(`${this.endpoint}/repair-items/${assign_params.repair_item_id}/assign`, assign_params)
+    .pipe(map(i => this.mapRepairItemResponse(i)));
+  }
+
+  updateSingleRepairItemStatus(updateParams: UpdateRepairItemStatusRequest): Observable<Repair> {
+    return this.apiService.post<Repair>(`${this.endpoint}/repair-items/${updateParams.repair_item_id}/update-status`, updateParams)
+    .pipe(map(r => this.mapRepair(r)));
+  }
+
   assignToSeamstress(assign_params: AssignRepairRequest): Observable<Repair> {
+    // Kept for backwards compatibility - maps old repair-level assignment to repair-item level
     return this.apiService.post<Repair>(`${this.endpoint}/assign`, assign_params)
     .pipe(map(r => this.mapRepair(r)));
   }
@@ -236,7 +273,6 @@ export class RepairApiService {
   }
 
   getComments(repairId: string): Observable<RepairComment[]> {
-    console.log('getComments called with repairId:', repairId);
     return this.apiService.get<RepairComment[]>(`/repair-comments/${repairId}`);
   }
 
@@ -246,7 +282,6 @@ export class RepairApiService {
     if (filters) {
       if (filters.repair_status_id) params = params.set('repair_status_id', filters.repair_status_id);
       if (filters.repair_type_id) params = params.set('repair_type_id', filters.repair_type_id);
-      if (filters.assigned_to_id) params = params.set('assigned_to_id', filters.assigned_to_id);
       if (filters.created_by_id) params = params.set('created_by_id', filters.created_by_id);
       if (filters.client_id) params = params.set('client_id', filters.client_id);
       if (filters.customer_phone) params = params.set('customer_phone', filters.customer_phone);
@@ -315,6 +350,15 @@ export class RepairApiService {
           description: item.description,
           estimatedPrice: item.price,
           finalPrice: item.final_price,
+          repairStatus: item.repair_status ? {
+            id: item.repair_status.repair_status_id || item.repair_status.id,
+            name: item.repair_status.name
+          } : undefined,
+          assignedToId: item.assigned_to_id,
+          assignedTo: item.assigned_to ? <User>{
+            id: item.assigned_to.id,
+            name: item.assigned_to.name
+          } : undefined,
           sortOrder: item.sort_order,
           createdAt: item.created_at ? new Date(item.created_at) : undefined,
           updatedAt: item.updated_at ? new Date(item.updated_at) : undefined
@@ -341,10 +385,6 @@ export class RepairApiService {
         : (repair.final_price !== undefined && repair.final_price !== null
           ? (Number(repair.final_price) || 0)
           : undefined),
-      assignedTo: repair.assigned_to ? <User>{
-        id: repair.assigned_to.user_id,
-        name: repair.assigned_to.name
-      } : undefined,
       createdBy: <User>{
         id: repair.created_by_user.id,
         name: repair.created_by_user.name,
@@ -408,8 +448,92 @@ export class RepairApiService {
       description: item.description,
       estimatedPrice: item.estimated_price,
       finalPrice: item.final_price,
+      repairStatus: item.repair_status ? {
+        id: item.repair_status.repair_status_id || item.repair_status.id,
+        name: item.repair_status.name
+      } : undefined,
       sortOrder: item.sort_order,
       createdAt: item.created_at ? new Date(item.created_at) : undefined,
-      updatedAt: item.updated_at ? new Date(item.updated_at) : undefined};
+      updatedAt: item.updated_at ? new Date(item.updated_at) : undefined
+    };
+  }
+
+  private mapRepairItemResponse(item: any): RepairItem {
+    return {
+      id: item.id,
+      repairId: item.repair_id,
+      garment: {
+        id: item.garment.id,
+        name: item.garment.name,
+        code: item.garment.code,
+        description: item.garment.description,
+        category: item.garment.category,
+        storeId: item.garment.store_id,
+        repairTypes: [],
+        isActive: item.garment.is_active,
+        createdAt: item.garment.created_at,
+        updatedAt: item.garment.updated_at
+      },
+      repairType: {
+        id: item.repair_type.id,
+        name: item.repair_type.name,
+        code: item.repair_type.code,
+        estimatedPrice: item.repair_type.estimated_price,
+        estimatedTime: item.repair_type.estimated_time,
+        commissionPercentage: item.repair_type.commission_percentage,
+        repairComplexity: {
+          id: item.repair_type.repair_complexity.id,
+          name: item.repair_type.repair_complexity.name,
+          code: item.repair_type.repair_complexity.code,
+          laborMultiplier: item.repair_type.repair_complexity.labor_multiplier,
+          timeMultiplier: item.repair_type.repair_complexity.time_multiplier,
+          storeId: item.repair_type.repair_complexity.store_id,
+          isActive: item.repair_type.repair_complexity.is_active,
+          createdAt: item.repair_type.repair_complexity.created_at,
+          updatedAt: item.repair_type.repair_complexity.updated_at
+        },
+        store: {
+          id: item.repair_type.store.id,
+          name: item.repair_type.store.name,
+          isActive: item.repair_type.store.is_active,
+          createdAt: item.repair_type.store.created_at,
+          updatedAt: item.repair_type.store.updated_at
+        },
+        isActive: item.repair_type.is_active,
+        createdAt: item.repair_type.created_at
+      },
+      description: item.description,
+      estimatedPrice: item.price,
+      finalPrice: item.final_price,
+      repairStatus: item.repair_status ? {
+        id: item.repair_status.repair_status_id || item.repair_status.id,
+        name: item.repair_status.name
+      } : undefined,
+      assignedToId: item.assigned_to_id,
+      assignedTo: item.assigned_to ? {
+        id: item.assigned_to.user_id,
+        name: item.assigned_to.name,
+        email: item.assigned_to.email,
+        role: item.assigned_to.role,
+        store: item.assigned_to.store ? {
+          id: item.assigned_to.store.id,
+          name: item.assigned_to.store.name,
+          isActive: item.assigned_to.store.is_active,
+          createdAt: item.assigned_to.store.created_at,
+          updatedAt: item.assigned_to.store.updated_at
+        } : null,
+        isActive: item.assigned_to.is_active,
+        createdAt: item.assigned_to.created_at,
+        updatedAt: item.assigned_to.updated_at
+      } : undefined,
+      sortOrder: item.sort_order,
+      createdAt: item.created_at ? new Date(item.created_at) : undefined,
+      updatedAt: item.updated_at ? new Date(item.updated_at) : undefined
+    };
+  }
+
+  getRepairItemsBySeamstress(seamstressId: string): Observable<RepairItem[]> {
+    return this.apiService.get<any[]>(`${this.endpoint}/seamstress/${seamstressId}/repair-items`)
+      .pipe(map(items => items.map(i => this.mapRepairItemResponse(i))));
   }
 }
