@@ -428,14 +428,14 @@
       transform: translateY(0);
     }
   }
+}
 
-  .meta-info { 
-    display: flex; 
-    justify-content: flex-end; 
-    gap: 2rem; 
-    color: var(--text-secondary); 
-    font-size: 0.85rem; 
-  }
+.meta-info { 
+  display: flex; 
+  justify-content: flex-end; 
+  gap: 2rem; 
+  color: var(--text-secondary); 
+  font-size: 0.85rem; 
 }
 
 // Ensure both ESTADO and ACCION badges have the same height
