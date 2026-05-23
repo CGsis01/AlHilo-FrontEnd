@@ -2,10 +2,12 @@ import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { register as registerSwiperElements } from 'swiper/element/bundle';
+import { map } from 'rxjs/operators';
 import { RepairUseCases } from '../../../domain/usecases/repair.usecases';
 import { Repair, RepairStatusEnum } from '../../../core/models/repair.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole, UserRoleCode } from '../../../core/models/user.model';
+import { getAggregateRepairStatus } from '../../../shared/utils/repair-status-aggregation.utils';
 
 @Component({
   selector: 'app-repairs',
@@ -77,14 +79,22 @@ export class RepairsComponent implements OnInit {
       RepairStatusEnum.DELIVERED
     ]);
 
-    const repairs$ = (isSeamstress) && currentUserId 
-      ? this.repairUseCases.getRepairsByAssignedUser(currentUserId)
+    const repairs$ = isSeamstress && currentUserId
+      ? this.repairUseCases.getRepairsByAssignedUser(currentUserId).pipe(
+          map(repairs => {
+            return repairs.filter(repair => {
+              const aggregateStatus = this.getAggregateStatusName(repair);
+              return aggregateStatus !== RepairStatusEnum.PENDING 
+              && aggregateStatus !== RepairStatusEnum.VALIDATED 
+              && aggregateStatus !== RepairStatusEnum.DELIVERED;
+            });
+          }))
       : this.repairUseCases.getAllRepairs();
 
     repairs$.subscribe({
       next: (repairs) => {
         this.repairs = isHeadSewing
-          ? repairs.filter(repair => !excludedHeadSewingStatuses.has(repair.repairStatus.name))
+          ? repairs.filter(repair => !excludedHeadSewingStatuses.has(this.getAggregateStatusName(repair)))
           : repairs;
 
         this.filterRepairs();
@@ -98,7 +108,7 @@ export class RepairsComponent implements OnInit {
   filterRepairs(): void {
     const source = this.selectedStatus === 'ALL'
       ? this.repairs
-      : this.repairs.filter(r => r.repairStatus.name === this.selectedStatus);
+      : this.repairs.filter(r => this.getAggregateStatusName(r) === this.selectedStatus);
 
     this.filteredRepairs = source.slice().sort(
       (a, b) => new Date(a.receivedDate).getTime() - new Date(b.receivedDate).getTime());
@@ -120,21 +130,36 @@ export class RepairsComponent implements OnInit {
     return statusMap[status as RepairStatusEnum];
   }
 
+  getAggregateStatusName(repair: Repair): RepairStatusEnum {
+    return getAggregateRepairStatus(repair);
+  }
+
   getStatusLabel(status: RepairStatusEnum): string {
     return status;
   }
 
   /** True when ANY repair in the full list is pending + express (forces priority assignment) */
   get hasPendingExpress(): boolean {
-    return this.repairs.some(r => r.isExpress && r.repairStatus.name === RepairStatusEnum.PENDING);
+    return this.repairs.some(r => r.isExpress && this.getAggregateStatusName(r) === RepairStatusEnum.PENDING);
   }
 
   /** A card is blocked when there is a pending+express repair and THIS card is not that repair */
   isCardBlocked(repair: Repair): boolean {
+    const aggregateStatus = this.getAggregateStatusName(repair);
+
     return this.hasPendingExpress 
-    && !(repair.isExpress && repair.repairStatus.name === RepairStatusEnum.PENDING)
-    && repair.repairStatus.name !== RepairStatusEnum.IN_PROGRESS 
-    && repair.repairStatus.name !== RepairStatusEnum.IN_VALIDATION
-    && repair.repairStatus.name !== RepairStatusEnum.VALIDATED;
+    && !(repair.isExpress && aggregateStatus === RepairStatusEnum.PENDING)
+    && aggregateStatus !== RepairStatusEnum.IN_PROGRESS 
+    && aggregateStatus !== RepairStatusEnum.IN_VALIDATION
+    && aggregateStatus !== RepairStatusEnum.VALIDATED;
+  }
+
+  getAssignedSeamstresses(repair: Repair): string | null {
+    const items = repair.items ?? [];
+    const seamstresses = items
+      .map(item => item.assignedTo?.name)
+      .filter((name): name is string => !!name);
+    
+    return seamstresses.length > 0 ? seamstresses.join(', ') : null;
   }
 }

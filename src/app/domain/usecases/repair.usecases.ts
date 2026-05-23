@@ -59,6 +59,10 @@ export class RepairUseCases {
     return this.repairRepository.updateStatus(repairId, status);
   }
 
+  updateRepairItemStatus(itemId: string, status: RepairStatus): Observable<Repair> {
+    return this.repairRepository.updateItemStatus(itemId, status);
+  }
+
   addRepairItem(repairId: string, item: Partial<RepairItem>): Observable<RepairItem> {
     return this.repairRepository.addItem(repairId, item);
   }
@@ -77,5 +81,17 @@ export class RepairUseCases {
 
   getComments(repairId: string): Observable<RepairComment[]> {
     return this.repairRepository.getComments(repairId);
+  }
+
+  getRepairItemsBySeamstress(userId: string): Observable<RepairItem[]> {
+    return this.repairRepository.getItemsBySeamstress(userId);
+  }
+
+  assignRepairGarments(repairId: string, assignments: Array<{itemId: string, seamstressId?: string}>): Observable<Repair> {
+    return this.repairRepository.assignRepairGarments(repairId, assignments);
+  }
+
+  assignRepairItem(itemId: string, seamstressId: string): Observable<RepairItem> {
+    return this.repairRepository.assignRepairItem(itemId, seamstressId);
   }
 }

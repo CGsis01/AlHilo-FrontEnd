@@ -1,4 +1,4 @@
-<div class="toast toast-top toast-end z-50" *ngIf="toasts.length > 0">
+<div class="toast z-50" *ngIf="toasts.length > 0" [ngClass]="getPositionClass()">
   <div *ngFor="let toast of toasts"
     class="alert shadow-lg cursor-pointer"
     [ngClass]="alertClass(toast.type)"

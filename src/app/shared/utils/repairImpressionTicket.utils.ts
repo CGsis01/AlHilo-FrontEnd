@@ -18,12 +18,17 @@ export class repairImpressionTicket {
   constructor(private router: Router) {}
 
   async generateTicketData(repair: Repair): Promise<TicketData> {
+    const items = repair.items ?? [];
+    const assignedSeamstresses = items
+      .map(item => item.assignedTo?.name)
+      .filter((name): name is string => !!name);
+    
     const qrData = {
       repairId: repair.id,
       customer: repair.customerName,
-      status: repair.repairStatus.name,
+      status: repair.repairStatus?.name,
       estimatedDelivery: repair.estimatedDeliveryDate,
-      assignedTo: repair.assignedTo?.name || 'No asignado'};
+      assignedTo: assignedSeamstresses.length > 0 ? assignedSeamstresses.join(', ') : 'No asignado'};
 
     try {
       const qrCodeDataUrl = await QRCode.toDataURL(JSON.stringify(qrData), {

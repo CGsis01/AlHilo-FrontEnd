@@ -41,7 +41,6 @@ export class RepairRepository implements Repository<Repair> {
       final_price: repair.finalPrice,
       advance_payment: repair.advancePayment,
       is_express: repair.isExpress ?? false,
-      assigned_to_id: repair.assignedTo?.id,
       received_date: this.toIsoString(repair.receivedDate) || nowIso,
       estimated_delivery_date: this.toIsoString(repair.estimatedDeliveryDate, true) || nowIso,
       actual_delivery_date: this.toIsoString(repair.actualDeliveryDate),
@@ -53,8 +52,10 @@ export class RepairRepository implements Repository<Repair> {
         repair_type_id: item.repairType?.id,
         description: item.description,
         price: item.estimatedPrice,
+        assigned_to_id: item.assignedToId,
         store_id: item.garment.storeId,
-        created_by: getStoredUserId()}))};
+        created_by: getStoredUserId()}))
+    };
 
     return this.repairApiService.create(createRequest);
   }
@@ -70,7 +71,6 @@ export class RepairRepository implements Repository<Repair> {
       final_price: repair.finalPrice,
       advance_payment: repair.advancePayment,
       is_express: repair.isExpress,
-      assigned_to_id: repair.assignedTo?.id,
       received_date: this.toIsoString(repair.receivedDate),
       estimated_delivery_date: this.toIsoString(repair.estimatedDeliveryDate, true),
       actual_delivery_date: this.toIsoString(repair.actualDeliveryDate),
@@ -82,7 +82,9 @@ export class RepairRepository implements Repository<Repair> {
         repair_type_id: item.repairType.id,
         description: item.description,
         estimated_price: item.estimatedPrice,
-        final_price: item.finalPrice}))};
+        final_price: item.finalPrice,
+        assigned_to_id: item.assignedToId}))
+    };
     
     return this.repairApiService.patch(id, updateRequest);
   }
@@ -121,8 +123,7 @@ export class RepairRepository implements Repository<Repair> {
     return new Observable(observer => {
       this.repairApiService.getByAssignedUser(userId).subscribe({
         next: (repairs) => {
-          observer.next(repairs.filter(r => r.repairStatus?.name === RepairStatusEnum.IN_PROGRESS 
-              || r.repairStatus?.name === RepairStatusEnum.IN_VALIDATION));
+          observer.next(repairs);
           observer.complete();},
         error: (error) => {
           observer.error(error);}});});
@@ -135,6 +136,43 @@ export class RepairRepository implements Repository<Repair> {
       updated_by: getStoredUserId()};
     
     return this.repairApiService.assignToSeamstress(assignRequest);
+  }
+
+  getItemsBySeamstress(userId: string): Observable<RepairItem[]> {
+    return this.repairApiService.getRepairItemsBySeamstress(userId);
+  }
+
+  assignRepairGarments(repairId: string, assignments: Array<{itemId: string, seamstressId?: string}>): Observable<Repair> {
+    const assignRequest = {
+      repair_id: repairId,
+      assignments: assignments.map(a => ({
+        repair_item_id: a.itemId,
+        assigned_to_id: a.seamstressId,
+        attended_by_id: a.seamstressId, 
+        updated_by: getStoredUserId()
+      })),
+      updated_by: getStoredUserId()};
+
+    return this.repairApiService.assignRepairGarments(assignRequest);
+  }
+
+  assignRepairItem(itemId: string, seamstressId: string): Observable<RepairItem> {
+    const assignRequest = {
+      repair_item_id: itemId,
+      assigned_to_id: seamstressId,
+      updated_by: getStoredUserId()
+    };
+    return this.repairApiService.assignSingleRepairItem(assignRequest);
+  }
+
+  updateItemStatus(itemId: string, status: RepairStatus): Observable<Repair> {
+    const updateRequest = {
+      repair_item_id: itemId,
+      repair_status_id: status.id,
+      updated_by: getStoredUserId()
+    };
+
+    return this.repairApiService.updateSingleRepairItemStatus(updateRequest);
   }
 
   updateStatus(repairId: string, status: RepairStatus): Observable<Repair> {
@@ -153,6 +191,7 @@ export class RepairRepository implements Repository<Repair> {
       description: item.description!,
       estimated_price: item.estimatedPrice!,
       final_price: item.finalPrice,
+      assigned_to_id: item.assignedToId,
       sort_order: item.sortOrder};
 
     return this.repairApiService.addRepairItem(repairId, req);
@@ -165,6 +204,8 @@ export class RepairRepository implements Repository<Repair> {
       description: item.description,
       estimated_price: item.estimatedPrice,
       final_price: item.finalPrice,
+      repair_status_id: item.repairStatus?.id,
+      assigned_to_id: item.assignedToId,
       sort_order: item.sortOrder};
 
     return this.repairApiService.updateRepairItem(repairId, itemId, req);

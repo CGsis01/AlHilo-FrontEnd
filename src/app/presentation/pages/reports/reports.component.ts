@@ -7,6 +7,7 @@ import { Repair, RepairStatusEnum } from '../../../core/models/repair.model';
 import { User } from '../../../core/models/user.model';
 import { UserRepository } from '../../../data/repositories/user.repository';
 import { DateFormatDirective } from '../../../shared/directives/date-format.directive';
+import { getAggregateRepairStatus } from '../../../shared/utils/repair-status-aggregation.utils';
 
 Chart.register(...registerables);
 
@@ -28,7 +29,7 @@ interface SeamstressSales {
 
 interface IncomeDetail {
   repair: Repair;
-  seamstress: string;
+  seamstress: string[];
   date: Date;
   income: number;
   status: RepairStatusEnum;
@@ -164,13 +165,31 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   // Income tab methods
   prepareIncomeDetails(): void {
     this.incomeDetails = this.repairs
-      .filter(repair => repair.repairStatus.name === RepairStatusEnum.DELIVERED)
-      .map(repair => ({
-        repair: repair,
-        seamstress: repair.assignedTo?.name || 'Sin asignar',
-        date: new Date(repair.actualDeliveryDate ?? repair.updatedAt ?? repair.receivedDate),
-        income: this.getRepairRevenue(repair),
-        status: repair.repairStatus.name as RepairStatusEnum}))
+      .filter(repair => getAggregateRepairStatus(repair) === RepairStatusEnum.DELIVERED)
+      .flatMap(repair => {
+        const items = repair.items ?? [];
+        const aggregateStatus = getAggregateRepairStatus(repair);
+        
+        // If no items, create single entry with unassigned
+        if (items.length === 0) {
+          return [{
+            repair: repair,
+            seamstress: ['Sin asignar'],
+            date: new Date(repair.actualDeliveryDate ?? repair.updatedAt ?? repair.receivedDate),
+            income: this.getRepairRevenue(repair),
+            status: aggregateStatus
+          }];
+        }
+        
+        // Create entry for each item with its assigned seamstress
+        return items.map(item => ({
+          repair: repair,
+          seamstress: [item.assignedTo?.name || 'Sin asignar', item.attendedBy?.name || 'Sin asignar'],
+          date: new Date(repair.actualDeliveryDate ?? repair.updatedAt ?? repair.receivedDate),
+          income: this.toFiniteNumber(item.finalPrice ?? item.estimatedPrice ?? 0),
+          status: aggregateStatus
+        }));
+      })
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   }
 
@@ -191,7 +210,7 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Filter by seamstress
     if (this.selectedSeamstress !== 'all') {
-      filtered = filtered.filter(item => item.seamstress === this.selectedSeamstress);
+      filtered = filtered.filter(item => item.seamstress.includes(this.selectedSeamstress));
     }
 
     this.filteredIncomeDetails = filtered;
@@ -218,7 +237,7 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.stats.totalRepairs = this.filteredRepairs.length;
 
     const deliveredRepairs = this.filteredRepairs.filter(r => 
-      r.repairStatus.name === RepairStatusEnum.DELIVERED);
+      getAggregateRepairStatus(r) === RepairStatusEnum.DELIVERED);
 
     this.stats.totalRevenue = deliveredRepairs.reduce((sum, repair) => {
       return sum + this.getRepairRevenue(repair);}, 0);
@@ -245,27 +264,35 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
     const seamstressMap = new Map<string, SeamstressSales>();
 
     this.filteredRepairs.forEach(repair => {
-      if (repair.assignedTo) {
-        const key = repair.assignedTo.id;
+      const items = repair.items ?? [];
+      
+      // If no items, skip
+      if (items.length === 0) return;
+      
+      items.forEach(item => {
+        if (item.assignedTo) {
+          const key = item.assignedTo.id;
 
-        if (!seamstressMap.has(key)) {
-          seamstressMap.set(key, {
-            seamstress: repair.assignedTo,
-            totalRepairs: 0,
-            completedRepairs: 0,
-            totalRevenue: 0,
-            averageRevenue: 0,
-            completionRate: 0});
-        }
+          if (!seamstressMap.has(key)) {
+            seamstressMap.set(key, {
+              seamstress: item.assignedTo,
+              totalRepairs: 0,
+              completedRepairs: 0,
+              totalRevenue: 0,
+              averageRevenue: 0,
+              completionRate: 0});
+          }
 
-        const sales = seamstressMap.get(key)!;
-        sales.totalRepairs++;
-        
-        if (repair.repairStatus.name === RepairStatusEnum.IN_VALIDATION || repair.repairStatus.name === RepairStatusEnum.DELIVERED) {
-          sales.completedRepairs++;
-          sales.totalRevenue += this.getRepairRevenue(repair);
+          const sales = seamstressMap.get(key)!;
+          sales.totalRepairs++;
+          
+          const aggregateStatus = getAggregateRepairStatus(repair);
+          if (aggregateStatus === RepairStatusEnum.IN_VALIDATION || aggregateStatus === RepairStatusEnum.DELIVERED) {
+            sales.completedRepairs++;
+            sales.totalRevenue += this.toFiniteNumber(item.finalPrice ?? item.estimatedPrice ?? 0);
+          }
         }
-      }
+      });
     });
 
     // Calculate averages and completion rates
@@ -423,7 +450,7 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
     const counts: { [key: string]: number } = {};
 
     Object.values(RepairStatusEnum).forEach(status => {
-      counts[status] = this.filteredRepairs.filter(r => r.repairStatus.name === status).length;
+      counts[status] = this.filteredRepairs.filter(r => getAggregateRepairStatus(r) === status).length;
     });
 
     return counts;

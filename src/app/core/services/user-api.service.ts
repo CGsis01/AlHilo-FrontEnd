@@ -147,6 +147,11 @@ export class UserApiService {
     return this.getAll({ role_code: UserRoleCode.SEAMSTRESS, is_active: true });
   }
 
+  getUnassignedSeamstressesAndHeadSewing(): Observable<User[]> {
+    return this.apiService.get<User[]>(`${this.endpoint}/unassigned-seamstresses`)
+    .pipe(map(response => response.map(u => this.mapUser(u))));
+  }
+
   private mapUser(user: any): User {
     return {
       id: user.id,

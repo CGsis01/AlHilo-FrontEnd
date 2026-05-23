@@ -77,6 +77,10 @@ export class UserRepository implements Repository<User> {
     return this.userApiService.getActiveSeamstresses();
   }
 
+  getUnassignedSeamstressesAndHeadSewing(): Observable<User[]> {
+    return this.userApiService.getUnassignedSeamstressesAndHeadSewing();
+  }
+
   activate(id: string, storeId?: string): Observable<boolean> {
     const activateRequest = {
       id: id,

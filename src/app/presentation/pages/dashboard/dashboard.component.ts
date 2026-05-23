@@ -5,6 +5,7 @@ import { RepairUseCases } from '../../../domain/usecases/repair.usecases';
 import { RepairStatusEnum } from '../../../core/models/repair.model';
 import { UserRole, UserRoleCode } from '../../../core/models/user.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { getAggregateRepairStatus } from '../../../shared/utils/repair-status-aggregation.utils';
 
 interface DashboardStats {
   total: number;
@@ -55,15 +56,17 @@ export class DashboardComponent implements OnInit {
     this.repairUseCases.getAllRepairs().subscribe({
       next: (repairs) => {
         this.stats.total = repairs.length;
-        this.stats.pending = repairs.filter(r => r.repairStatus.name === RepairStatusEnum.PENDING).length;
-        this.stats.inProgress = repairs.filter(r => r.repairStatus.name === RepairStatusEnum.IN_PROGRESS).length;
-        this.stats.inValidation = repairs.filter(r => r.repairStatus.name === RepairStatusEnum.IN_VALIDATION).length;
-        this.stats.validated = repairs.filter(r => r.repairStatus.name === RepairStatusEnum.VALIDATED).length;
-        this.stats.delivered = repairs.filter(r => r.repairStatus.name === RepairStatusEnum.DELIVERED).length;
-        },
-      error: () => {}});
-
-    this.isLoading.set(false);
+        this.stats.pending = repairs.filter(r => getAggregateRepairStatus(r) === RepairStatusEnum.PENDING).length;
+        this.stats.inProgress = repairs.filter(r => getAggregateRepairStatus(r) === RepairStatusEnum.IN_PROGRESS).length;
+        this.stats.inValidation = repairs.filter(r => getAggregateRepairStatus(r) === RepairStatusEnum.IN_VALIDATION).length;
+        this.stats.validated = repairs.filter(r => getAggregateRepairStatus(r) === RepairStatusEnum.VALIDATED).length;
+        this.stats.delivered = repairs.filter(r => getAggregateRepairStatus(r) === RepairStatusEnum.DELIVERED).length;
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      }
+    });
   }
 
   navigateToRepairs(repairStatus?: RepairStatusEnum): void {

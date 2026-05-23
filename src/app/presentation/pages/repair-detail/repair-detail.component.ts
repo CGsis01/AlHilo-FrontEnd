@@ -22,14 +22,27 @@ import { forkJoin } from 'rxjs';
 import { RepairComment } from '@core/models/repair-comment.model';
 import { getStoredUserId } from '../../../shared/utils/userLocalData.utils';
 import { RepairItem } from '@core/models/repair-item.model';
+import { SeamstressAssignModalComponent } from './seamstress-assign-modal.component';
+import { UnassignConfirmModalComponent } from './unassign-confirm-modal.component';
+import { JobReviewModalComponent } from './job-review-modal.component';
 
 @Component({
   selector: 'app-repair-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    SeamstressAssignModalComponent,
+    UnassignConfirmModalComponent,
+    JobReviewModalComponent
+  ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './repair-detail.component.html',
-  styleUrls: ['./repair-detail.component.scss', './repair-detail.receipt.scss']
+  styleUrls: ['./repair-detail.component.scss', 
+    './repair-detail.ticket.scss', 
+    './repair-detail.payment.scss', 
+    './repair-detail.receipt.scss']
 })
 
 export class RepairDetailComponent implements OnInit {
@@ -37,7 +50,11 @@ export class RepairDetailComponent implements OnInit {
   isLoading = signal(true);
   errorMessage = '';
 
-   // ─── Advance Ticket ──────────────────────────────────────────
+  // ─── Advance Ticket ───────────────────────────────────────────
+  showAdvancePaymentTicket = signal(false);
+  pendingAdvancePaymentTicket = signal(false);
+  showAssignModalJobReview = signal(false);
+
   advancePaymentMinimum = 0;
   advancePaymentMaximum = 0;
 
@@ -46,25 +63,22 @@ export class RepairDetailComponent implements OnInit {
   UserRole = UserRoleCode;
   RepairStatus = RepairStatusEnum;
   repairComment: RepairComment[] = [];
-  showAssignModalJobReview = signal(false);
+  
   comment: string = '';
 
   // ─── Seamstresses ─────────────────────────────────────────────
-  showAssignModal = signal(false);
+  showSeamstressAssignModal = signal(false);
+  showUnassignConfirmModal = signal(false);
   isLoadingSeamstresses = signal(false);
   seamstresses: User[] = [];
-  selectedSeamstress: User | null = null;  
+  selectedSeamstress: User | null = null;
+  selectedGarmentItem: RepairItem | null = null;  
 
   // ─── Repair Ticket ────────────────────────────────────────────
   showTicket = signal(false);
   activeTicketItem: RepairItem | null = null;
   activeTicketIndex = 0;
   qrCodeDataUrl = '';
-
- // ─── Advance Ticket ───────────────────────────────────────────
-  showAdvancePaymentTicket = signal(false);
-  pendingAdvancePaymentTicket = signal(false);
-
 
   // ─── Repair Items ─────────────────────────────────────────────
   repairItems: RepairItem[] = [];
@@ -170,7 +184,236 @@ export class RepairDetailComponent implements OnInit {
   }
 
   getRepairStatus(statusName: string): RepairStatus {
-    return this.repairStatuses().filter(status => status.name === statusName)[0]!;
+    const status = this.repairStatuses().find(s => s.name === statusName);
+    return status || { id: '', name: statusName };
+  }
+
+  getItemStatusName(item: RepairItem): string {
+    return item.repairStatus?.name || this.repair?.repairStatus?.name || RepairStatusEnum.PENDING;
+  }
+
+  areAllItemsValidated(): boolean {
+    const items = this.repair?.items || [];
+    return items.length > 0 && items.every(item => this.getItemStatusName(item) === RepairStatusEnum.VALIDATED);
+  }
+
+  canManageItemStatus(item: RepairItem): boolean {
+    if (!this.userRole) {
+      return false;
+    }
+
+    if (this.areAllItemsValidated()) {
+      return false;
+    }
+
+    const currentStatusName = this.getItemStatusName(item);
+    const currentUserId = this.authService.currentUser?.id;
+
+    // Admin and Receptionist can manage all statuses
+    if (this.userRole.code === UserRoleCode.ADMIN)
+      return true;
+
+    // Receptionist: can manage transitions between IN_PROGRESS, IN_VALIDATION, VALIDATED
+    if (this.userRole.code === UserRoleCode.RECEPTIONIST) {
+
+      if(currentStatusName === RepairStatusEnum.VALIDATED)
+        return false;
+
+      return (
+        currentStatusName === RepairStatusEnum.IN_PROGRESS ||
+        currentStatusName === RepairStatusEnum.IN_VALIDATION ||
+        currentStatusName === RepairStatusEnum.VALIDATED);
+    }
+
+    // Head Sewing: can manage transitions between IN_PROGRESS, IN_VALIDATION, VALIDATED
+    if (this.userRole.code === UserRoleCode.HEADSEWING) {
+
+      if(currentStatusName === RepairStatusEnum.VALIDATED)
+        return false;
+
+      return (
+        currentStatusName === RepairStatusEnum.IN_PROGRESS ||
+        currentStatusName === RepairStatusEnum.IN_VALIDATION ||
+        currentStatusName === RepairStatusEnum.VALIDATED);
+    }
+
+    // Seamstress: can manage transitions between IN_PROGRESS and IN_VALIDATION (only if assigned)
+    if (this.userRole.code === UserRoleCode.SEAMSTRESS) {
+      if(!!currentUserId && item.assignedTo?.id === currentUserId)
+        return currentStatusName === RepairStatusEnum.IN_VALIDATION ? false 
+          : currentStatusName === RepairStatusEnum.IN_PROGRESS ? true : false;
+    }
+
+    return false;
+  }
+
+  private readonly STATUS_FLOW: RepairStatusEnum[] = [
+    RepairStatusEnum.PENDING,
+    RepairStatusEnum.IN_PROGRESS,
+    RepairStatusEnum.IN_VALIDATION,
+    RepairStatusEnum.VALIDATED,
+    RepairStatusEnum.DELIVERED
+  ];
+
+  getItemPrevStatus(item: RepairItem): RepairStatus | null {
+    const currentName = this.getItemStatusName(item) as RepairStatusEnum;
+    
+    const idx = this.STATUS_FLOW.indexOf(currentName);
+    if (idx <= 0) 
+      return null;
+
+    const prevName = this.STATUS_FLOW[idx - 1];
+    if (this.userRole?.code === UserRoleCode.SEAMSTRESS && (prevName === RepairStatusEnum.PENDING || prevName === RepairStatusEnum.IN_PROGRESS))
+      return null;
+    
+    const status = this.getRepairStatus(prevName);
+    return status.id ? status : null;
+  }
+
+  getItemNextStatus(item: RepairItem): RepairStatus | null {
+    const currentName = this.getItemStatusName(item) as RepairStatusEnum;
+    
+    if (currentName === RepairStatusEnum.PENDING) 
+      return null;
+    
+    const idx = this.STATUS_FLOW.indexOf(currentName);
+    if (idx < 0 || idx >= this.STATUS_FLOW.length - 1) 
+      return null;
+    
+    const nextName = this.STATUS_FLOW[idx + 1];
+    if (this.userRole?.code === UserRoleCode.SEAMSTRESS && nextName === RepairStatusEnum.VALIDATED) 
+      return null;
+    
+    const status = this.getRepairStatus(nextName);
+    return status.id ? status : null;
+  }
+
+  onStatusBadgeClick(item: RepairItem, targetStatus: RepairStatus): void {
+    const currentStatusName = this.getItemStatusName(item);
+    
+    if (!targetStatus.id || currentStatusName === targetStatus.name) 
+      return;
+
+    if (currentStatusName === RepairStatusEnum.IN_PROGRESS && targetStatus.name === RepairStatusEnum.PENDING) {
+      this.revertToPendingAndUnassign(item, targetStatus);
+      
+      return;
+    }
+
+    // Check if transitioning from IN_VALIDATION to IN_PROGRESS
+    const isValidationToProgressTransition = currentStatusName === RepairStatusEnum.IN_VALIDATION && targetStatus.name === RepairStatusEnum.IN_PROGRESS;
+    this.updateItemStatus(item, targetStatus, isValidationToProgressTransition);    
+  }
+
+  private revertToPendingAndUnassign(item: RepairItem, pendingStatus: RepairStatus): void {
+    if (!this.repair?.id || !item.id) return;
+    const itemId = item.id;
+    const assignments = [{ itemId, seamstressId: undefined }];
+
+    this.repairUseCases.assignRepairGarments(this.repair.id, assignments).subscribe({
+      next: (updatedRepair) => {
+        updatedRepair.items = (updatedRepair.items || []).map(i =>
+          i.id === itemId ? { ...i, assignedToId: undefined, assignedTo: undefined } : i
+        );
+        this.repair = updatedRepair;
+        this.updateItemStatus(item, pendingStatus);
+      },
+      error: () => {
+        this.toastService.show('Error al revertir la prenda', 'error', 'bottom-right');
+      }
+    });
+  }
+
+  getItemStatusTransitions(item: RepairItem): RepairStatus[] {
+    const currentName = this.getItemStatusName(item);
+
+    if (this.userRole?.code === UserRoleCode.SEAMSTRESS) {
+      if (currentName === RepairStatusEnum.IN_PROGRESS) {
+        return [
+          this.getRepairStatus(RepairStatusEnum.IN_VALIDATION)
+        ];
+      }
+
+      // If the current status is IN_VALIDATION, no transitions are available
+      if (currentName === RepairStatusEnum.IN_VALIDATION) {
+        return [];
+      }
+
+      return [this.getRepairStatus(currentName)];
+    }
+
+    if (currentName === RepairStatusEnum.PENDING) {
+      return [
+        this.getRepairStatus(RepairStatusEnum.PENDING),
+        this.getRepairStatus(RepairStatusEnum.IN_PROGRESS)
+      ];
+    }
+
+    if (currentName === RepairStatusEnum.IN_PROGRESS) {
+      return [
+        this.getRepairStatus(RepairStatusEnum.PENDING),
+        this.getRepairStatus(RepairStatusEnum.IN_PROGRESS),
+        this.getRepairStatus(RepairStatusEnum.IN_VALIDATION)
+      ];
+    }
+
+    if (currentName === RepairStatusEnum.IN_VALIDATION) {
+      return [
+        this.getRepairStatus(RepairStatusEnum.IN_PROGRESS),
+        this.getRepairStatus(RepairStatusEnum.IN_VALIDATION),
+        this.getRepairStatus(RepairStatusEnum.VALIDATED)
+      ];
+    }
+
+    if (currentName === RepairStatusEnum.VALIDATED) {
+      return [
+        this.getRepairStatus(RepairStatusEnum.IN_VALIDATION),
+        this.getRepairStatus(RepairStatusEnum.VALIDATED),
+        this.getRepairStatus(RepairStatusEnum.DELIVERED)
+      ];
+    }
+
+    return [this.getRepairStatus(RepairStatusEnum.DELIVERED)];
+  }
+
+  onItemStatusChange(item: RepairItem, selectedStatusName: string): void {
+    const currentStatusName = this.getItemStatusName(item);
+    if (selectedStatusName === currentStatusName)
+      return;
+
+    const selectedStatus = this.getRepairStatus(selectedStatusName);
+    if (!selectedStatus.id) 
+      return;
+
+    this.updateItemStatus(item, selectedStatus);
+  }
+
+  updateItemStatus(item: RepairItem, newStatus: RepairStatus, openCommentsModal: boolean = false): void {
+    if (!item.id) {
+      return;
+    }
+
+    this.repairUseCases.updateRepairItemStatus(item.id, newStatus).subscribe({
+      next: (updatedRepair) => {
+        this.repair = updatedRepair;
+        this.toastService.show('Estado de la prenda actualizado', 'success');
+        
+        if (openCommentsModal) {
+          this.openAssignModalJobReview();
+        }
+      },
+      error: (error) => {
+        this.toastService.show('Error al actualizar el estado de la prenda', 'error', 'bottom-right');
+        this.errorMessage = error.message || 'Error al actualizar el estado de la prenda';}
+    });
+  }
+
+  hasItemsInWork(): boolean {
+    const items = this.repair?.items || [];
+    return items.some(item => {
+      const statusName = this.getItemStatusName(item);
+      return statusName === RepairStatusEnum.PENDING || statusName === RepairStatusEnum.IN_PROGRESS;
+    });
   }
 
   updateStatus(newStatus: RepairStatus): void {
@@ -181,7 +424,7 @@ export class RepairDetailComponent implements OnInit {
       next: (updatedRepair) => {
         this.repair = updatedRepair;
         
-        if (updatedRepair.repairStatus.name === RepairStatusEnum.VALIDATED) {
+        if (updatedRepair?.repairStatus?.name === RepairStatusEnum.VALIDATED) {
           this.whatsappApiService.sendNotification({
             phone: updatedRepair.customerPhone,
             customer_name: updatedRepair.customerName,
@@ -198,84 +441,177 @@ export class RepairDetailComponent implements OnInit {
   }
 
   // ─── Seamstresses ─────────────────────────────────────────────
-  openAssignModal(): void {
-    this.selectedSeamstress = this.repair?.assignedTo || null;    
+  openSeamstressAssignModal(item: RepairItem): void {
+    this.selectedGarmentItem = item;
+    this.selectedSeamstress = item.assignedTo || null;
     this.loadSeamstresses();
-
-    this.showAssignModal.set(true);
+    this.showSeamstressAssignModal.set(true);
   }
 
-  closeAssignModal(): void {
-    this.showAssignModal.set(false);
-    
+  closeSeamstressAssignModal(): void {
+    this.showSeamstressAssignModal.set(false);
+    this.closeUnassignConfirmModal();
+    this.selectedGarmentItem = null;
     this.selectedSeamstress = null;
   }
+
+  openUnassignConfirmModal(): void {
+    this.showUnassignConfirmModal.set(true);
+  }
+
+  closeUnassignConfirmModal(): void {
+    this.showUnassignConfirmModal.set(false);
+  }
+
   // ─── Job Reviews ─────────────────────────────────────────────
   openAssignModalJobReview(): void {
-        this.showAssignModalJobReview.set(true);
-    }
+      this.showAssignModalJobReview.set(true);
+  }
 
-    closeAssignModalJobReview(): void {
-        this.showAssignModalJobReview.set(false);
-    }
+  closeAssignModalJobReview(): void {
+      this.showAssignModalJobReview.set(false);
+  }
 
   loadSeamstresses(): void {
     this.isLoadingSeamstresses.set(true);
     
-    this.userUseCases.getUsersByRole([{ code: UserRoleCode.SEAMSTRESS }, { code: UserRoleCode.HEADSEWING }] as UserRole[]).subscribe({
-      next: (users) => { this.seamstresses = users.filter(u => u.isActive); },
-      error: () => { }});
-    
-    this.isLoadingSeamstresses.set(false);
+    this.userUseCases.getUnassignedSeamstressesAndHeadSewing().subscribe({
+      next: (users) => {
+        this.seamstresses = users.filter(u => u.isActive);
+        this.isLoadingSeamstresses.set(false);
+      },
+      error: () => {
+        this.isLoadingSeamstresses.set(false);
+      }});
+  }
+
+  isSeamstressAlreadyAssigned(seamstress: User): boolean {
+    return (this.repair?.items || []).some(item =>
+      item.id !== this.selectedGarmentItem?.id &&
+      (item.assignedTo?.id === seamstress.id || item.assignedToId === seamstress.id));
   }
 
   selectSeamstress(seamstress: User): void {
+    if (this.isSeamstressAlreadyAssigned(seamstress)) return;
     this.selectedSeamstress = seamstress;
   }
 
-  async confirmAssignment(): Promise<void> {
-    if (!this.repair || !this.selectedSeamstress) 
+  assignSeamstressToGarment(): void {
+    if (!this.repair?.id || !this.selectedGarmentItem || !this.selectedSeamstress)
       return;
 
-    this.repairUseCases.assignRepairToSeamstress(this.repair.id, this.selectedSeamstress)
-    .subscribe({
-      next: async (updatedRepair) => {
-        this.repair = updatedRepair;
-        this.updateStatus(this.repairStatuses().filter(s => s.name === RepairStatusEnum.IN_PROGRESS)[0]);
-        
-        this.whatsappApiService.sendNotification({
-          phone: updatedRepair.customerPhone,
-          customer_name: updatedRepair.customerName,
-          repair_id: updatedRepair.id.substring(0, 8), // Shorten ID for message
-          event: 'in_progress'
-        }).subscribe(result => {
-          if (result.success) {
-            this.toastService.show('Notificación WhatsApp enviada: reparación en progreso', 'success');
-          } else {
-            this.toastService.show('No se pudo enviar la notificación WhatsApp', 'error');
-          }
-        });
+    const selectedGarmentItemId = this.selectedGarmentItem.id;
+    const selectedSeamstress = this.selectedSeamstress;
+    const wasItemPending = this.getItemStatusName(this.selectedGarmentItem) === RepairStatusEnum.PENDING;
 
-        this.closeAssignModal();},
-      error: (error) => { this.errorMessage = error.message || 'Error al asignar la costurera';}});
+    const assignments = [{
+      itemId: this.selectedGarmentItem.id!,
+      seamstressId: this.selectedSeamstress.id
+    }];
+
+    this.repairUseCases.assignRepairGarments(this.repair.id, assignments)
+      .subscribe({
+        next: (updatedRepair) => {
+          if (selectedGarmentItemId) {
+            updatedRepair.items = (updatedRepair.items || []).map(item =>
+              item.id === selectedGarmentItemId
+                ? {
+                    ...item,
+                    assignedToId: selectedSeamstress.id,
+                    assignedTo: item.assignedTo || selectedSeamstress
+                  }
+                : item
+            );
+          }
+
+          this.repair = updatedRepair;
+          
+          // If item was pending, transition it to IN_PROGRESS
+          if (wasItemPending && selectedGarmentItemId) {
+            const item = this.repair.items?.find(i => i.id === selectedGarmentItemId);
+            if (item) {
+              const inProgressStatus = this.getRepairStatus(RepairStatusEnum.IN_PROGRESS);
+              if (inProgressStatus.id) {
+                this.updateItemStatus(item, inProgressStatus);
+              }
+            }
+          }
+
+          this.toastService.show('Prenda asignada exitosamente', 'success', 'bottom-right');
+          this.closeSeamstressAssignModal();
+        },
+        error: (error) => {
+          this.toastService.show('Error al asignar la prenda', 'error', 'bottom-right');
+          console.error(error);
+          this.errorMessage = error.message || 'Error al asignar la prenda';
+        }
+      });
+  }
+
+  unassignSeamstressFromGarment(): void {
+    if (!this.repair?.id || !this.selectedGarmentItem?.id)
+      return;
+
+    this.closeUnassignConfirmModal();
+
+    const selectedGarmentItemId = this.selectedGarmentItem.id;
+    const assignments = [{
+      itemId: selectedGarmentItemId,
+      seamstressId: undefined
+    }];
+
+    this.repairUseCases.assignRepairGarments(this.repair.id, assignments)
+      .subscribe({
+        next: (updatedRepair) => {
+          updatedRepair.items = (updatedRepair.items || []).map(item =>
+            item.id === selectedGarmentItemId
+              ? {
+                  ...item,
+                  assignedToId: undefined,
+                  assignedTo: undefined
+                }
+              : item
+          );
+
+          this.repair = updatedRepair;
+          
+          // Automatically transition to PENDING status
+          if (selectedGarmentItemId) {
+            const item = this.repair.items?.find(i => i.id === selectedGarmentItemId);
+            if (item) {
+              const pendingStatus = this.getRepairStatus(RepairStatusEnum.PENDING);
+              if (pendingStatus.id) {
+                this.updateItemStatus(item, pendingStatus);
+              }
+            }
+          }
+
+          this.toastService.show('Asignación removida. Prenda en estado Pendiente', 'success', 'bottom-right');
+          this.closeSeamstressAssignModal();
+        },
+        error: (error) => {
+          this.toastService.show('Error al desasignar la prenda', 'error', 'bottom-right');
+          console.error(error);
+          this.errorMessage = error.message || 'Error al desasignar la prenda';
+        }
+      });
+  }
+
+  isAssigned(): boolean {
+    return this.repair?.items?.some(item => !!item.assignedToId || !!item.assignedTo) ?? false;
   }
 
   async confirmJobReview(): Promise<void> {
-    if (!this.comment.trim() || !this.repair) return;
+    if (!this.comment.trim() || !this.repair) 
+      return;
 
     const currentUserId = getStoredUserId() ?? '';
 
-    this.repairUseCases.addComment(
-      this.repair.id,
-      this.comment.trim(),
-      currentUserId,
-    ).subscribe({
+    this.repairUseCases.addComment(this.repair.id, this.comment.trim(), currentUserId).subscribe({
       next: (savedComment) => {
-        console.log(savedComment, "EL valor del c", this.comment);
         this.repairComment = [savedComment, ...(Array.isArray(this.repairComment) ? this.repairComment : [])];
-        console.log(this.repairComment, "el repairComment")
         this.comment = '';
-        this.updateStatus(this.repairStatuses().filter(s => s.name === RepairStatusEnum.IN_PROGRESS)[0]);
+
         this.toastService.show('Comentario agregado exitosamente', 'success');
         this.closeAssignModalJobReview();
       },
@@ -283,6 +619,10 @@ export class RepairDetailComponent implements OnInit {
         this.toastService.show('Error al agregar el comentario: ' + error.message, 'error');
       }
     });
+  }
+
+  isNotAllowedToDeliver(): boolean {
+    return this.repair?.repairStatus?.name === RepairStatusEnum.VALIDATED && this.hasItemsInWork();
   }
 
   // ─── Repair Ticket ────────────────────────────────────────────
@@ -308,6 +648,7 @@ export class RepairDetailComponent implements OnInit {
       this.openAdvancePaymentTicket();
     }
   }
+
   // ─── Payment Modal ────────────────────────────────────────────
   openPaymentModal(): void {
     this.initializePaymentModal();
@@ -580,7 +921,6 @@ export class RepairDetailComponent implements OnInit {
     return value.toFixed(2);
   }
 
-
   private getAdvanceNumericValue(value: unknown): number {
     const numericValue = Number(value);
     return Number.isFinite(numericValue) ? numericValue : 0;
@@ -742,6 +1082,7 @@ export class RepairDetailComponent implements OnInit {
       void this.router.navigate(['/repairs']);
     }
   }
+
   private waitForTicketRender(): Promise<void> {
     return new Promise(resolve => {
       requestAnimationFrame(() => {

@@ -300,7 +300,9 @@ export class RepairFormComponent implements OnInit {
             } else {
               this.toastService.show('La reparación se creó, pero no se pudo mapear el tipo de pago del anticipo con tarjeta.', 'error');
             }
+            
             this.handleRepairCreated(repair);
+           
             return;
           }
 
@@ -845,9 +847,8 @@ export class RepairFormComponent implements OnInit {
   private handleRepairCreated(repair: Repair): void {
     this.repair = repair; 
     this.isLoading.set(false);
-
     void this.openTicketAndPrint();
-
+    
     this.whatsappApiService.sendNotification({
       phone: repair.customerPhone,
       customer_name: repair.customerName,

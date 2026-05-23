@@ -1,0 +1,198 @@
+.modal-overlay { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    bottom: 0; 
+    background: rgba(0,0,0,0.5); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    z-index: 1000; 
+
+    .modal-content { 
+        background: var(--surface); 
+        border-radius: 12px; 
+        width: 100%; 
+        max-width: 480px; 
+        max-height: 90vh; 
+        overflow: hidden; 
+        display: flex; 
+        flex-direction: column; 
+
+        .modal-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 1.5rem; 
+            border-bottom: 1px solid var(--border); 
+            
+            h2 { 
+                margin: 0; 
+                font-size: 1.25rem; 
+                font-weight: 600; 
+                color: var(--text); 
+            } 
+
+            .modal-close { 
+                background: none; 
+                border: none; 
+                font-size: 1.5rem; 
+                color: var(--text-secondary); 
+                cursor: pointer; 
+                padding: 0; 
+                
+                &:hover { color: var(--text); } 
+            }
+        }
+
+        .modal-body { 
+            padding: 1.5rem; 
+            overflow-y: auto; 
+
+            .current-garment-info {
+                background: var(--hover);
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 1.5rem;
+                border-left: 4px solid var(--gold);
+            }
+
+            .garment-detail-title {
+                margin: 0 0 0.25rem 0;
+                font-weight: 600;
+                color: var(--text);
+                font-size: 1.1rem;
+            }
+
+            .garment-detail-subtitle {
+                margin: 0 0 0.5rem 0;
+                color: var(--text-secondary);
+                font-size: 0.95rem;
+            }
+
+            .garment-detail-description {
+                margin: 0;
+                color: var(--text-secondary);
+                font-size: 0.9rem;
+                line-height: 1.4;
+            }
+
+            .loading-seamstresses { 
+                display: flex; 
+                align-items: center; 
+                gap: 0.75rem; 
+                padding: 2rem; 
+                justify-content: center; 
+                color: var(--text-secondary); 
+
+                .spinner-small { 
+                    width: 24px; 
+                    height: 24px; 
+                    border: 3px solid var(--border); 
+                    border-top-color: var(--gold); 
+                    border-radius: 50%; 
+                    animation: spin 1s linear infinite; 
+                }
+            }
+
+            .seamstress-list { 
+                display: flex; 
+                flex-direction: column; 
+                gap: 0.5rem; 
+
+                // ─── Seamstress List Layout ────────────────────────────────────
+                .seamstress-list-label {
+                    margin: 0 0 1rem 0;
+                    color: var(--text);
+                    font-weight: 500;
+                    font-size: 0.95rem;
+                }
+
+                .seamstress-options {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.75rem;
+
+                    .seamstress-option {
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                        padding: 1rem;
+                        border: 2px solid var(--border);
+                        border-radius: 8px;
+                        background: var(--background);
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        text-align: left;
+                        
+                        &:hover {
+                            border-color: var(--gold-light);
+                            background: var(--hover);
+                            transform: translateX(4px);
+                        }
+                        
+                        &.selected {
+                            border-color: var(--gold);
+                            background: rgba(212, 175, 55, 0.1);
+                            
+                            .seamstress-avatar {
+                                animation: pulse 0.3s ease;
+                            }
+                        }
+
+                        &.disabled, &:disabled {
+                            opacity: 0.45;
+                            cursor: not-allowed;
+                            pointer-events: none;
+                            border-color: var(--border);
+                            background: var(--background);
+
+                            &:hover {
+                                transform: none;
+                                border-color: var(--border);
+                                background: var(--background);
+                            }
+                        }
+                    }
+
+                    .seamstress-avatar { 
+                        width: 40px; 
+                        height: 40px; 
+                        border-radius: 50%; 
+                        background: var(--gold); 
+                        color: white; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        font-weight: 600; 
+                    }
+
+                    .seamstress-name { 
+                        font-weight: 500; 
+                        color: var(--text); 
+                    }
+                }    
+            }
+
+            .no-seamstresses { 
+                text-align: center; 
+                padding: 2rem; 
+                color: var(--text-secondary); 
+            }
+        }
+
+        .modal-footer { 
+            display: flex; 
+            justify-content: flex-end; 
+            gap: 0.75rem; 
+            padding: 1.5rem; 
+            border-top: 1px solid var(--border); 
+        }
+    }    
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}

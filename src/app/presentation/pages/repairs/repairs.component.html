@@ -4,9 +4,7 @@
       <h1>Órdenes de reparación</h1>
       <p class="subtitle">Gestiona y realiza un seguimiento de todas las órdenes de reparación</p>
     </div>
-    <a routerLink="/repairs/new" 
-      class="btn-primary"
-      *ngIf="userRole?.code === UserRole.ADMIN || userRole?.code === UserRole.RECEPTIONIST">
+    <a routerLink="/repairs/new" class="btn-primary" *ngIf="userRole?.code === UserRole.ADMIN || userRole?.code === UserRole.RECEPTIONIST">
       <span>➕</span> Nueva compostura
     </a>
   </div>
@@ -27,8 +25,8 @@
         <h3>{{ repair.customerName }}</h3>
         <div class="card-badges">
           <span class="express-badge" *ngIf="repair.isExpress">⚡ Express</span>
-          <span class="status-badge" [ngClass]="getStatusClass(repair.repairStatus.name)">
-            {{ repair.repairStatus.name }}
+          <span class="status-badge" [ngClass]="getStatusClass(getAggregateStatusName(repair))">
+            {{ getAggregateStatusName(repair) }}
           </span>
         </div>
       </div>
@@ -50,9 +48,9 @@
           <span class="label">Entrega:</span>
           <span class="value">{{ repair.estimatedDeliveryDate | date:'shortDate' }}</span>
         </div>
-        <div class="info-row" *ngIf="repair.assignedTo">
+        <div class="info-row" *ngIf="getAssignedSeamstresses(repair) as seamstresses">
           <span class="label">Asignada a:</span>
-          <span class="value">{{ repair.assignedTo.name }}</span>
+          <span class="value">{{ seamstresses }}</span>
         </div>
       </div>
 
@@ -76,8 +74,8 @@
             <h3>{{ repair.customerName }}</h3>
             <div class="card-badges">
               <span class="express-badge" *ngIf="repair.isExpress">⚡ Express</span>
-              <span class="status-badge" [ngClass]="getStatusClass(repair.repairStatus.name)">
-                {{ repair.repairStatus.name }}
+              <span class="status-badge" [ngClass]="getStatusClass(getAggregateStatusName(repair))">
+                {{ getAggregateStatusName(repair) }}
               </span>
             </div>
           </div>
@@ -95,9 +93,9 @@
               <span class="label">Entrega:</span>
               <span class="value">{{ repair.estimatedDeliveryDate | date:'shortDate' }}</span>
             </div>
-            <div class="info-row" *ngIf="repair.assignedTo">
+            <div class="info-row" *ngIf="getAssignedSeamstresses(repair) as seamstresses">
               <span class="label">Asignada a:</span>
-              <span class="value">{{ repair.assignedTo.name }}</span>
+              <span class="value">{{ seamstresses }}</span>
             </div>
           </div>
 

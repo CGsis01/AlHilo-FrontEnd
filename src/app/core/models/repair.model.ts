@@ -1,6 +1,6 @@
-import { User } from "./user.model";
 import { RepairStatus } from "./repair-status.model";
 import { RepairItem } from "./repair-item.model";
+import { User } from "./user.model";
 
 export enum RepairStatusEnum {
   PENDING = "Pendiente",
@@ -22,7 +22,6 @@ export interface Repair {
   finalPrice?: number;
   advancePayment?: number;
   isExpress?: boolean;
-  assignedTo?: User;
   createdBy: User;
   receivedDate: Date;
   estimatedDeliveryDate: Date;
