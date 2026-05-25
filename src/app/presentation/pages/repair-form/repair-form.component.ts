@@ -48,11 +48,17 @@ import { GarmentTicketData } from "../../components/garment-selector-modal/garme
 @Component({
   selector: "app-repair-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ClientModalComponent, ClientSelectionModalComponent, RepairItemsEditorComponent, DateFormatDirective],
-  templateUrl: './repair-form.component.html',
-  styleUrls: ['./repair-form.component.scss']
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ClientModalComponent,
+    ClientSelectionModalComponent,
+    RepairItemsEditorComponent,
+    DateFormatDirective,
+  ],
+  templateUrl: "./repair-form.component.html",
+  styleUrls: ["./repair-form.component.scss"],
 })
-
 export class RepairFormComponent implements OnInit {
   // ─── Repair ───────────────────────────────────────────────────
   repairForm!: FormGroup;
@@ -505,22 +511,13 @@ export class RepairFormComponent implements OnInit {
 
           // Auto-open modal when client not found
           setTimeout(() => this.openClientModal(), 300);
-        } else {
-          if (clients.length === 1) {
-            this.matchingClients = [];
-            this.showClientSelectionModal.set(false);
-            this.selectedClient = clients[0];
-            this.fillClientData(clients[0]);
-          } else if (clients.length > 1) {
-            this.selectedClient = null;
-            this.matchingClients = clients;
-            this.clearClientData();
-            this.showClientSelectionModal.set(true);
-          }
         }
       },
-      error: () => { this.searchMessage = 'Error al buscar cliente'; }});
-    
+      error: () => {
+        this.searchMessage = "Error al buscar cliente";
+      },
+    });
+
     this.isSearching.set(false);
   }
 

@@ -150,14 +150,16 @@ export class RepairDetailComponent implements OnInit {
       this.router.navigate(["/repairs"]);
     }
 
-    await this.ensureSwiper();
+    const { register } = await import("swiper/element/bundle");
+    register();
   }
 
   // ─── Repair ───────────────────────────────────────────────────
   private async ensureSwiper(): Promise<void> {
-    if (typeof customElements === 'undefined') return;
-    if (customElements.get('swiper-container')) return;
-    registerSwiperElements();
+    if (typeof customElements === "undefined") return;
+    if (customElements.get("swiper-container")) return;
+    const { register } = await import("swiper/element/bundle");
+    register();
   }
 
   loadRepair(id: string): void {
@@ -645,7 +647,9 @@ export class RepairDetailComponent implements OnInit {
     if (!this.repair) return;
 
     try {
-      const ticketData = await this.repairImpressionTicket.generateTicketData(this.repair);
+      const ticketData = await this.repairImpressionTicket.generateTicketData(
+        this.repair,
+      );
       this.qrCodeDataUrl = ticketData.qrCodeDataUrl;
 
       await this.triggerWorkOrderPrint();
@@ -708,6 +712,7 @@ export class RepairDetailComponent implements OnInit {
 
             if (mixedTotal > remaining) {
               this.toastService.show("El pago mixto no puede ser mayor al saldo restante.", "error");
+
               this.handleRepairUpdated(updatedRepair);
 
               return;
@@ -715,6 +720,7 @@ export class RepairDetailComponent implements OnInit {
 
             if (mixedCardPaid > remaining) {
               this.toastService.show("El pago con tarjeta no puede ser mayor al saldo restante.", "error");
+
               this.handleRepairUpdated(updatedRepair);
 
               return;
@@ -722,6 +728,7 @@ export class RepairDetailComponent implements OnInit {
 
             if (mixedCardPaid > 0 && !this.voucherId.trim()) {
               this.toastService.show("Ingresa el ID del voucher para registrar el pago con tarjeta.", "error");
+
               this.handleRepairUpdated(updatedRepair);
 
               return;
@@ -1094,7 +1101,9 @@ export class RepairDetailComponent implements OnInit {
     this.showAdvancePaymentTicket.set(true);
   }
 
-  private async triggerWorkOrderPrint(redirectAfterPrint = false): Promise<void> {
+  private async triggerWorkOrderPrint(
+    redirectAfterPrint = false,
+  ): Promise<void> {
     if (!this.repair) {
       return;
     }
@@ -1113,6 +1122,7 @@ export class RepairDetailComponent implements OnInit {
       } catch (error) {
         console.error("Error printing work order tickets:", error);
         this.toastService.show("No se pudieron imprimir todos los tickets", "error");
+
         this.closeTicket();
         
         return;
