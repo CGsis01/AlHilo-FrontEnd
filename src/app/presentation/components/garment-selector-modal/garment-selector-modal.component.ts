@@ -43,6 +43,8 @@ export class GarmentSelectorModalComponent implements OnChanges {
   step: 'garments' | 'repairTypes' | 'comments' = 'garments';
   searchQuery = '';
   filtered: Garment[] = [];
+  repairTypeSearchQuery = '';
+  filteredRepairTypes: GarmentRepairType[] = [];
   selectedGarment: Garment | null = null;
 
   commentAddService = '';
@@ -72,7 +74,30 @@ export class GarmentSelectorModalComponent implements OnChanges {
 
   selectGarment(garment: Garment): void {
     this.selectedGarment = garment;
+    this.repairTypeSearchQuery = '';
+    this.applyRepairTypeFilter();
     this.step = 'repairTypes';
+  }
+
+  applyRepairTypeFilter(): void {
+    const repairTypes = this.selectedGarment?.repairTypes ?? [];
+    const q = this.normalizeForSearch(this.repairTypeSearchQuery);
+
+    this.filteredRepairTypes = q
+      ? repairTypes.filter(rt => {
+          const name = this.normalizeForSearch(rt.repairTypeName);
+          const code = this.normalizeForSearch(rt.repairTypeCode);
+          return name.includes(q) || code.includes(q);
+        })
+      : [...repairTypes];
+  }
+
+  private normalizeForSearch(value?: string | null): string {
+    return (value ?? '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
   selectRepairType(repairType: GarmentRepairType): void {
@@ -112,6 +137,8 @@ export class GarmentSelectorModalComponent implements OnChanges {
   
   back(): void {
     this.step = 'garments';
+    this.repairTypeSearchQuery = '';
+    this.filteredRepairTypes = [];
     this.selectedGarment = null;
   }
 
@@ -129,6 +156,8 @@ export class GarmentSelectorModalComponent implements OnChanges {
   private reset(): void {
     this.step = 'garments';
     this.searchQuery = '';
+    this.repairTypeSearchQuery = '';
+    this.filteredRepairTypes = [];
     this.selectedGarment = null;
     this.selectedRepairType = null;
     this.commentAddService = "";

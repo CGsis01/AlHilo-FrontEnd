@@ -1,19 +1,17 @@
 <div class="modal-backdrop" *ngIf="isOpen" (click)="onBackdropClick($event)">
   <div class="modal-content">
-
     <!-- ── Step 1: Garments ── -->
     <ng-container *ngIf="step === 'garments'">
       <div class="modal-header">
         <div class="modal-title">
-          <span >👗</span>
+          <span>👗</span>
           <h2>Seleccionar Prenda</h2>
         </div>
         <button type="button" class="close-btn" (click)="close()" aria-label="Cerrar">×</button>
       </div>
 
       <div class="modal-search">
-        <input
-          type="text"
+        <input type="text"
           [(ngModel)]="searchQuery"
           (ngModelChange)="applyFilter()"
           placeholder="Buscar prenda..."
@@ -32,6 +30,7 @@
             <span class="pos-btn__meta" *ngIf="garment.code">{{ garment.code }}</span>
           </button>
         </div>
+
         <ng-template #emptyGarments>
           <div class="empty-state">Sin prendas disponibles</div>
         </ng-template>
@@ -52,11 +51,20 @@
         <button type="button" class="close-btn" (click)="close()" aria-label="Cerrar">×</button>
       </div>
 
+      <div class="modal-search">
+        <input type="text"
+          [(ngModel)]="repairTypeSearchQuery"
+          (ngModelChange)="applyRepairTypeFilter()"
+          placeholder="Buscar tipo de reparación..."
+          class="search-input"
+          autofocus>
+      </div>
+
       <div class="modal-body">
-        <div class="pos-grid" *ngIf="selectedGarment.repairTypes && selectedGarment.repairTypes.length > 0; else emptyRepairTypes">
+        <div class="pos-grid" *ngIf="filteredRepairTypes.length > 0; else emptyRepairTypes">
           <button type="button"
             class="pos-btn repair-type-btn"
-            *ngFor="let rt of selectedGarment.repairTypes"
+            *ngFor="let rt of filteredRepairTypes"
             [class.is-default]="rt.isDefault"
             (click)="selectRepairType(rt)">
             <span class="pos-btn__icon">🧵</span>
@@ -68,7 +76,9 @@
           </button>
         </div>
         <ng-template #emptyRepairTypes>
-          <div class="empty-state">Esta prenda no tiene reparaciones configuradas</div>
+          <div class="empty-state">
+            {{ selectedGarment.repairTypes.length ? 'No hay coincidencias para la busqueda' : 'Esta prenda no tiene reparaciones configuradas' }}
+          </div>
         </ng-template>
       </div>
     </ng-container>
@@ -94,6 +104,7 @@
         <textarea [(ngModel)]="commentAddService" placeholder="Escribe tu comentario" class="comment-box"></textarea>
       </div>
     </div>
+    
     <div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" (click)="closeGarmentModal()">Cancelar</button>

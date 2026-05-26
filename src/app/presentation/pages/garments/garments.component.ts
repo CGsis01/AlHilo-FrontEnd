@@ -35,6 +35,9 @@ export class GarmentsComponent implements OnInit {
   // Repair type management
   selectedGarmentForRepairTypes: Garment | null = null;
   selectedRepairTypeId = '';
+  repairTypeSearchTerm = '';
+  filteredAvailableRepairTypes: RepairType[] = [];
+  showRepairTypeSuggestions = false;
   repairTypeOptions = {
     isDefault: false,
     estimatedPriceOverride: undefined as number | undefined,
@@ -200,12 +203,52 @@ export class GarmentsComponent implements OnInit {
     this.showRepairTypesModal.set(false);
     this.selectedGarmentForRepairTypes = null;
     this.selectedRepairTypeId = '';
+    this.repairTypeSearchTerm = '';
+    this.filteredAvailableRepairTypes = [];
+    this.showRepairTypeSuggestions = false;
     this.resetRepairTypeOptions();
   }
 
   updateAvailableRepairTypes(garment: Garment): void {
     const repairTypesByStore = this.repairTypes().filter(rt => rt.store.id === garment.storeId);
     this.availableRepairTypes = repairTypesByStore.filter(rt => !garment.repairTypes.some(grt => grt.repairTypeId === rt.id));
+    this.filterAvailableRepairTypes();
+  }
+
+  onRepairTypeSearchInput(): void {
+    this.selectedRepairTypeId = '';
+    this.filterAvailableRepairTypes();
+    this.showRepairTypeSuggestions = true;
+  }
+
+  onRepairTypeSearchFocus(): void {
+    this.filterAvailableRepairTypes();
+    this.showRepairTypeSuggestions = true;
+  }
+
+  onRepairTypeSearchBlur(): void {
+    // Delay lets click on suggestion run before hiding the list.
+    setTimeout(() => {
+      this.showRepairTypeSuggestions = false;
+    }, 150);
+  }
+
+  selectRepairType(repairType: RepairType): void {
+    this.selectedRepairTypeId = repairType.id;
+    this.repairTypeSearchTerm = `${repairType.name} (${repairType.code})`;
+    this.showRepairTypeSuggestions = false;
+  }
+
+  private filterAvailableRepairTypes(): void {
+    const term = this.repairTypeSearchTerm.trim().toLowerCase();
+
+    this.filteredAvailableRepairTypes = term
+      ? this.availableRepairTypes.filter(rt => {
+          const name = rt.name.toLowerCase();
+          const code = rt.code.toLowerCase();
+          return name.includes(term) || code.includes(term);
+        })
+      : [...this.availableRepairTypes];
   }
 
   addRepairTypeToGarment(): void {
@@ -246,6 +289,8 @@ export class GarmentsComponent implements OnInit {
             
             this.resetRepairTypeOptions();
             this.selectedRepairTypeId = '';
+            this.repairTypeSearchTerm = '';
+            this.filterAvailableRepairTypes();
           },
           error: (error) => {
             console.error('Error reloading garments:', error);

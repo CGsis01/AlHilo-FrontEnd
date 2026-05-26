@@ -553,6 +553,49 @@
   }
 }
 
+.predictive-select-wrapper {
+  position: relative;
+}
+
+.predictive-options,
+.predictive-empty {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+}
+
+.predictive-options {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.predictive-option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.predictive-empty {
+  color: var(--text-secondary);
+  padding: 0.7rem 0.85rem;
+  font-size: 0.9rem;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

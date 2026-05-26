@@ -36,10 +36,14 @@
     align-items: center;
     gap: 0.6rem;
 
+    > span,
     .modal-icon {
       display: block;
       font-size: 1.4rem;
       line-height: 1.4;
+      color: var(--gold, #d4af37);
+      font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+      user-select: none;
     }
 
     h2 {
@@ -123,8 +127,8 @@
 /* ── Body / Grid ── */
 .modal-body {
   padding: 0.75rem 1.5rem 1.25rem;
-  /* Show ~2 rows (8 buttons) then scroll */
-  max-height: calc(2 * 110px + 1.25rem);
+  /* Keep the same visible area (~2 rows / 8 buttons) across all selection steps. */
+  height: calc(2 * 120px + 2rem);
   overflow-y: auto;
 
   &::-webkit-scrollbar { width: 6px; }
@@ -140,6 +144,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 /* ── Shared POS button ── */
@@ -170,6 +175,9 @@
     display: block;
     font-size: 1.6rem;
     line-height: 1.4;
+    color: var(--gold, #d4af37);
+    font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+    user-select: none;
   }
 
   .pos-btn__name {
@@ -250,6 +258,11 @@
     max-height: unset;
   }
 
+  .modal-body {
+    padding: 0.75rem 1.5rem 1.25rem;
+    height: 190px;
+  }
+
   .modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -257,34 +270,6 @@
     padding: 1.5rem;
     border-top: 1px solid var(--border);
   }
-}
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover { transform: translateY(-2px); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-}
-
-.btn-secondary {
-  padding: 0.75rem 1.5rem;
-  background: var(--hover);
-  color: var(--text);
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:hover { background: var(--border); }
 }
 
 .comment-box {

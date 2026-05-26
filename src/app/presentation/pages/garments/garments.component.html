@@ -196,15 +196,29 @@
         <h3>Agregar Tipo de Reparación</h3>
         <div class="form-group">
           <label for="repairTypeSelect">Tipo de Reparación</label>
-          <select 
-            id="repairTypeSelect" 
-            [(ngModel)]="selectedRepairTypeId" 
-            class="form-select">
-            <option value="">Seleccionar tipo de reparación</option>
-            <option *ngFor="let rt of availableRepairTypes" [value]="rt.id">
-              {{ rt.name }} ({{ rt.code }})
-            </option>
-          </select>
+          <div class="predictive-select-wrapper">
+            <input id="repairTypeSelect"
+              type="text"
+              [(ngModel)]="repairTypeSearchTerm"
+              (input)="onRepairTypeSearchInput()"
+              (focus)="onRepairTypeSearchFocus()"
+              (blur)="onRepairTypeSearchBlur()"
+              placeholder="Escribe para buscar tipo de reparación"
+              class="form-input"/>
+
+            <div class="predictive-options" *ngIf="showRepairTypeSuggestions && filteredAvailableRepairTypes.length > 0">
+              <button type="button"
+                class="predictive-option"
+                *ngFor="let rt of filteredAvailableRepairTypes"
+                (mousedown)="selectRepairType(rt)">
+                {{ rt.name }} ({{ rt.code }})
+              </button>
+            </div>
+
+            <div class="predictive-empty" *ngIf="showRepairTypeSuggestions && filteredAvailableRepairTypes.length === 0">
+              No se encontraron coincidencias
+            </div>
+          </div>
         </div>
 
         <div class="form-row">
