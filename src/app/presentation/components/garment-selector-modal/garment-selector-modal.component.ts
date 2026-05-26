@@ -6,7 +6,7 @@ import * as QRCode from 'qrcode';
 
 export interface GarmentSelection {
   garment: Garment;
-  repairType: GarmentRepairType;
+  repairTypes: GarmentRepairType[];
   comment: string;
 }
 
@@ -49,7 +49,7 @@ export class GarmentSelectorModalComponent implements OnChanges {
 
   commentAddService = '';
   showModalAddServices = signal(false);
-  selectedRepairType: GarmentRepairType | null = null;
+  selectedRepairTypes: GarmentRepairType[] = [];
 
   openGarmentModal(): void {
     this.showModalAddServices.set(true);
@@ -74,6 +74,7 @@ export class GarmentSelectorModalComponent implements OnChanges {
 
   selectGarment(garment: Garment): void {
     this.selectedGarment = garment;
+    this.selectedRepairTypes = [];
     this.repairTypeSearchQuery = '';
     this.applyRepairTypeFilter();
     this.step = 'repairTypes';
@@ -101,12 +102,29 @@ export class GarmentSelectorModalComponent implements OnChanges {
   }
 
   selectRepairType(repairType: GarmentRepairType): void {
-    this.selectedRepairType = repairType;
+    const idx = this.selectedRepairTypes.findIndex(r => r.repairTypeId === repairType.repairTypeId);
+    if (idx >= 0) {
+      this.selectedRepairTypes.splice(idx, 1);
+    } else {
+      this.selectedRepairTypes.push(repairType);
+    }
+  }
+
+  isRepairTypeSelected(repairTypeId: string): boolean {
+    return this.selectedRepairTypes.some(r => r.repairTypeId === repairTypeId);
+  }
+
+  getSelectedRepairTypeNames(): string {
+    return this.selectedRepairTypes.map(rt => rt.repairTypeName).join(', ');
+  }
+
+  openCommentModal(): void {
+    if (this.selectedRepairTypes.length === 0) return;
     this.showModalAddServices.set(true);
   }
 
   async confirmSelection(): Promise<void> {
-    if (!this.selectedGarment || !this.selectedRepairType) return;
+    if (!this.selectedGarment || this.selectedRepairTypes.length === 0) return;
 
     let qrCodeDataUrl = '';
     
@@ -116,10 +134,12 @@ export class GarmentSelectorModalComponent implements OnChanges {
       console.error('Error generating QR code:', error);
     }
 
+    const repairTypeNames = this.selectedRepairTypes.map(rt => rt.repairTypeName).join(', ');
+
     this.printTicketRequest.emit({
       qrCodeDataUrl,
       garmentName: this.selectedGarment.name,
-      repairTypeName: this.selectedRepairType.repairTypeName,
+      repairTypeName: repairTypeNames,
       comment: this.commentAddService,
       repairId: this.repairId,
       customerName: this.customerName,
@@ -127,7 +147,7 @@ export class GarmentSelectorModalComponent implements OnChanges {
       estimatedDeliveryDate: this.estimatedDeliveryDate ? new Date(this.estimatedDeliveryDate) : undefined
     });
 
-    this.garmentSelected.emit({ garment: this.selectedGarment, repairType: this.selectedRepairType, comment: this.commentAddService });
+    this.garmentSelected.emit({ garment: this.selectedGarment, repairTypes: this.selectedRepairTypes, comment: this.commentAddService });
     
     this.showModalAddServices.set(false);
     
@@ -140,6 +160,7 @@ export class GarmentSelectorModalComponent implements OnChanges {
     this.repairTypeSearchQuery = '';
     this.filteredRepairTypes = [];
     this.selectedGarment = null;
+    this.selectedRepairTypes = [];
   }
 
   close(): void {
@@ -159,7 +180,7 @@ export class GarmentSelectorModalComponent implements OnChanges {
     this.repairTypeSearchQuery = '';
     this.filteredRepairTypes = [];
     this.selectedGarment = null;
-    this.selectedRepairType = null;
+    this.selectedRepairTypes = [];
     this.commentAddService = "";
     this.applyFilter();
   }

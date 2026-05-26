@@ -210,6 +210,35 @@
   background: var(--gold-light, rgba(212, 175, 55, 0.08));
 }
 
+.repair-type-btn.is-selected {
+  border-color: var(--gold, #d4af37);
+  background: var(--gold-light, rgba(212, 175, 55, 0.2));
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.btn-continue {
+  border: 1px solid var(--gold, #d4af37);
+  background: var(--gold-light, rgba(212, 175, 55, 0.18));
+  color: var(--gold, #d4af37);
+  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--gold-light, rgba(212, 175, 55, 0.28));
+  }
+}
+
 /* ── Empty state ── */
 .empty-state {
   padding: 2rem;

@@ -65,9 +65,6 @@ export class RepairFormComponent implements OnInit {
   selectedClient: Client | null = null;
   matchingClients: Client[] = [];
 
-  // ─── Repair Items ─────────────────────────────────────────────
-  selectedRepairType: RepairType | null = null;
-
   repairItems: RepairItem[] = [];
 
   // ─── Repair Ticket ────────────────────────────────────────────
@@ -194,7 +191,7 @@ export class RepairFormComponent implements OnInit {
   // ─── Repair ───────────────────────────────────────────────────
   onSubmit(): void {
     const itemsValid = this.repairItems.length > 0 &&
-      this.repairItems.every(i => i.garment.name?.trim() && i.repairType && i.description?.trim() && i.estimatedPrice > 0);
+      this.repairItems.every(i => i.garment.name?.trim() && i.repairTypes?.length > 0 && i.description?.trim() && i.estimatedPrice > 0);
 
     const advanceControl = this.repairForm.get('advancePayment');
     advanceControl?.markAsTouched();
@@ -455,7 +452,7 @@ export class RepairFormComponent implements OnInit {
     this.advancePaymentMaximum = this.calculateAdvancePaymentMaximum(items);
 
     // Calculate total estimated time from repair items
-    const totalEstimatedTime = items.reduce((sum, item) => sum + (item.repairType?.estimatedTime || 0), 0);
+    const totalEstimatedTime = items.reduce((sum, item) => sum + (item.repairTypes?.reduce((t, rt) => t + (rt.estimatedTime || 0), 0) || 0), 0);
 
     // Calculate and set estimated delivery date using work schedule
     const deliveryDate = this.addWorkMinutes(new Date(this.estimatedDeliveryDate() || new Date()), totalEstimatedTime);
@@ -596,7 +593,12 @@ export class RepairFormComponent implements OnInit {
   get itemsValid(): boolean {
     return this.repairItems.length > 0 &&
       this.repairItems.every(i =>
-        i.garment?.name?.trim() && i.repairType && i.description?.trim() && i.estimatedPrice > 0);
+        i.garment?.name?.trim() && i.repairTypes?.length > 0 && i.description?.trim() && i.estimatedPrice > 0);
+  }
+
+  getRepairTypeNames(item: RepairItem): string {
+    const names = (item.repairTypes ?? []).map(type => type.name).filter(Boolean);
+    return names.length > 0 ? names.join(', ') : 'Sin tipo';
   }
 
   get hasAdvancePayment(): boolean {

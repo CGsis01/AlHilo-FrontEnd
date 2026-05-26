@@ -192,6 +192,11 @@ export class RepairDetailComponent implements OnInit {
     return item.repairStatus?.name || this.repair?.repairStatus?.name || RepairStatusEnum.PENDING;
   }
 
+  getRepairTypeNames(item: RepairItem): string {
+    const names = (item.repairTypes ?? []).map(type => type.name).filter(Boolean);
+    return names.length > 0 ? names.join(', ') : 'Sin tipo';
+  }
+
   areAllItemsValidated(): boolean {
     const items = this.repair?.items || [];
     return items.length > 0 && items.every(item => this.getItemStatusName(item) === RepairStatusEnum.VALIDATED);

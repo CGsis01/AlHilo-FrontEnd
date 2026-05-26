@@ -34,13 +34,10 @@
         [name]="'garmentType_' + i"
         class="item-input" />
 
-      <select [(ngModel)]="draft.repairType.repairTypeId"
-        (ngModelChange)="onFieldChange()"
-        [name]="'repairType_' + i"
-        class="item-input">
-        <option value="">-- Reparación --</option>
-        <option *ngFor="let rt of repairTypes" [value]="rt.id">{{ rt.name }}</option>
-      </select>
+      <div class="item-repair-types">
+        <span class="repair-type-chip" *ngFor="let rt of draft.repairTypes">{{ rt.repairTypeName }}</span>
+        <span class="repair-type-empty" *ngIf="draft.repairTypes.length === 0">Sin tipo de reparación</span>
+      </div>
 
       <input type="text"
         [(ngModel)]="draft.description"

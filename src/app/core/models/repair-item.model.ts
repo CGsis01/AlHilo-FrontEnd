@@ -9,7 +9,7 @@ export interface RepairItem {
   repairId?: string;
   repair?: Repair;
   garment: Garment;
-  repairType: RepairType;
+  repairTypes: RepairType[];
   description: string;
   estimatedPrice: number;
   finalPrice?: number;

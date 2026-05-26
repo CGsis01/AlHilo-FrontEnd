@@ -9,7 +9,7 @@
     <div class="modal-body">
       <div class="current-garment-info" *ngIf="selectedGarmentItem">
         <p class="garment-detail-title">{{ selectedGarmentItem.garment.name }}</p>
-        <p class="garment-detail-subtitle">{{ selectedGarmentItem.repairType.name }}</p>
+        <p class="garment-detail-subtitle">{{ getRepairTypeNames(selectedGarmentItem) }}</p>
         <p class="garment-detail-description">{{ selectedGarmentItem.description }}</p>
       </div>
 

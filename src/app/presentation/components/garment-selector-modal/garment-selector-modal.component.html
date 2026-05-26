@@ -66,6 +66,7 @@
             class="pos-btn repair-type-btn"
             *ngFor="let rt of filteredRepairTypes"
             [class.is-default]="rt.isDefault"
+            [class.is-selected]="isRepairTypeSelected(rt.repairTypeId)"
             (click)="selectRepairType(rt)">
             <span class="pos-btn__icon">🧵</span>
             <span class="pos-btn__name">{{ rt.repairTypeName }}</span>
@@ -81,6 +82,12 @@
           </div>
         </ng-template>
       </div>
+
+      <div class="modal-footer" *ngIf="selectedRepairTypes.length > 0">
+        <button type="button" class="btn-continue" (click)="openCommentModal()">
+          Continuar ({{ selectedRepairTypes.length }} seleccionado{{ selectedRepairTypes.length !== 1 ? 's' : '' }})
+        </button>
+      </div>
     </ng-container>
 
   </div>
@@ -93,7 +100,7 @@
       <div class="modal-title">
         <div class="step2-title">
           <h2>Descripcion</h2>
-          <span class="step2-subtitle" *ngIf="selectedGarment && selectedRepairType">{{ selectedGarment.name }} - {{ selectedRepairType.repairTypeName }}</span>
+          <span class="step2-subtitle" *ngIf="selectedGarment && selectedRepairTypes.length > 0">{{ selectedGarment.name }} — {{ getSelectedRepairTypeNames() }}</span>
         </div>
       </div>
       <button type="button" class="close-btn" (click)="closeGarmentModal()" aria-label="Cerrar">×</button>

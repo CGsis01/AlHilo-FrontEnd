@@ -10,7 +10,7 @@ import { GarmentSelection, GarmentSelectorModalComponent, GarmentTicketData } fr
 export interface RepairItemDraft {
   _id: string; // local draft id
   garment: Garment;
-  repairType: GarmentRepairType;
+  repairTypes: GarmentRepairType[];
   description: string;
   estimatedPrice: string; // string for input binding, converted on emit
 }
@@ -59,14 +59,14 @@ export class RepairItemsEditorComponent implements OnChanges {
   }
 
   onGarmentSelected(selection: GarmentSelection): void {
+    const suggestedPrice = selection.repairTypes.reduce((sum, rt) => sum + (rt.estimatedPriceOverride || 0), 0);
     this.drafts.push({
       _id: `draft-${++this._draftCounter}`,
       garment: selection.garment,
-      repairType: selection.repairType,
+      repairTypes: selection.repairTypes,
       description: selection.comment,
-      estimatedPrice: selection.repairType.estimatedPriceOverride
-        ? selection.repairType.estimatedPriceOverride.toString()
-        : ''});
+      estimatedPrice: suggestedPrice > 0 ? suggestedPrice.toString() : ''
+    });
 
     this.showGarmentModal.set(false);
     
@@ -81,7 +81,7 @@ export class RepairItemsEditorComponent implements OnChanges {
     this.drafts.push({
       _id: `draft-${++this._draftCounter}`,
       garment: {} as Garment,
-      repairType: {} as GarmentRepairType,
+      repairTypes: [],
       description: '',
       estimatedPrice: ''});
   }
@@ -113,8 +113,8 @@ export class RepairItemsEditorComponent implements OnChanges {
 
   get isValid(): boolean {
     return this.drafts.every(d =>
-      d.garment.id.trim() &&
-      d.repairType.repairTypeId.trim() &&
+      d.garment.id?.trim() &&
+      d.repairTypes.length > 0 &&
       d.description.trim() &&
       parseFloat(d.estimatedPrice) > 0);
   }
@@ -127,13 +127,18 @@ export class RepairItemsEditorComponent implements OnChanges {
 
   private emit(): void {
     const items: RepairItem[] = this.drafts.map(d => {
-      const repairType = this.repairTypes.find(rt => rt.id === d.repairType.repairTypeId);
+      const repairTypes = d.repairTypes.map(grt => {
+        const found = this.repairTypes.find(rt => rt.id === grt.repairTypeId);
+        return found;
+      }).filter((rt): rt is RepairType => !!rt);
       return {
         id: d._id,
         garment: d.garment,
-        repairType: repairType!,
+        repairTypes,
         description: d.description,
-        estimatedPrice: parseFloat(d.estimatedPrice) || 0};});
+        estimatedPrice: parseFloat(d.estimatedPrice) || 0
+      };
+    });
 
     this.itemsChange.emit(items);
   }
@@ -142,14 +147,16 @@ export class RepairItemsEditorComponent implements OnChanges {
     return {
       _id: item.id || `draft-${++this._draftCounter}`,
       garment: item.garment,
-      repairType: {
-        repairTypeId: item.repairType?.id,
-        repairTypeName: item.repairType?.name,
-        repairTypeCode: item.repairType?.code,
-        isDefault: false, // original repair items don't have this info, default to false
-        estimatedPriceOverride: item.estimatedPrice
-      } as GarmentRepairType, // This cast assumes that the RepairType in the item is compatible with GarmentRepairType
+      repairTypes: (item.repairTypes || []).map(rt => ({
+        repairTypeId: rt.id,
+        repairTypeName: rt.name,
+        repairTypeCode: rt.code,
+        isDefault: false,
+        estimatedPriceOverride: item.estimatedPrice,
+        isActive: true
+      } as GarmentRepairType)),
       description: item.description,
-      estimatedPrice: item.estimatedPrice?.toString() || ''};
+      estimatedPrice: item.estimatedPrice?.toString() || ''
+    };
   }
 }

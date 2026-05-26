@@ -467,8 +467,15 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
       }
 
       items.forEach(item => {
-        const typeName = item.repairType?.name || 'Sin tipo';
-        counts[typeName] = (counts[typeName] || 0) + 1;
+        const typeNames = (item.repairTypes ?? []).map(type => type.name).filter(Boolean);
+        if (typeNames.length === 0) {
+          counts['Sin tipo'] = (counts['Sin tipo'] || 0) + 1;
+          return;
+        }
+
+        Array.from(new Set(typeNames)).forEach(typeName => {
+          counts[typeName] = (counts[typeName] || 0) + 1;
+        });
       });
 
       return counts;
@@ -487,10 +494,20 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
       }
 
       items.forEach(item => {
-        const typeName = item.repairType?.name || 'Sin tipo';
+        const typeNames = (item.repairTypes ?? []).map(type => type.name).filter(Boolean);
         const itemRevenue = this.toFiniteNumber(item.finalPrice ?? item.estimatedPrice ?? 0);
 
-        revenue[typeName] = (revenue[typeName] || 0) + itemRevenue;
+        if (typeNames.length === 0) {
+          revenue['Sin tipo'] = (revenue['Sin tipo'] || 0) + itemRevenue;
+          return;
+        }
+
+        const uniqueNames = Array.from(new Set(typeNames));
+        const splitRevenue = itemRevenue / uniqueNames.length;
+
+        uniqueNames.forEach(typeName => {
+          revenue[typeName] = (revenue[typeName] || 0) + splitRevenue;
+        });
       });
 
       return revenue;
@@ -500,7 +517,7 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   getRepairTypeLabel(repair: Repair): string {
     const items = repair.items ?? [];
     const typeNames = items
-      .map(item => item.repairType?.name)
+      .flatMap(item => (item.repairTypes ?? []).map(type => type.name))
       .filter((name): name is string => !!name);
 
     if (typeNames.length === 0) {

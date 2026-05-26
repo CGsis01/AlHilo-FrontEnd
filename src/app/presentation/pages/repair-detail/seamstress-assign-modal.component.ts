@@ -24,4 +24,9 @@ export class SeamstressAssignModalComponent {
   @Output() openUnassign = new EventEmitter<void>();
   @Output() selectSeamstress = new EventEmitter<User>();
   @Output() assignSeamstress = new EventEmitter<void>();
+
+  getRepairTypeNames(item: RepairItem | null): string {
+    const names = (item?.repairTypes ?? []).map(type => type.name).filter(Boolean);
+    return names.length > 0 ? names.join(', ') : 'Sin tipo';
+  }
 }

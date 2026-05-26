@@ -345,7 +345,7 @@
           <ng-container *ngIf="repair?.items?.length; else legacyAdvanceService">
             <div class="receipt-service-row" *ngFor="let item of repair?.items">
               <div class="receipt-service-detail">
-                <span class="receipt-service-name">{{ item.repairType.name }}</span>
+                <span class="receipt-service-name">{{ getRepairTypeNames(item) }}</span>
                 <span class="receipt-service-desc">{{ item.garment.name }} — {{ item.description }}</span>
               </div>
               <span class="receipt-service-price">${{ item.estimatedPrice | number:'1.2-2':'en-US' }}</span>

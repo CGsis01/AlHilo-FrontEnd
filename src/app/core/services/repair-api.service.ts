@@ -9,11 +9,16 @@ import { PaginatedResponse } from '../../core/interfaces/api-response.interface'
 import { User } from '@core/models/user.model';
 import { RepairComment } from '@core/models/repair-comment.model';
 
+export interface RepairItemRepairTypeRequest {
+  repair_type_id: string;
+  price: number;
+}
+
 export interface RepairItemRequest {
   repair_item_id?: string;
   repair_id?: string;
   garment_id: string;
-  repair_type_id: string;
+  repair_types: RepairItemRepairTypeRequest[];
   description: string;
   estimated_price: number;
   repair_status_id?: string;
@@ -319,34 +324,36 @@ export class RepairApiService {
             createdAt: item.garment.created_at,
             updatedAt: item.garment.updated_at
           },
-          repairType: {
-            id: item.repair_type.id,
-            name: item.repair_type.name,
-            code: item.repair_type.code,
-            estimatedPrice: item.repair_type.estimated_price,
-            estimatedTime: item.repair_type.estimated_time,
-            commissionPercentage: item.repair_type.commission_percentage,
-            repairComplexity: {
-              id: item.repair_type.repair_complexity.id,
-              name: item.repair_type.repair_complexity.name,
-              code: item.repair_type.repair_complexity.code,
-              laborMultiplier: item.repair_type.repair_complexity.labor_multiplier,
-              timeMultiplier: item.repair_type.repair_complexity.time_multiplier,
-              storeId: item.repair_type.repair_complexity.store_id,
-              isActive: item.repair_type.repair_complexity.is_active,
-              createdAt: item.repair_type.repair_complexity.created_at,
-              updatedAt: item.repair_type.repair_complexity.updated_at
-            },
-            store: {
-              id: item.repair_type.store.id,
-              name: item.repair_type.store.name,
-              isActive: item.repair_type.store.is_active,
-              createdAt: item.repair_type.store.created_at,
-              updatedAt: item.repair_type.store.updated_at
-            },
-            isActive: item.repair_type.is_active,
-            createdAt: item.repair_type.created_at
-          },
+          repairTypes: Array.isArray(item.repair_item_repair_types)
+            ? item.repair_item_repair_types.map((rirt: any) => ({
+                id: rirt.repair_type.id,
+                name: rirt.repair_type.name,
+                code: rirt.repair_type.code,
+                estimatedPrice: rirt.repair_type.estimated_price,
+                estimatedTime: rirt.repair_type.estimated_time,
+                commissionPercentage: rirt.repair_type.commission_percentage,
+                repairComplexity: rirt.repair_type.repair_complexity ? {
+                  id: rirt.repair_type.repair_complexity.id,
+                  name: rirt.repair_type.repair_complexity.name,
+                  code: rirt.repair_type.repair_complexity.code,
+                  laborMultiplier: rirt.repair_type.repair_complexity.labor_multiplier,
+                  timeMultiplier: rirt.repair_type.repair_complexity.time_multiplier,
+                  storeId: rirt.repair_type.repair_complexity.store_id,
+                  isActive: rirt.repair_type.repair_complexity.is_active,
+                  createdAt: rirt.repair_type.repair_complexity.created_at,
+                  updatedAt: rirt.repair_type.repair_complexity.updated_at
+                } : undefined,
+                store: rirt.repair_type.store ? {
+                  id: rirt.repair_type.store.id,
+                  name: rirt.repair_type.store.name,
+                  isActive: rirt.repair_type.store.is_active,
+                  createdAt: rirt.repair_type.store.created_at,
+                  updatedAt: rirt.repair_type.store.updated_at
+                } : undefined,
+                isActive: rirt.repair_type.is_active,
+                createdAt: rirt.repair_type.created_at
+              }))
+            : [],
           description: item.description,
           estimatedPrice: item.price,
           finalPrice: item.final_price,
@@ -417,34 +424,36 @@ export class RepairApiService {
         createdAt: item.garment.created_at,
         updatedAt: item.garment.updated_at
       },
-      repairType: {
-        id: item.repair_type.repair_type_id,
-        name: item.repair_type.name,
-        code: item.repair_type.code,
-        estimatedPrice: item.repair_type.estimated_price,
-        estimatedTime: item.repair_type.estimated_time,
-        commissionPercentage: item.repair_type.commission_percentage,
-        repairComplexity: {
-          id: item.repair_type.repair_complexity.id,
-          name: item.repair_type.repair_complexity.name,
-          code: item.repair_type.repair_complexity.code,
-          laborMultiplier: item.repair_type.repair_complexity.labor_multiplier,
-          timeMultiplier: item.repair_type.repair_complexity.time_multiplier,
-          storeId: item.repair_type.repair_complexity.store_id,
-          isActive: item.repair_type.repair_complexity.is_active,
-          createdAt: item.repair_type.repair_complexity.created_at,
-          updatedAt: item.repair_type.repair_complexity.updated_at
-        },
-        store: {
-          id: item.repair_type.store.id,
-          name: item.repair_type.store.name,
-          isActive: item.repair_type.store.is_active,
-          createdAt: item.repair_type.store.created_at,
-          updatedAt: item.repair_type.store.updated_at
-        },
-        isActive: item.repair_type.is_active,
-        createdAt: item.repair_type.created_at
-      },
+      repairTypes: Array.isArray(item.repair_item_repair_types)
+        ? item.repair_item_repair_types.map((rirt: any) => ({
+            id: rirt.repair_type.repair_type_id ?? rirt.repair_type.id,
+            name: rirt.repair_type.name,
+            code: rirt.repair_type.code,
+            estimatedPrice: rirt.repair_type.estimated_price,
+            estimatedTime: rirt.repair_type.estimated_time,
+            commissionPercentage: rirt.repair_type.commission_percentage,
+            repairComplexity: rirt.repair_type.repair_complexity ? {
+              id: rirt.repair_type.repair_complexity.id,
+              name: rirt.repair_type.repair_complexity.name,
+              code: rirt.repair_type.repair_complexity.code,
+              laborMultiplier: rirt.repair_type.repair_complexity.labor_multiplier,
+              timeMultiplier: rirt.repair_type.repair_complexity.time_multiplier,
+              storeId: rirt.repair_type.repair_complexity.store_id,
+              isActive: rirt.repair_type.repair_complexity.is_active,
+              createdAt: rirt.repair_type.repair_complexity.created_at,
+              updatedAt: rirt.repair_type.repair_complexity.updated_at
+            } : undefined,
+            store: rirt.repair_type.store ? {
+              id: rirt.repair_type.store.id,
+              name: rirt.repair_type.store.name,
+              isActive: rirt.repair_type.store.is_active,
+              createdAt: rirt.repair_type.store.created_at,
+              updatedAt: rirt.repair_type.store.updated_at
+            } : undefined,
+            isActive: rirt.repair_type.is_active,
+            createdAt: rirt.repair_type.created_at
+          }))
+        : [],
       description: item.description,
       estimatedPrice: item.estimated_price,
       finalPrice: item.final_price,
@@ -474,34 +483,36 @@ export class RepairApiService {
         createdAt: item.garment.created_at,
         updatedAt: item.garment.updated_at
       },
-      repairType: {
-        id: item.repair_type.id,
-        name: item.repair_type.name,
-        code: item.repair_type.code,
-        estimatedPrice: item.repair_type.estimated_price,
-        estimatedTime: item.repair_type.estimated_time,
-        commissionPercentage: item.repair_type.commission_percentage,
-        repairComplexity: {
-          id: item.repair_type.repair_complexity.id,
-          name: item.repair_type.repair_complexity.name,
-          code: item.repair_type.repair_complexity.code,
-          laborMultiplier: item.repair_type.repair_complexity.labor_multiplier,
-          timeMultiplier: item.repair_type.repair_complexity.time_multiplier,
-          storeId: item.repair_type.repair_complexity.store_id,
-          isActive: item.repair_type.repair_complexity.is_active,
-          createdAt: item.repair_type.repair_complexity.created_at,
-          updatedAt: item.repair_type.repair_complexity.updated_at
-        },
-        store: {
-          id: item.repair_type.store.id,
-          name: item.repair_type.store.name,
-          isActive: item.repair_type.store.is_active,
-          createdAt: item.repair_type.store.created_at,
-          updatedAt: item.repair_type.store.updated_at
-        },
-        isActive: item.repair_type.is_active,
-        createdAt: item.repair_type.created_at
-      },
+      repairTypes: Array.isArray(item.repair_item_repair_types)
+        ? item.repair_item_repair_types.map((rirt: any) => ({
+            id: rirt.repair_type.id,
+            name: rirt.repair_type.name,
+            code: rirt.repair_type.code,
+            estimatedPrice: rirt.repair_type.estimated_price,
+            estimatedTime: rirt.repair_type.estimated_time,
+            commissionPercentage: rirt.repair_type.commission_percentage,
+            repairComplexity: rirt.repair_type.repair_complexity ? {
+              id: rirt.repair_type.repair_complexity.id,
+              name: rirt.repair_type.repair_complexity.name,
+              code: rirt.repair_type.repair_complexity.code,
+              laborMultiplier: rirt.repair_type.repair_complexity.labor_multiplier,
+              timeMultiplier: rirt.repair_type.repair_complexity.time_multiplier,
+              storeId: rirt.repair_type.repair_complexity.store_id,
+              isActive: rirt.repair_type.repair_complexity.is_active,
+              createdAt: rirt.repair_type.repair_complexity.created_at,
+              updatedAt: rirt.repair_type.repair_complexity.updated_at
+            } : undefined,
+            store: rirt.repair_type.store ? {
+              id: rirt.repair_type.store.id,
+              name: rirt.repair_type.store.name,
+              isActive: rirt.repair_type.store.is_active,
+              createdAt: rirt.repair_type.store.created_at,
+              updatedAt: rirt.repair_type.store.updated_at
+            } : undefined,
+            isActive: rirt.repair_type.is_active,
+            createdAt: rirt.repair_type.created_at
+          }))
+        : [],
       description: item.description,
       estimatedPrice: item.price,
       finalPrice: item.final_price,
