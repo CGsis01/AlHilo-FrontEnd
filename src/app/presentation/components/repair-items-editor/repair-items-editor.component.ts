@@ -13,6 +13,7 @@ export interface RepairItemDraft {
   repairTypes: GarmentRepairType[];
   description: string;
   estimatedPrice: string; // string for input binding, converted on emit
+  isPatternSource: boolean;
 }
 
 @Component({
@@ -65,7 +66,8 @@ export class RepairItemsEditorComponent implements OnChanges {
       garment: selection.garment,
       repairTypes: selection.repairTypes,
       description: selection.comment,
-      estimatedPrice: suggestedPrice > 0 ? suggestedPrice.toString() : ''
+      estimatedPrice: suggestedPrice > 0 ? suggestedPrice.toString() : '',
+      isPatternSource: false
     });
 
     this.showGarmentModal.set(false);
@@ -83,7 +85,8 @@ export class RepairItemsEditorComponent implements OnChanges {
       garment: {} as Garment,
       repairTypes: [],
       description: '',
-      estimatedPrice: ''});
+      estimatedPrice: '',
+      isPatternSource: false});
   }
 
   removeItem(index: number): void {
@@ -96,7 +99,23 @@ export class RepairItemsEditorComponent implements OnChanges {
     this.emit();
   }
 
+  onPatternSourceChange(draft: RepairItemDraft): void {
+    if (draft.isPatternSource) {
+      draft.estimatedPrice = '0';
+    }
+
+    this.emit();
+  }
+
   onPriceInput(event: Event, draft: RepairItemDraft): void {
+    if (draft.isPatternSource) {
+      draft.estimatedPrice = '0';
+      const input = event.target as HTMLInputElement;
+      input.value = '0';
+      this.emit();
+      return;
+    }
+
     const input = event.target as HTMLInputElement;
     const sanitized = input.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
     
@@ -108,7 +127,7 @@ export class RepairItemsEditorComponent implements OnChanges {
   }
 
   get totalEstimated(): number {
-    return this.drafts.reduce((sum, d) => sum + (parseFloat(d.estimatedPrice) || 0), 0);
+    return this.drafts.reduce((sum, d) => sum + (d.isPatternSource ? 0 : (parseFloat(d.estimatedPrice) || 0)), 0);
   }
 
   get isValid(): boolean {
@@ -116,7 +135,7 @@ export class RepairItemsEditorComponent implements OnChanges {
       d.garment.id?.trim() &&
       d.repairTypes.length > 0 &&
       d.description.trim() &&
-      parseFloat(d.estimatedPrice) > 0);
+      (d.isPatternSource || parseFloat(d.estimatedPrice) > 0));
   }
 
   get canAddService(): boolean {
@@ -136,7 +155,8 @@ export class RepairItemsEditorComponent implements OnChanges {
         garment: d.garment,
         repairTypes,
         description: d.description,
-        estimatedPrice: parseFloat(d.estimatedPrice) || 0
+        estimatedPrice: d.isPatternSource ? 0 : (parseFloat(d.estimatedPrice) || 0),
+        isPatternSource: d.isPatternSource
       };
     });
 
@@ -156,7 +176,8 @@ export class RepairItemsEditorComponent implements OnChanges {
         isActive: true
       } as GarmentRepairType)),
       description: item.description,
-      estimatedPrice: item.estimatedPrice?.toString() || ''
+      estimatedPrice: item.estimatedPrice?.toString() || '',
+      isPatternSource: item.isPatternSource ?? false
     };
   }
 }

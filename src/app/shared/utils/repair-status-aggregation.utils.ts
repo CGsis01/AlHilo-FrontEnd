@@ -11,6 +11,7 @@ import { Repair, RepairStatusEnum } from '../../core/models/repair.model';
  */
 export function getAggregateRepairStatus(repair: Repair): RepairStatusEnum {
   const itemStatuses = (repair.items || [])
+    .filter(item => !item.isPatternSource)
     .map(item => item.repairStatus?.name)
     .filter((status): status is RepairStatusEnum => !!status) as RepairStatusEnum[];
 

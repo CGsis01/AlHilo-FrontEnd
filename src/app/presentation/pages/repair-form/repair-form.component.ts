@@ -190,8 +190,7 @@ export class RepairFormComponent implements OnInit {
 
   // ─── Repair ───────────────────────────────────────────────────
   onSubmit(): void {
-    const itemsValid = this.repairItems.length > 0 &&
-      this.repairItems.every(i => i.garment.name?.trim() && i.repairTypes?.length > 0 && i.description?.trim() && i.estimatedPrice > 0);
+    const itemsValid = this.itemsValid;
 
     const advanceControl = this.repairForm.get('advancePayment');
     advanceControl?.markAsTouched();
@@ -218,7 +217,7 @@ export class RepairFormComponent implements OnInit {
     const rawAdvance = selectedAdvancePaymentType === 'mixed'
       ? Math.round((cashAdvance + cardAdvance) * 100) / 100
       : this.getAdvanceNumericValue(formValue.advancePayment);
-    const totalPrice = this.repairItems.reduce((s, i) => s + i.estimatedPrice, 0);
+    const totalPrice = this.repairItems.reduce((s, i) => s + (i.isPatternSource ? 0 : i.estimatedPrice), 0);
     const advanceVoucherId = (formValue.advanceVoucherId || '').trim();
     const selectedAdvanceCardType = (formValue.advanceCardType || 'debit') as 'debit' | 'credit';
     const minimumAdvance = this.advancePaymentMinimum;
@@ -591,9 +590,17 @@ export class RepairFormComponent implements OnInit {
   // ─── Helepers ─────────────────────────────────────────────────
 
   get itemsValid(): boolean {
+    const hasBillableItem = this.repairItems.some(i => !i.isPatternSource);
+
     return this.repairItems.length > 0 &&
+      hasBillableItem &&
       this.repairItems.every(i =>
-        i.garment?.name?.trim() && i.repairTypes?.length > 0 && i.description?.trim() && i.estimatedPrice > 0);
+        i.isPatternSource || (
+          i.garment?.name?.trim() &&
+          i.repairTypes?.length > 0 &&
+          i.description?.trim() &&
+          i.estimatedPrice > 0
+        ));
   }
 
   getRepairTypeNames(item: RepairItem): string {

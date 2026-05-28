@@ -44,6 +44,7 @@
                 </th>
                 <th>Prenda</th>
                 <th>Tipo</th>
+                <th class="pattern-column">Muestra</th>
                 <th>Descripción</th>
                 <th class="garment-status">Estado</th>
                 <th class="text-right" *ngIf="repair.finalPrice && userRole?.code !== UserRole.SEAMSTRESS && userRole?.code !== UserRole.HEADSEWING">
@@ -54,10 +55,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let item of repair.items">
+              <tr *ngFor="let item of repair.items" [class.muestra-row]="item.isPatternSource">
                 <td class="assign-column assign-cell" *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
                   <button class="btn-assign-seamstress" 
-                  *ngIf="getItemStatusName(item) !== RepairStatus.IN_VALIDATION && getItemStatusName(item) !== RepairStatus.VALIDATED && repair.repairStatus?.name !== RepairStatus.DELIVERED" 
+                  *ngIf="!item.isPatternSource && getItemStatusName(item) !== RepairStatus.IN_VALIDATION && getItemStatusName(item) !== RepairStatus.VALIDATED && repair.repairStatus?.name !== RepairStatus.DELIVERED" 
                   (click)="openSeamstressAssignModal(item)" 
                   title="Asignar costurera">
                     👤
@@ -65,6 +66,11 @@
                 </td>
                 <td>{{ item.garment.name }}</td>
                 <td>{{ getRepairTypeNames(item) }}</td>
+                <td class="pattern-cell">
+                  <span class="pattern-badge" [class.pattern-badge--active]="item.isPatternSource">
+                    {{ item.isPatternSource ? 'Sí' : 'No' }}
+                  </span>
+                </td>
                 <td>{{ item.description }}</td>
                 <td class="status-cell">
                   <span class="status-badge" [ngClass]="getStatusClass(getItemStatusName(item))">
@@ -76,7 +82,7 @@
                 </td>
                 <td class="assigned-name">{{ item.assignedTo?.name || item.attendedBy?.name || 'Sin asignar' }}</td>
                 <td class="item-action-cell">
-                  <ng-container *ngIf="canManageItemStatus(item) && getItemStatusName(item); else noItemAction">
+                  <ng-container *ngIf="!item.isPatternSource && canManageItemStatus(item) && getItemStatusName(item); else noItemAction">
                     <div class="item-status-actions">
                       <span *ngIf="getItemPrevStatus(item) as prevStatus"
                             class="status-badge status-badge-btn"

@@ -22,6 +22,7 @@
       <span>Tipo de Reparación *</span>
       <span>Descripción *</span>
       <span>Precio *</span>
+      <span>Muestra</span>
       <span></span>
     </div>
 
@@ -32,7 +33,7 @@
         (ngModelChange)="onFieldChange()"
         placeholder="Ej. Pantalón"
         [name]="'garmentType_' + i"
-        class="item-input" />
+        class="item-input garment-input" />
 
       <div class="item-repair-types">
         <span class="repair-type-chip" *ngFor="let rt of draft.repairTypes">{{ rt.repairTypeName }}</span>
@@ -44,15 +45,25 @@
         (ngModelChange)="onFieldChange()"
         placeholder="Descripción del trabajo"
         [name]="'description_' + i"
-        class="item-input" />
+        class="item-input description-input" />
 
       <input type="text"
         [ngModel]="draft.estimatedPrice"
         (input)="onPriceInput($event, draft)"
-        placeholder="0.00"
+        [placeholder]="draft.isPatternSource ? 'Sin costo' : '0.00'"
         inputmode="decimal"
         [name]="'price_' + i"
-        class="item-input item-price" />
+        [disabled]="draft.isPatternSource"
+        class="item-input item-price price-input" />
+
+      <label class="pattern-toggle" [attr.for]="'patternSource_' + i">
+        <input type="checkbox"
+          [id]="'patternSource_' + i"
+          [(ngModel)]="draft.isPatternSource"
+          (ngModelChange)="onPatternSourceChange(draft)"
+          [name]="'patternSource_' + i" />
+        <span>Muestra</span>
+      </label>
         
       <button type="button"
         class="btn-remove-item"

@@ -219,12 +219,20 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
     return names.length > 0 ? names.join(', ') : 'Sin tipo';
   }
 
+  isMuestra(item: RepairItem): boolean {
+    return item.isPatternSource === true;
+  }
+
   areAllItemsValidated(): boolean {
-    const items = this.repair?.items || [];
+    const items = (this.repair?.items || []).filter(item => !item.isPatternSource);
     return items.length > 0 && items.every(item => this.getItemStatusName(item) === RepairStatusEnum.VALIDATED);
   }
 
   canManageItemStatus(item: RepairItem): boolean {
+    if (this.isMuestra(item)) {
+      return false;
+    }
+
     if (!this.userRole) {
       return false;
     }
@@ -283,6 +291,10 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   ];
 
   getItemPrevStatus(item: RepairItem): RepairStatus | null {
+    if (this.isMuestra(item)) {
+      return null;
+    }
+
     const currentName = this.getItemStatusName(item) as RepairStatusEnum;
     
     const idx = this.STATUS_FLOW.indexOf(currentName);
@@ -298,6 +310,10 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   }
 
   getItemNextStatus(item: RepairItem): RepairStatus | null {
+    if (this.isMuestra(item)) {
+      return null;
+    }
+
     const currentName = this.getItemStatusName(item) as RepairStatusEnum;
     
     if (currentName === RepairStatusEnum.PENDING) 
@@ -316,6 +332,10 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   }
 
   onStatusBadgeClick(item: RepairItem, targetStatus: RepairStatus): void {
+    if (this.isMuestra(item)) {
+      return;
+    }
+
     const currentStatusName = this.getItemStatusName(item);
     
     if (!targetStatus.id || currentStatusName === targetStatus.name) 
@@ -352,6 +372,10 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   }
 
   getItemStatusTransitions(item: RepairItem): RepairStatus[] {
+    if (this.isMuestra(item)) {
+      return [];
+    }
+
     const currentName = this.getItemStatusName(item);
 
     if (this.userRole?.code === UserRoleCode.SEAMSTRESS) {
@@ -469,6 +493,10 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
 
   // ─── Seamstresses ─────────────────────────────────────────────
   openSeamstressAssignModal(item: RepairItem): void {
+    if (this.isMuestra(item)) {
+      return;
+    }
+
     this.selectedGarmentItem = item;
     this.selectedSeamstress = item.assignedTo || null;
     this.loadSeamstresses();

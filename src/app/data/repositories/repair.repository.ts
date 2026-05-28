@@ -49,9 +49,10 @@ export class RepairRepository implements Repository<Repair> {
       repair_items: repair.items?.map(item => ({
         repair_id: item.repairId,
         garment_id: item.garment.id,
-        repair_types: (item.repairTypes || []).map(rt => ({ repair_type_id: rt.id, price: item.estimatedPrice })),
+        repair_types: (item.repairTypes || []).map(rt => ({ repair_type_id: rt.id, price: item.isPatternSource ? 0 : item.estimatedPrice })),
         description: item.description,
-        price: item.estimatedPrice,
+        price: item.isPatternSource ? 0 : item.estimatedPrice,
+        is_pattern_source: item.isPatternSource ?? false,
         assigned_to_id: item.assignedToId,
         store_id: item.garment.storeId,
         created_by: getStoredUserId()}))
@@ -79,9 +80,10 @@ export class RepairRepository implements Repository<Repair> {
       items: repair.items?.map(item => ({
         repair_item_id: item.id?.startsWith('new-') ? undefined : item.id,
         garment_id: item.garment.id,
-        repair_types: (item.repairTypes || []).map(rt => ({ repair_type_id: rt.id, price: item.estimatedPrice })),
+        repair_types: (item.repairTypes || []).map(rt => ({ repair_type_id: rt.id, price: item.isPatternSource ? 0 : item.estimatedPrice })),
         description: item.description,
-        estimated_price: item.estimatedPrice,
+        estimated_price: item.isPatternSource ? 0 : item.estimatedPrice,
+        is_pattern_source: item.isPatternSource ?? false,
         final_price: item.finalPrice,
         assigned_to_id: item.assignedToId}))
     };
@@ -185,11 +187,13 @@ export class RepairRepository implements Repository<Repair> {
   }
 
   addItem(repairId: string, item: Partial<RepairItem>): Observable<RepairItem> {
+    const itemPrice = item.isPatternSource ? 0 : item.estimatedPrice!;
     const req: RepairItemRequest = {
       garment_id: item.garment?.id!,
-      repair_types: (item.repairTypes || []).map(rt => ({ repair_type_id: rt.id, price: item.estimatedPrice! })),
+      repair_types: (item.repairTypes || []).map(rt => ({ repair_type_id: rt.id, price: itemPrice })),
       description: item.description!,
-      estimated_price: item.estimatedPrice!,
+      estimated_price: itemPrice,
+      is_pattern_source: item.isPatternSource ?? false,
       final_price: item.finalPrice,
       assigned_to_id: item.assignedToId,
       sort_order: item.sortOrder};
@@ -198,11 +202,13 @@ export class RepairRepository implements Repository<Repair> {
   }
 
   updateItem(repairId: string, itemId: string, item: Partial<RepairItem>): Observable<RepairItem> {
+    const itemPrice = item.isPatternSource ? 0 : item.estimatedPrice;
     const req: Partial<RepairItemRequest> = {
       garment_id: item.garment?.id,
-      repair_types: item.repairTypes ? item.repairTypes.map(rt => ({ repair_type_id: rt.id, price: item.estimatedPrice! })) : undefined,
+      repair_types: item.repairTypes ? item.repairTypes.map(rt => ({ repair_type_id: rt.id, price: itemPrice ?? 0 })) : undefined,
       description: item.description,
-      estimated_price: item.estimatedPrice,
+      estimated_price: itemPrice,
+      is_pattern_source: item.isPatternSource,
       final_price: item.finalPrice,
       repair_status_id: item.repairStatus?.id,
       assigned_to_id: item.assignedToId,

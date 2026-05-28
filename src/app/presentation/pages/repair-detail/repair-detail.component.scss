@@ -158,6 +158,12 @@
       text-align: center;
     }
 
+    .pattern-column {
+      width: 90px;
+      min-width: 90px;
+      text-align: center;
+    }
+
     .assigned-seamstress {
       width: 180px;
       min-width: 180px;
@@ -191,6 +197,30 @@
 
     .status-cell { 
       text-align: center;
+    }
+
+    .pattern-cell {
+      text-align: center;
+    }
+
+    .pattern-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: var(--hover);
+    }
+
+    .pattern-badge--active {
+      border-color: var(--gold, #d4af37);
+      color: var(--gold, #d4af37);
+      background: var(--gold-light, rgba(212, 175, 55, 0.15));
     }
 
     .text-right { text-align: right; }
@@ -227,6 +257,23 @@
     }
 
     tr:last-child td { border-bottom: none; }
+
+    tr.muestra-row {
+      opacity: 0.55;
+      background: repeating-linear-gradient(
+        135deg,
+        transparent,
+        transparent 6px,
+        rgba(0,0,0,0.04) 6px,
+        rgba(0,0,0,0.04) 8px
+      );
+
+      td { color: var(--text-secondary); }
+
+      .pattern-badge--active {
+        border-style: dashed;
+      }
+    }
   }
 
   // ─── Comments Swiper ────────────────────────────────────────────

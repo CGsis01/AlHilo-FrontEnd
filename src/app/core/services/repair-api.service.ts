@@ -21,6 +21,7 @@ export interface RepairItemRequest {
   repair_types: RepairItemRepairTypeRequest[];
   description: string;
   estimated_price: number;
+  is_pattern_source?: boolean;
   repair_status_id?: string;
   assigned_to_id?: string;
   final_price?: number;
@@ -361,6 +362,7 @@ export class RepairApiService {
           description: item.description,
           estimatedPrice: item.price,
           finalPrice: item.final_price,
+          isPatternSource: item.is_pattern_source ?? false,
           repairStatus: item.repair_status ? {
             id: item.repair_status.repair_status_id || item.repair_status.id,
             name: item.repair_status.name
@@ -466,6 +468,7 @@ export class RepairApiService {
       description: item.description,
       estimatedPrice: item.estimated_price,
       finalPrice: item.final_price,
+      isPatternSource: item.is_pattern_source ?? false,
       repairStatus: item.repair_status ? {
         id: item.repair_status.repair_status_id || item.repair_status.id,
         name: item.repair_status.name
@@ -546,6 +549,7 @@ export class RepairApiService {
         createdAt: item.assigned_to.created_at,
         updatedAt: item.assigned_to.updated_at
       } : undefined,
+      isPatternSource: item.is_pattern_source ?? false,
       sortOrder: item.sort_order,
       createdAt: item.created_at ? new Date(item.created_at) : undefined,
       updatedAt: item.updated_at ? new Date(item.updated_at) : undefined

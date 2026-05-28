@@ -18,6 +18,7 @@ export interface RepairItem {
   assignedToId?: string;
   attendedById?: string;
   attendedBy?: User;
+  isPatternSource?: boolean;
   sortOrder?: number;
   createdAt?: Date;
   updatedAt?: Date;
