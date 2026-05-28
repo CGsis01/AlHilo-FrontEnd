@@ -281,6 +281,10 @@ export class RepairApiService {
     return this.apiService.get<RepairComment[]>(`/repair-comments/${repairId}`);
   }
 
+  normalizeRepair(repair: any): Repair {
+    return this.mapRepair(repair);
+  }
+
   private buildFilterParams(filters?: RepairFilters): HttpParams {
     let params = new HttpParams();
 
@@ -365,6 +369,11 @@ export class RepairApiService {
           assignedTo: item.assigned_to ? <User>{
             id: item.assigned_to.id,
             name: item.assigned_to.name
+          } : undefined,
+          attendedById: item.attended_by_id,
+          attendedBy: item.attended_by ? <User>{
+            id: item.attended_by.id,
+            name: item.attended_by.name
           } : undefined,
           sortOrder: item.sort_order,
           createdAt: item.created_at ? new Date(item.created_at) : undefined,

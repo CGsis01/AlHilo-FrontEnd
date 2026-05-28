@@ -1,10 +1,11 @@
-import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, of } from 'rxjs';
+import { catchError, of, Subject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { register as registerSwiperElements } from 'swiper/element/bundle';
+import { takeUntil } from 'rxjs/operators';
 import { UserUseCases } from '../../../domain/usecases/user.usecases';
 import { RepairUseCases } from '../../../domain/usecases/repair.usecases';
 import { RepairStatusUseCases } from '../../../domain/usecases/repair-status.usecases';
@@ -14,6 +15,7 @@ import { PaymentTypeUseCases } from '@domain/usecases/payment-type.usecases';
 import { PaymentType } from '@core/models/payment-type.model';
 import { PaymentUseCases } from '../../../domain/usecases/payment.usecases';
 import { AuthService } from '../../../core/services/auth.service';
+import { RepairRealtimeService } from '../../../core/services/repair-realtime.service';
 import { User, UserRole, UserRoleCode } from '../../../core/models/user.model';
 import { repairImpressionTicket } from '../../../shared/utils/repairImpressionTicket.utils';
 import { WhatsappApiService } from '../../../core/services/whatsapp-api.service';
@@ -45,7 +47,7 @@ import { JobReviewModalComponent } from './job-review-modal.component';
     './repair-detail.receipt.scss']
 })
 
-export class RepairDetailComponent implements OnInit {
+export class RepairDetailComponent implements OnInit, OnDestroy {
   // ─── Repair ───────────────────────────────────────────────────
   isLoading = signal(true);
   errorMessage = '';
@@ -83,6 +85,7 @@ export class RepairDetailComponent implements OnInit {
   // ─── Repair Items ─────────────────────────────────────────────
   repairItems: RepairItem[] = [];
   repairForm!: FormGroup;
+  private destroy$ = new Subject<void>();
 
   // ─── Payment Modal ────────────────────────────────────────────
   showPaymentModal = signal(false);
@@ -132,6 +135,7 @@ export class RepairDetailComponent implements OnInit {
     private paymentUseCases: PaymentUseCases,
     private userUseCases: UserUseCases,
     private authService: AuthService,
+    private repairRealtimeService: RepairRealtimeService,
     private repairImpressionTicket: repairImpressionTicket,
     private whatsappApiService: WhatsappApiService,
     private toastService: ToastService
@@ -144,11 +148,29 @@ export class RepairDetailComponent implements OnInit {
     
     if (repairId) {
       this.loadRepair(repairId);
+
+      this.repairRealtimeService.events$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(event => {
+          if (event.repair_id === repairId) {
+            if (event.repair) {
+              this.repair = event.repair;
+              return;
+            }
+
+            this.loadRepair(repairId);
+          }
+        });
     } else {
       this.router.navigate(['/repairs']);
     }
 
     await this.ensureSwiper();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // ─── Repair ───────────────────────────────────────────────────

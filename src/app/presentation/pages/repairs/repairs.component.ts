@@ -1,12 +1,15 @@
-import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { register as registerSwiperElements } from 'swiper/element/bundle';
-import { map } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { map, takeUntil } from 'rxjs/operators';
 import { RepairUseCases } from '../../../domain/usecases/repair.usecases';
 import { Repair, RepairStatusEnum } from '../../../core/models/repair.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { RepairRealtimeService } from '../../../core/services/repair-realtime.service';
 import { UserRole, UserRoleCode } from '../../../core/models/user.model';
+import { removeRepairById, upsertRepairById } from '../../../shared/utils/repair-realtime.utils';
 import { getAggregateRepairStatus } from '../../../shared/utils/repair-status-aggregation.utils';
 
 @Component({
@@ -18,7 +21,7 @@ import { getAggregateRepairStatus } from '../../../shared/utils/repair-status-ag
   styleUrls: ['./repairs.component.scss']
 })
 
-export class RepairsComponent implements OnInit {
+export class RepairsComponent implements OnInit, OnDestroy {
   isLoading = signal(true);
 
   repairs: Repair[] = [];
@@ -27,6 +30,7 @@ export class RepairsComponent implements OnInit {
   RepairStatus = RepairStatusEnum;
   userRole: UserRole | undefined;
   UserRole = UserRoleCode;
+  private destroy$ = new Subject<void>();
 
   statusOptions = [
     { value: 'ALL', label: 'Todas las reparaciones' },
@@ -39,13 +43,14 @@ export class RepairsComponent implements OnInit {
   constructor(
     private repairUseCases: RepairUseCases,
     private authService: AuthService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private repairRealtimeService: RepairRealtimeService
   ) {}
 
   ngOnInit(): void {
     void this.ensureSwiper();
     this.userRole = this.authService.currentUser?.role;
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const status = params['status'];
       
       if (status && this.statusOptions.some(opt => opt.value === status)) {
@@ -53,6 +58,22 @@ export class RepairsComponent implements OnInit {
       }
       
       this.loadRepairs();});
+
+    this.repairRealtimeService.events$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        if (!event.repair) {
+          this.loadRepairs();
+          return;
+        }
+
+        this.applyRealtimeRepairUpdate(event.repair);
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private async ensureSwiper(): Promise<void> {
@@ -103,6 +124,48 @@ export class RepairsComponent implements OnInit {
         console.error('Error loading repairs:', err);
         this.isLoading.set(false);
       }});
+  }
+
+  private applyRealtimeRepairUpdate(repair: Repair): void {
+    const visibleRepair = this.getVisibleRepair(repair);
+
+    this.repairs = visibleRepair
+      ? upsertRepairById(this.repairs, visibleRepair)
+      : removeRepairById(this.repairs, repair.id);
+
+    this.filterRepairs();
+  }
+
+  private getVisibleRepair(repair: Repair): Repair | null {
+    const aggregateStatus = this.getAggregateStatusName(repair);
+    const currentUserId = this.authService.currentUser?.id;
+
+    if (this.userRole?.code === UserRoleCode.SEAMSTRESS) {
+      const isAssignedToCurrentUser = (repair.items ?? []).some(item =>
+        item.assignedTo?.id === currentUserId || item.assignedToId === currentUserId
+      );
+
+      if (!isAssignedToCurrentUser) {
+        return null;
+      }
+
+      if (
+        aggregateStatus === RepairStatusEnum.PENDING ||
+        aggregateStatus === RepairStatusEnum.VALIDATED ||
+        aggregateStatus === RepairStatusEnum.DELIVERED
+      ) {
+        return null;
+      }
+    }
+
+    if (
+      this.userRole?.code === UserRoleCode.HEADSEWING &&
+      (aggregateStatus === RepairStatusEnum.VALIDATED || aggregateStatus === RepairStatusEnum.DELIVERED)
+    ) {
+      return null;
+    }
+
+    return repair;
   }
 
   filterRepairs(): void {

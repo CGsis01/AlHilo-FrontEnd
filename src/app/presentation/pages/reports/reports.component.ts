@@ -1,11 +1,14 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { RepairRepository } from '../../../data/repositories/repair.repository';
 import { Repair, RepairStatusEnum } from '../../../core/models/repair.model';
 import { User } from '../../../core/models/user.model';
 import { UserRepository } from '../../../data/repositories/user.repository';
+import { RepairRealtimeService } from '../../../core/services/repair-realtime.service';
 import { DateFormatDirective } from '../../../shared/directives/date-format.directive';
 import { getAggregateRepairStatus } from '../../../shared/utils/repair-status-aggregation.utils';
 
@@ -75,10 +78,12 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   private statusChart: Chart | null = null;
   private typeChart: Chart | null = null;
   private revenueChart: Chart | null = null;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private repairRepository: RepairRepository,
-    private userRepository: UserRepository
+    private userRepository: UserRepository,
+    private repairRealtimeService: RepairRealtimeService
   ) {
     // Set default date range (last 30 days)
     const today = new Date();
@@ -92,6 +97,20 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.loadData();
     this.loadSeamstresses();
+
+    this.repairRealtimeService.events$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        if (!event.repair) {
+          this.loadData();
+          return;
+        }
+
+        this.repairs = this.upsertRepair(event.repair);
+        this.applyDateFilters();
+        this.prepareIncomeDetails();
+        this.applyIncomeFilters();
+      });
   }
 
   ngAfterViewInit(): void {
@@ -102,6 +121,8 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.destroyCharts();
   }
 
@@ -184,7 +205,7 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
         // Create entry for each item with its assigned seamstress
         return items.map(item => ({
           repair: repair,
-          seamstress: [item.assignedTo?.name || 'Sin asignar', item.attendedBy?.name || 'Sin asignar'],
+          seamstress: [item.assignedTo?.name || item.attendedBy?.name || 'Sin asignar'],
           date: new Date(repair.actualDeliveryDate ?? repair.updatedAt ?? repair.receivedDate),
           income: this.toFiniteNumber(item.finalPrice ?? item.estimatedPrice ?? 0),
           status: aggregateStatus
@@ -529,6 +550,19 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private getRepairRevenue(repair: Repair): number {
     return this.toFiniteNumber(repair.finalPrice ?? repair.estimatedPrice ?? 0);
+  }
+
+  private upsertRepair(repair: Repair): Repair[] {
+    const repairIndex = this.repairs.findIndex(currentRepair => currentRepair.id === repair.id);
+
+    if (repairIndex === -1) {
+      return [...this.repairs, repair];
+    }
+
+    const nextRepairs = this.repairs.slice();
+    nextRepairs[repairIndex] = repair;
+
+    return nextRepairs;
   }
 
   private toFiniteNumber(value: unknown): number {
