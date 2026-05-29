@@ -16,6 +16,7 @@ import { UserRoleCode } from '@core/models/user.model';
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   isLoading = signal(false);
+  showPassword = signal(false);
   errorMessage = '';
 
   constructor(
@@ -63,5 +64,9 @@ export class LoginComponent implements OnInit {
 
   get password() {
     return this.loginForm.get('password');
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword.set(!this.showPassword());
   }
 }

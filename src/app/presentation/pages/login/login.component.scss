@@ -135,6 +135,49 @@
       color: var(--text-secondary);
     }
   }
+
+  .password-field {
+    position: relative;
+
+    input {
+      width: 100%;
+      padding-right: 3rem;
+    }
+  }
+
+  .toggle-password-btn {
+    position: absolute;
+    right: 0.625rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, background-color 0.2s ease;
+
+    &:hover {
+      color: var(--gold);
+      background: var(--gold-light);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--gold-light);
+    }
+
+    svg {
+      width: 1.125rem;
+      height: 1.125rem;
+      fill: currentColor;
+    }
+  }
 }
 
 .error-message {
