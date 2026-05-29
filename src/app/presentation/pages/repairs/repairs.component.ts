@@ -27,6 +27,7 @@ export class RepairsComponent implements OnInit, OnDestroy {
   repairs: Repair[] = [];
   filteredRepairs: Repair[] = [];
   selectedStatus: string = 'ALL';
+  customerSearchTerm = '';
   RepairStatus = RepairStatusEnum;
   userRole: UserRole | undefined;
   UserRole = UserRoleCode;
@@ -169,12 +170,40 @@ export class RepairsComponent implements OnInit, OnDestroy {
   }
 
   filterRepairs(): void {
-    const source = this.selectedStatus === 'ALL'
+    const sourceByStatus = this.selectedStatus === 'ALL'
       ? this.repairs
       : this.repairs.filter(r => this.getAggregateStatusName(r) === this.selectedStatus);
 
+    const normalizedSearch = this.normalizeSearchText(this.customerSearchTerm.trim());
+    const source = normalizedSearch
+      ? sourceByStatus.filter(repair =>
+          this.normalizeSearchText(repair.customerName).includes(normalizedSearch)
+        )
+      : sourceByStatus;
+
     this.filteredRepairs = source.slice().sort(
       (a, b) => new Date(a.receivedDate).getTime() - new Date(b.receivedDate).getTime());
+  }
+
+  onCustomerSearchChange(searchTerm: string): void {
+    this.customerSearchTerm = searchTerm;
+    this.filterRepairs();
+  }
+
+  clearCustomerSearch(): void {
+    if (!this.customerSearchTerm) {
+      return;
+    }
+
+    this.customerSearchTerm = '';
+    this.filterRepairs();
+  }
+
+  private normalizeSearchText(value: string): string {
+    return value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
   onStatusChange(status: string): void {

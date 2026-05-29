@@ -77,6 +77,65 @@
   }
 }
 
+.search-wrapper {
+  margin-bottom: 1.5rem;
+
+  .search-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+}
+
+.search-control {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem;
+  max-width: 560px;
+
+  &:focus-within {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+  }
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+  padding: 0.4rem 0.5rem;
+
+  &::placeholder {
+    color: var(--text-secondary);
+  }
+}
+
+.search-clear {
+  border: 1px solid var(--border);
+  background: var(--hover);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+}
+
 .repairs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -293,6 +352,10 @@
     grid-template-columns: 1fr;
   }
 
+  .search-control {
+    max-width: 100%;
+  }
+
   .desktop-only {
     display: none;
   }
@@ -329,5 +392,11 @@
   .card-body,
   .card-footer {
     padding: 1rem;
+  }
+
+  .search-control {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
   }
 }

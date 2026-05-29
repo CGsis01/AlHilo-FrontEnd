@@ -18,6 +18,26 @@
     </button>
   </div>
 
+  <div class="search-wrapper" *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
+    <label for="repair-customer-search" class="search-label">Buscar por cliente</label>
+    <div class="search-control">
+      <input id="repair-customer-search"
+        type="text"
+        class="search-input"
+        placeholder="Escribe el nombre del cliente..."
+        [value]="customerSearchTerm"
+        (input)="onCustomerSearchChange(($any($event.target).value || '').toString())"/>
+      
+        <button type="button"
+        class="search-clear"
+        *ngIf="customerSearchTerm"
+        (click)="clearCustomerSearch()"
+        aria-label="Limpiar búsqueda">
+        Limpiar
+      </button>
+    </div>
+  </div>
+
   <!-- Desktop grid -->
   <div class="repairs-grid desktop-only" *ngIf="!isLoading() && filteredRepairs.length > 0">
     <div class="repair-card" *ngFor="let repair of filteredRepairs">
@@ -115,7 +135,7 @@
   <div class="empty-state" *ngIf="!isLoading() && filteredRepairs.length === 0">
     <div class="empty-icon">📭</div>
     <h3>No se encontraron reparaciones</h3>
-    <p>No hay reparaciones que coincidan con el filtro seleccionado.</p>
+    <p>No hay reparaciones que coincidan con los filtros aplicados.</p>
   </div>
 
   <div class="loading-state" *ngIf="isLoading()">
