@@ -44,7 +44,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    const fingerprintService =  this.injector.get(FingerprintService);
+    const fingerprintService = this.injector.get(FingerprintService);
     fingerprintService.stopCapture().catch(console.error);
   }
 

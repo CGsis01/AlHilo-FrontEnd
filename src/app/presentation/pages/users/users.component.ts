@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { Component, OnDestroy, OnInit, Injector, signal, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, of, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -9,6 +9,7 @@ import { RoleUseCases } from '../../../domain/usecases/role.usecases';
 import { User, UserRole } from '../../../core/models/user.model';
 import { Store } from '../../../core/models/store.model';
 import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
+// import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
 
 type EditableUser =
   Partial<Omit<User, 'role'>> & {
@@ -75,7 +76,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     private userUseCases: UserUseCases,
     private roleUseCases: RoleUseCases,
     private storeUseCases: StoreUseCases,
-    private fingerprintService: FingerprintService
+    private injector: Injector
   ) {}
 
   ngOnInit(): void {
@@ -87,7 +88,8 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.fingerprintSubscriptions.unsubscribe();
-    void this.fingerprintService.stopCapture();
+    const fingerprintService = this.injector.get(FingerprintService);
+    void fingerprintService.stopCapture();
   }
 
   loadUsers(): void {
@@ -138,7 +140,8 @@ export class UsersComponent implements OnInit, OnDestroy {
   closeModal(): void {
     this.showModal.set(false);
     this.resetFingerprintCaptureState();
-    void this.fingerprintService.stopCapture();
+    const fingerprintService = this.injector.get(FingerprintService);
+    void fingerprintService.stopCapture();
 
     this.editingUser = this.createEmptyUser();
     this.selectedRole = null;
@@ -240,12 +243,14 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.fingerprintProgress.set(0);
     this.editingUser.fingerprintSamples = [];
 
-    try {
+    const fingerprintService = this.injector.get(FingerprintService);
+
+    try {      
       const samples: string[] = [];
 
       for (let i = 0; i < this.MAX_SAMPLES; i++) {
         this.fingerprintMessage.set(`Coloca la huella ${i + 1} de ${this.MAX_SAMPLES}`);
-        const sample = await this.fingerprintService.captureOnePng();
+        const sample = await fingerprintService.captureOnePng();
 
         samples.push(sample);
         this.fingerprintProgress.set(i + 1);
@@ -265,7 +270,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       this.editingUser.fingerprintSamples = [];
     } finally {
       this.isFingerprintCapturing.set(false);
-      await this.fingerprintService.stopCapture();
+      await fingerprintService.stopCapture();
     }
   }
 
@@ -286,8 +291,9 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   private subscribeToFingerprintEvents(): void {
+    const fingerprintService = this.injector.get(FingerprintService);
     this.fingerprintSubscriptions.add(
-      this.fingerprintService.onDeviceStatus().subscribe((status) => {
+      fingerprintService.onDeviceStatus().subscribe((status) => {
         this.readerConnected.set(status === 'connected');
 
         if (!this.showModal()) {
