@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -26,7 +26,8 @@ export class LoginComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private fingerprintService: FingerprintService
+    private injector: Injector,
+    // private fingerprintService: FingerprintService
   ) {}
 
   ngOnInit(): void {
@@ -43,7 +44,8 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.fingerprintService.stopCapture().catch(console.error);
+    const fingerprintService =  this.injector.get(FingerprintService);
+    fingerprintService.stopCapture().catch(console.error);
   }
 
   onSubmit(): void {
@@ -81,9 +83,11 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   private async waitFingerprintLogin() {
+    const fingerprintService = this.injector.get(FingerprintService);
+
     while (!this.authService.isAuthenticated()) {
       try {
-        const sample = await this.fingerprintService.captureOnePng();
+        const sample = await fingerprintService.captureOnePng();
 
         this.authService.fingerprintLogin(sample).subscribe({
         next: response => {

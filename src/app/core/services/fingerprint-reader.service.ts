@@ -1,11 +1,13 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
-import { FingerprintReader, QualityCode, QualityReported, SampleFormat, SamplesAcquired } from '@digitalpersona/devices';
+// import { FingerprintReader, QualityCode, QualityReported, SampleFormat, SamplesAcquired } from '@digitalpersona/devices';
 
 @Injectable({ providedIn: 'root' })
 
 export class FingerprintService {
-  private reader!: FingerprintReader;
+  // private reader!: FingerprintReader;
+  private devicesModule: any;
+  private reader!: any;
   private fingerprintDetected$ = new Subject<string>();
   private currentQuality$ = new Subject<string>();
   private deviceStatus$ = new Subject<'connected' | 'disconnected'>();
@@ -17,10 +19,22 @@ export class FingerprintService {
     // this.createReader();
   }
 
-  private createReader(): void {
-    this.reader = new FingerprintReader();
+  async initialize(): Promise<void> {
+    if (this.reader) {
+      return;
+    }
+
+    this.devicesModule = await import('@digitalpersona/devices');
+
+    this.reader = new this.devicesModule.FingerprintReader();
+
     this.registerEvents();
   }
+
+  // private createReader(): void {
+  //   this.reader = new FingerprintReader();
+  //   this.registerEvents();
+  // }
 
   private registerEvents(): void {
     this.reader.on('DeviceConnected', () => {
@@ -39,24 +53,24 @@ export class FingerprintService {
       this.ngZone.run(() => { this.captureActive = false; });
     });
 
-    this.reader.on('QualityReported', (event: QualityReported) => {
+    this.reader.on('QualityReported', (event: any) => {
       this.ngZone.run(() => {
         const quality = event.quality;
         
         switch (quality) {
-          case QualityCode.Good:
+          case this.devicesModule.QualityCode.Good:
             this.currentQuality$.next('Buena');
             break;
-          case QualityCode.TooDark:
+          case this.devicesModule.QualityCode.TooDark:
             this.currentQuality$.next('Mala: Imagen demasiado oscura');
             break;
-          case QualityCode.TooLight:
+          case this.devicesModule.QualityCode.TooLight:
             this.currentQuality$.next('Mala: Imagen demasiado clara');
             break;
-          case QualityCode.TooNoisy:
+          case this.devicesModule.QualityCode.TooNoisy:
             this.currentQuality$.next('Mala: Imagen con mucho ruido');
             break;
-          case QualityCode.TooSmall:
+          case this.devicesModule.QualityCode.TooSmall:
             this.currentQuality$.next('Mala: Área de la huella muy pequeña');
             break;
           default:
@@ -66,7 +80,7 @@ export class FingerprintService {
       });
     });
 
-    this.reader.on('SamplesAcquired', (event: SamplesAcquired) => {
+    this.reader.on('SamplesAcquired', (event: any) => {
       this.ngZone.run(() => {
         const fingerprintData = this.extractFingerprintSample(event);
 
@@ -85,9 +99,9 @@ export class FingerprintService {
   }
 
   startCapture(): Promise<void> {
-    if (!this.reader) {
-      this.createReader();
-    }
+    // if (!this.reader) {
+    //   this.createReader();
+    // }
 
     this.resetWebSdkSessionCache();
 
@@ -118,12 +132,12 @@ export class FingerprintService {
   }
 
   async captureOnePng(): Promise<string> {
-    if (!this.reader) {
-      this.createReader();
-    }
+    // if (!this.reader) {
+    //   this.createReader();
+    // }
 
     return new Promise(async (resolve, reject) => {
-      const onSample = async (event: SamplesAcquired) => {
+      const onSample = async (event: any) => {
         try {
           const sample = this.extractFingerprintSample(event);
 
@@ -146,7 +160,7 @@ export class FingerprintService {
       this.reader.on('SamplesAcquired', onSample);
 
       try {        
-        await this.reader.startAcquisition(SampleFormat.PngImage);
+        await this.reader.startAcquisition(this.devicesModule.SampleFormat.PngImage);
       } catch (e) {
         this.reader.off('SamplesAcquired', onSample);
         reject(e);
@@ -155,10 +169,10 @@ export class FingerprintService {
   }
 
   async captureFourPngs(): Promise<string[]> {
-    if (!this.reader) {
-      this.createReader();
-    }
-    
+    // if (!this.reader) {
+    //   this.createReader();
+    // }
+
     const samples: string[] = [];
 
     for (let i = 0; i < 4; i++) {
@@ -182,7 +196,7 @@ export class FingerprintService {
     }
 
     try {
-      await this.reader.startAcquisition(SampleFormat.PngImage);
+      await this.reader.startAcquisition(this.devicesModule.SampleFormat.PngImage);
       
       this.captureActive = true;
     } catch (error) {
@@ -226,7 +240,7 @@ export class FingerprintService {
     return String(error ?? '');
   }
 
-  private extractFingerprintSample(event: SamplesAcquired): string | null {
+  private extractFingerprintSample(event: any): string | null {
     if (!event.samples?.length) {
       return null;
     }
