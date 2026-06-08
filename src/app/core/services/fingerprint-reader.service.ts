@@ -14,7 +14,7 @@ export class FingerprintService {
   private captureResolve: ((value: string) => void) | null = null;
 
   constructor(private ngZone: NgZone) {
-    this.createReader();
+    // this.createReader();
   }
 
   private createReader(): void {
@@ -85,6 +85,10 @@ export class FingerprintService {
   }
 
   startCapture(): Promise<void> {
+    if (!this.reader) {
+      this.createReader();
+    }
+
     this.resetWebSdkSessionCache();
 
     return this.beginCapture();
@@ -114,6 +118,10 @@ export class FingerprintService {
   }
 
   async captureOnePng(): Promise<string> {
+    if (!this.reader) {
+      this.createReader();
+    }
+
     return new Promise(async (resolve, reject) => {
       const onSample = async (event: SamplesAcquired) => {
         try {
@@ -147,6 +155,10 @@ export class FingerprintService {
   }
 
   async captureFourPngs(): Promise<string[]> {
+    if (!this.reader) {
+      this.createReader();
+    }
+    
     const samples: string[] = [];
 
     for (let i = 0; i < 4; i++) {
