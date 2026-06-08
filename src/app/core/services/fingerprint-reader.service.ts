@@ -15,9 +15,7 @@ export class FingerprintService {
 
   private captureResolve: ((value: string) => void) | null = null;
 
-  constructor(private ngZone: NgZone) {
-    // this.createReader();
-  }
+  constructor(private ngZone: NgZone) {}
 
   async initialize(): Promise<void> {
     if (this.reader) {
@@ -37,6 +35,10 @@ export class FingerprintService {
   // }
 
   private registerEvents(): void {
+    if (!this.reader) {
+      return;
+    }
+
     this.reader.on('DeviceConnected', () => {
       this.ngZone.run(() => { this.deviceStatus$.next('connected'); });
     });
@@ -98,19 +100,23 @@ export class FingerprintService {
     });
   }
 
-  startCapture(): Promise<void> {
-    // if (!this.reader) {
-    //   this.createReader();
-    // }
+  async startCapture(): Promise<void> {
+    if (!this.reader) {
+      await this.initialize();
+    }
 
     this.resetWebSdkSessionCache();
 
     return this.beginCapture();
   }
 
-  stopCapture(): Promise<void> {
+  async stopCapture(): Promise<void> {
     this.captureActive = false;
     this.captureResolve = null;
+
+    if (!this.reader) {
+      await this.initialize();
+    }
 
     return this.reader.stopAcquisition().catch(() => undefined);
   }
@@ -132,9 +138,11 @@ export class FingerprintService {
   }
 
   async captureOnePng(): Promise<string> {
-    // if (!this.reader) {
-    //   this.createReader();
-    // }
+    console.log('reader=', this.reader);
+    
+    if (!this.reader) {
+      await this.initialize();
+    }
 
     return new Promise(async (resolve, reject) => {
       const onSample = async (event: any) => {
@@ -169,9 +177,9 @@ export class FingerprintService {
   }
 
   async captureFourPngs(): Promise<string[]> {
-    // if (!this.reader) {
-    //   this.createReader();
-    // }
+    if (!this.reader) {
+      await this.initialize();
+    }
 
     const samples: string[] = [];
 
