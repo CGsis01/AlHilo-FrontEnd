@@ -15,6 +15,8 @@ export class FingerprintService {
 
   private captureResolve: ((value: string) => void) | null = null;
 
+  private initializationPromise?: Promise<void>
+
   constructor(private ngZone: NgZone) {}
 
   async initialize(): Promise<void> {
@@ -26,15 +28,29 @@ export class FingerprintService {
         return;
       }
 
-      this.devicesModule = await import('@digitalpersona/devices');
+      if (this.initializationPromise) {
+        return this.initializationPromise;
+      }
 
-      console.log('IMPORT OK');
+      this.initializationPromise = (async () => {
+        this.devicesModule = await import('@digitalpersona/devices');
+        console.log('IMPORT OK');
+        this.reader = new this.devicesModule.FingerprintReader();
+        console.log('READER CREATED');
+        this.registerEvents();
+      })();
 
-      this.reader = new this.devicesModule.FingerprintReader();
+      return this.initializationPromise;
 
-      console.log('READER CREATED');
+      // this.devicesModule = await import('@digitalpersona/devices');
 
-      this.registerEvents();
+      // console.log('IMPORT OK');
+
+      // this.reader = new this.devicesModule.FingerprintReader();
+
+      // console.log('READER CREATED');
+
+      // this.registerEvents();
     } catch (error) {
       console.error('INITIALIZE ERROR', error);
 

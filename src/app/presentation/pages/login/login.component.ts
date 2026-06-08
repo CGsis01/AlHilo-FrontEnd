@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, signal, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRoleCode } from '../../../core/models/user.model';
 import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
@@ -89,20 +90,36 @@ export class LoginComponent implements OnInit, OnDestroy {
       try {
         const sample = await fingerprintService.captureOnePng();
 
-        this.authService.fingerprintLogin(sample).subscribe({
-        next: response => {
-          if (response.user.role.code === UserRoleCode.SEAMSTRESS || response.user.role.code === UserRoleCode.HEADSEWING) {
-            this.router.navigate(['/repairs']);
-          } else {
-            this.router.navigate(['/dashboard']);
-          }
-        },
-        error: () => {
-          this.errorMessage = 'Huella no reconocida';
-          this.fingerprintBusy.set(false);
-        }});
-      } catch {
+        const response = await firstValueFrom(this.authService.fingerprintLogin(sample));
+
+        if (response.user.role.code === UserRoleCode.SEAMSTRESS || response.user.role.code === UserRoleCode.HEADSEWING) 
+        {
+          await this.router.navigate(['/repairs']);
+        } else {
+          await this.router.navigate(['/dashboard']);
+        }
+
+        break;
+
+        // this.authService.fingerprintLogin(sample).subscribe({
+        // next: response => {
+        //   if (response.user.role.code === UserRoleCode.SEAMSTRESS || response.user.role.code === UserRoleCode.HEADSEWING) {
+        //     this.router.navigate(['/repairs']);
+        //   } else {
+        //     this.router.navigate(['/dashboard']);
+        //   }
+        // },
+        // error: () => {
+        //   this.errorMessage = 'Huella no reconocida';
+        //   this.fingerprintBusy.set(false);
+        // }});
+      } catch (error) {
         // continuar escuchando
+        console.error('Fingerprint login error', error);
+
+        await new Promise(resolve =>
+          setTimeout(resolve, 1000)
+        );
       }
     }
   }
