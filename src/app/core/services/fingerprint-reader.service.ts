@@ -18,15 +18,28 @@ export class FingerprintService {
   constructor(private ngZone: NgZone) {}
 
   async initialize(): Promise<void> {
-    if (this.reader) {
-      return;
+    try {
+      console.log('IMPORTANDO DIGITALPERSONA');
+
+      if (this.reader) {
+        console.log('READER YA EXISTE');
+        return;
+      }
+
+      this.devicesModule = await import('@digitalpersona/devices');
+
+      console.log('IMPORT OK');
+
+      this.reader = new this.devicesModule.FingerprintReader();
+
+      console.log('READER CREATED');
+
+      this.registerEvents();
+    } catch (error) {
+      console.error('INITIALIZE ERROR', error);
+
+      throw error;
     }
-
-    this.devicesModule = await import('@digitalpersona/devices');
-
-    this.reader = new this.devicesModule.FingerprintReader();
-
-    this.registerEvents();
   }
 
   // private createReader(): void {
@@ -138,11 +151,11 @@ export class FingerprintService {
   }
 
   async captureOnePng(): Promise<string> {
-    console.log('reader=', this.reader);
-    
-    if (!this.reader) {
-      await this.initialize();
-    }
+    console.log('ANTES DE INITIALIZE');
+
+    await this.initialize();
+
+    console.log('DESPUES DE INITIALIZE', this.reader);
 
     return new Promise(async (resolve, reject) => {
       const onSample = async (event: any) => {
