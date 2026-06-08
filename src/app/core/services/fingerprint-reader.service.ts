@@ -34,23 +34,11 @@ export class FingerprintService {
 
       this.initializationPromise = (async () => {
         this.devicesModule = await import('@digitalpersona/devices');
-        console.log('IMPORT OK');
         this.reader = new this.devicesModule.FingerprintReader();
-        console.log('READER CREATED');
         this.registerEvents();
       })();
 
       return this.initializationPromise;
-
-      // this.devicesModule = await import('@digitalpersona/devices');
-
-      // console.log('IMPORT OK');
-
-      // this.reader = new this.devicesModule.FingerprintReader();
-
-      // console.log('READER CREATED');
-
-      // this.registerEvents();
     } catch (error) {
       console.error('INITIALIZE ERROR', error);
 
@@ -58,10 +46,6 @@ export class FingerprintService {
     }
   }
 
-  // private createReader(): void {
-  //   this.reader = new FingerprintReader();
-  //   this.registerEvents();
-  // }
 
   private registerEvents(): void {
     if (!this.reader) {
@@ -167,11 +151,7 @@ export class FingerprintService {
   }
 
   async captureOnePng(): Promise<string> {
-    console.log('ANTES DE INITIALIZE');
-
     await this.initialize();
-
-    console.log('DESPUES DE INITIALIZE', this.reader);
 
     return new Promise(async (resolve, reject) => {
       const onSample = async (event: any) => {

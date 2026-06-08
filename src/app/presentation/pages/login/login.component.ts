@@ -100,19 +100,6 @@ export class LoginComponent implements OnInit, OnDestroy {
         }
 
         break;
-
-        // this.authService.fingerprintLogin(sample).subscribe({
-        // next: response => {
-        //   if (response.user.role.code === UserRoleCode.SEAMSTRESS || response.user.role.code === UserRoleCode.HEADSEWING) {
-        //     this.router.navigate(['/repairs']);
-        //   } else {
-        //     this.router.navigate(['/dashboard']);
-        //   }
-        // },
-        // error: () => {
-        //   this.errorMessage = 'Huella no reconocida';
-        //   this.fingerprintBusy.set(false);
-        // }});
       } catch (error) {
         // continuar escuchando
         console.error('Fingerprint login error', error);

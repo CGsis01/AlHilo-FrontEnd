@@ -31,9 +31,9 @@
       "@data/*": ["src/app/data/*"],
       "@environments/*": ["src/environments/*"]
     },
-    "allowJs": true
+    
   },
-  "include": ["src/**/*.d.ts"],
+
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,

@@ -25,13 +25,9 @@
     // Establish the root object, `window` (`self`) in the browser, `global`
     // on the server, or `this` in some virtual machines. We use `self`
     // instead of `window` for `WebWorker` support.
-    // var root = typeof self === 'object' && self.self === self && self ||
-    //         typeof global === 'object' && global.global === global && global ||
-    //         this;
-
-    var root = typeof globalThis !== 'undefined'
-        ? globalThis
-        : window;
+    var root = typeof self === 'object' && self.self === self && self ||
+            typeof global === 'object' && global.global === global && global ||
+            this;
 
     if (root != null) {
         previous_async = root.async;
