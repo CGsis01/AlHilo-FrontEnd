@@ -10,6 +10,7 @@ export interface CreateUserRequest {
   name: string;
   email: string;
   password: string;
+  fingerprint_data?: string;
   role_id: string;
   is_active?: boolean;
 }
@@ -18,6 +19,7 @@ export interface UpdateUserRequest {
   name?: string;
   email?: string;
   role_id?: string;
+  fingerprint_data?: string;
   is_active?: boolean;
 }
 
@@ -172,6 +174,7 @@ export class UserApiService {
         updatedAt: new Date(user.store.updated_at)
       } : null,
       isActive: user.is_active,
+      hasFingerprintEnrolled: user.has_fingerprint_enrolled ?? false,
       createdAt: new Date(user.created_at),
       updatedAt: new Date(user.updated_at)};
     }

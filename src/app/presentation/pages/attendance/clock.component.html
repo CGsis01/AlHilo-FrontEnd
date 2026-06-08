@@ -1,0 +1,107 @@
+<div class="clock-container">
+  <div class="clock-content">
+    <!-- Header -->
+    <div class="clock-header">
+        <h1>Reloj Checador</h1>
+        <p class="subtitle">Seguimiento de Horas de Trabajo</p>
+    </div>
+
+    <section class="filters-section">
+      <div class="section-header">
+        <h2>Filtrar historial</h2>
+        <p>Consulta sesiones por rango de fechas</p>
+      </div>
+
+      <div class="date-filters">
+        <div class="filter-group">
+          <label for="startDate">Desde</label>
+          <input id="startDate" type="date" [(ngModel)]="startDate" class="date-input">
+        </div>
+
+        <div class="filter-group">
+          <label for="endDate">Hasta</label>
+          <input id="endDate" type="date" [(ngModel)]="endDate" class="date-input">
+        </div>
+
+        <button type="button" class="btn-filter" (click)="loadRange()">
+          Buscar
+        </button>
+        <button type="button" class="btn-secondary" (click)="loadCurrentAttendance()">
+          Hoy
+        </button>
+        <button type="button" class="btn-secondary" (click)="exportAttendanceToExcel()" [disabled]="recentSessions.length === 0" title="Exportar asistencias a Excel">
+          📊
+        </button>
+      </div>
+    </section>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+      <div class="stat-card info">
+        <div class="stat-body">
+          <div class="stat-icon">
+            <svg class="stat-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <dt>Horas de Hoy</dt>
+            <dd>{{ getTodaysHours() }}</dd>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-body">
+          <div class="stat-icon">
+            <svg class="stat-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <dt>Esta semana</dt>
+            <dd>{{ getWeeklyHours() }}</dd>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card primary">
+        <div class="stat-body">
+          <div class="stat-icon">
+            <svg class="stat-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <dt>Este Mes</dt>
+            <dd>{{ getMonthlyHours() }}</dd>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sessions -->
+    <div class="attendance-table-wrapper" *ngIf="!isLoading() && users.length > 0">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Fecha</th>
+            <th>Entrada</th>
+            <th>Salida</th>
+            <th>Horas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of recentSessions">
+            <td>{{ getSessionUserName(a) }}</td>
+            <td>{{ formatDate(a.clockIn) }}</td>
+            <td>{{ formatTime(a.clockIn) }}</td>
+            <td>{{ a.clockOut ? formatTime(a.clockOut) : '—' }}</td>
+            <td>{{ getSessionDuration(a) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

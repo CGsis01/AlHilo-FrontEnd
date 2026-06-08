@@ -51,43 +51,6 @@
   }
 }
 
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-  }
-}
-
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: var(--hover);
-  }
-}
-
 .users-table-wrapper {
   background: var(--surface);
   border-radius: 12px;
@@ -202,6 +165,25 @@
   &.inactive {
     background: rgba(239, 68, 68, 0.15);
     color: #dc2626;
+  }
+}
+
+.fingerprint-badge {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+
+  &.enrolled {
+    background: rgba(34, 197, 94, 0.15);
+    color: #16a34a;
+  }
+
+  &.not-enrolled {
+    background: rgba(251, 191, 36, 0.2);
+    color: #b45309;
   }
 }
 
@@ -378,6 +360,94 @@
   }
 }
 
+.reader-status {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  font-size: 1rem;
+}
+
+.fingerprint-inline-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.fingerprint-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fingerprint-scan-btn {
+  width: 3.25rem;
+  min-width: 3.25rem;
+  height: 3.25rem;
+  padding: 0;
+  justify-content: center;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.fingerprint-scan-btn.is-loading {
+  cursor: wait;
+  color: var(--gold-dark);
+  border-color: rgba(212, 175, 55, 0.45);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.06) 100%);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.12), 0 8px 18px rgba(212, 175, 55, 0.12);
+  animation: fingerprintButtonPulse 1.4s ease-in-out infinite;
+}
+
+.fingerprint-scan-btn:disabled {
+  opacity: 0.9;
+}
+
+.fingerprint-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  flex-shrink: 0;
+}
+
+.fingerprint-icon.is-loading {
+  background: rgba(212, 175, 55, 0.14);
+  border-color: rgba(212, 175, 55, 0.36);
+  animation: fingerprintIconPulse 1.2s ease-in-out infinite;
+}
+
+.fingerprint-icon.is-loading::before {
+  content: '';
+  position: absolute;
+  inset: -0.35rem;
+  border-radius: 999px;
+  border: 2px solid rgba(212, 175, 55, 0.28);
+  border-top-color: var(--gold);
+  animation: fingerprintSpin 0.8s linear infinite;
+}
+
+.fingerprint-emoji {
+  font-size: 1rem;
+  line-height: 1;
+  transform: translateY(0.02rem);
+}
+
+.fingerprint-btn-label {
+  flex: 1;
+  text-align: left;
+}
+
+.form-group small {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
 .error-message {
   padding: 0.75rem;
   background: rgba(239, 68, 68, 0.1);
@@ -440,6 +510,15 @@
       font-size: 0.85rem;
     }
   }
+
+  .fingerprint-inline-row {
+    flex-direction: column;
+  }
+
+  .fingerprint-scan-btn {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 480px) {
@@ -463,5 +542,35 @@
       padding: 0.625rem 0.75rem;
       font-size: 0.8rem;
     }
+  }
+}
+
+@keyframes fingerprintSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fingerprintIconPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.18);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 0.45rem rgba(212, 175, 55, 0.08);
+    transform: scale(1.04);
+  }
+}
+
+@keyframes fingerprintButtonPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.12), 0 8px 18px rgba(212, 175, 55, 0.12);
+  }
+  50% {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.18), 0 10px 22px rgba(212, 175, 55, 0.16);
   }
 }

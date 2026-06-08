@@ -74,6 +74,11 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard([UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST])]
   },
   {
+    path: 'attendance',
+    loadComponent: () => import('./presentation/pages/attendance/clock.component').then(m => m.ClockComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: '',
     redirectTo: '/dashboard',
     pathMatch: 'full'

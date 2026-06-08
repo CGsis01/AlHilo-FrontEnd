@@ -19,6 +19,8 @@ export interface User {
   name: string;
   email: string;
   password?: string;
+  fingerprintSamples?: string[];
+  hasFingerprintEnrolled?: boolean;
   role: UserRole;
   store: Store | null;
   isActive: boolean;

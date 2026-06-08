@@ -1,6 +1,6 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, of } from 'rxjs';
+import { catchError, forkJoin, of, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreUseCases } from '../../../domain/usecases/store.usecases';
@@ -8,9 +8,15 @@ import { UserUseCases } from '../../../domain/usecases/user.usecases';
 import { RoleUseCases } from '../../../domain/usecases/role.usecases';
 import { User, UserRole } from '../../../core/models/user.model';
 import { Store } from '../../../core/models/store.model';
-import { Role } from '@core/models/role.model';
+import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
 
-type EditableUser = Partial<Omit<User, 'role'>> & { role: UserRole; store: Partial<Store>; password?: string };
+type EditableUser =
+  Partial<Omit<User, 'role'>> & {
+    role: UserRole;
+    store: Partial<Store>;
+    password?: string;
+    fingerprintSamples?: string[];
+  };
 
 @Component({
   selector: 'app-users',
@@ -20,51 +26,72 @@ type EditableUser = Partial<Omit<User, 'role'>> & { role: UserRole; store: Parti
   styleUrls: ['./users.component.scss']
 })
 
-export class UsersComponent implements OnInit {
+export class UsersComponent implements OnInit, OnDestroy {
   isLoading = signal(true);
   isEditing = signal(false);
   showModal = signal(false);
 
   users: User[] = [];
-  
+
   editingUser: EditableUser = this.createEmptyUser();
   selectedRole: UserRole | null = null;
   selectedStore: Store | null = null;
   selectedStoreFilter: string = '';
   errorMessage = '';
 
-  roles = toSignal(this.roleUseCases.getAllRoles().pipe(
-    catchError(error => {
-      console.error('Error loading roles:', error);
-      return of([] as UserRole[]);})
+  roles = toSignal(
+    this.roleUseCases.getAllRoles().pipe(
+      catchError((error) => {
+        console.error('Error loading roles:', error);
+
+        return of([] as UserRole[]);
+      })
     ),
     { initialValue: [] as UserRole[] }
   );
 
-  stores = toSignal(this.storeUseCases.getActiveStores().pipe(
-    catchError(error => {
-      console.error('Error loading stores:', error);
-      return of([] as Store[]);})
+  stores = toSignal(
+    this.storeUseCases.getActiveStores().pipe(
+      catchError((error) => {
+        console.error('Error loading stores:', error);
+
+        return of([] as Store[]);
+      })
     ),
     { initialValue: [] as Store[] }
   );
 
-  // Modal to Add/Edit Users state
   modalTitle = computed(() => this.isEditing() ? 'Editar Usuario' : 'Agregar Usuario');
   saveButtonLabel = computed(() => this.isEditing() ? 'Actualizar' : 'Crear');
 
-  constructor(private userUseCases: UserUseCases, private roleUseCases: RoleUseCases, private storeUseCases: StoreUseCases) {}
+  private fingerprintSubscriptions = new Subscription();
+  private readonly MAX_SAMPLES = 4;
+  isFingerprintCapturing = signal(false);
+  fingerprintMessage = signal('');
+  fingerprintProgress = signal(0);
+  readerConnected = signal(false);
+
+  constructor(
+    private userUseCases: UserUseCases,
+    private roleUseCases: RoleUseCases,
+    private storeUseCases: StoreUseCases,
+    private fingerprintService: FingerprintService
+  ) {}
 
   ngOnInit(): void {
     this.isLoading.set(true);
-
+    this.subscribeToFingerprintEvents();
     this.loadUsers();
-    
     this.isLoading.set(false);
   }
 
+  ngOnDestroy(): void {
+    this.fingerprintSubscriptions.unsubscribe();
+    void this.fingerprintService.stopCapture();
+  }
+
   loadUsers(): void {
-    const loadMethod = this.selectedStoreFilter 
+    const loadMethod = this.selectedStoreFilter
       ? this.userUseCases.getUsersByStore(this.selectedStoreFilter)
       : this.userUseCases.getAllUsers();
 
@@ -85,41 +112,62 @@ export class UsersComponent implements OnInit {
 
   openAddModal(): void {
     this.isEditing.set(false);
-    
     this.editingUser = this.createEmptyUser();
     this.selectedRole = null;
-    
+    this.resetFingerprintCaptureState();
     this.showModal.set(true);
     this.errorMessage = '';
   }
 
   openEditModal(user: User): void {
     this.isEditing.set(true);
-    
-    this.editingUser = { ...user, role: { ...user.role }, store: user.store ? { ...user.store } : { id: '', name: '' } as Store };
+
+    this.editingUser = {
+      ...user,
+      fingerprintSamples: [],
+      role: { ...user.role },
+      store: user.store ? { ...user.store } : { id: '', name: '' } as Store
+    };
+
     this.selectedRole = user.role;
-    
+    this.resetFingerprintCaptureState();
     this.showModal.set(true);
     this.errorMessage = '';
   }
 
   closeModal(): void {
     this.showModal.set(false);
-    
+    this.resetFingerprintCaptureState();
+    void this.fingerprintService.stopCapture();
+
     this.editingUser = this.createEmptyUser();
     this.selectedRole = null;
     this.errorMessage = '';
   }
 
   saveUser(): void {
-    if (!this.editingUser.name || !this.editingUser.email || !this.editingUser.role.code || (!this.editingUser.store.id && this.stores.length > 0)) {
+    if (!this.editingUser.name || !this.editingUser.email || !this.editingUser.role.code || (!this.editingUser.store.id && this.stores().length > 0)) {
       this.errorMessage = 'Nombre, email, rol y sucursal son requeridos';
-
       return;
     }
 
+    if (!this.isEditing() && (!this.editingUser.fingerprintSamples || this.editingUser.fingerprintSamples.length !== 4)) {
+      this.errorMessage = 'Debes capturar las 4 huellas antes de crear el usuario';
+      return;
+    }
+
+    if (this.isEditing() && this.editingUser.fingerprintSamples && this.editingUser.fingerprintSamples.length > 0 && this.editingUser.fingerprintSamples.length !== 4) {
+      this.errorMessage = 'Si vas a reemplazar la huella, debes capturar las 4 muestras';
+      return;
+    }
+
+    const payload = {
+      ...this.editingUser,
+      fingerprintSamples: this.editingUser.fingerprintSamples ?? []
+    };
+
     if (this.isEditing() && this.editingUser.id) {
-      this.userUseCases.updateUser(this.editingUser.id, this.editingUser).subscribe({
+      this.userUseCases.updateUser(this.editingUser.id, payload).subscribe({
         next: () => {
           this.loadUsers();
           this.closeModal();},
@@ -127,7 +175,7 @@ export class UsersComponent implements OnInit {
           console.error('Error updating user:', error);
           this.errorMessage = 'Error al actualizar el usuario';}});
     } else {
-      this.userUseCases.createUser(this.editingUser).subscribe({
+      this.userUseCases.createUser(payload).subscribe({
         next: () => {
           this.loadUsers();
           this.closeModal();},
@@ -155,7 +203,7 @@ export class UsersComponent implements OnInit {
       : ((roleIdOrEvent.target as HTMLSelectElement | null)?.value ?? '');
 
     this.selectedRole = this.roles().find(role => role.id === roleId) || null;
-    
+
     this.editingUser.role = this.selectedRole
       ? { id: this.selectedRole.id, name: this.selectedRole.name, code: this.selectedRole.code }
       : { id: '', name: '', code: '' };
@@ -165,20 +213,60 @@ export class UsersComponent implements OnInit {
     const storeId = typeof storeIdOrEvent === 'string'
       ? storeIdOrEvent
       : ((storeIdOrEvent.target as HTMLSelectElement | null)?.value ?? '');
-    
-      this.selectedStore = this.stores().find(store => store.id === storeId) || null;
-    
-      this.editingUser.store = this.selectedStore
+
+    this.selectedStore = this.stores().find(store => store.id === storeId) || null;
+
+    this.editingUser.store = this.selectedStore
       ? { id: this.selectedStore.id, name: this.selectedStore.name } as Store
       : { id: '', name: '' } as Store;
   }
 
   onStoreFilterChange(): void {
     this.isLoading.set(true);
-    
+
     this.loadUsers();
 
     this.isLoading.set(false);
+  }
+
+  async captureFingerprintFromDevice(): Promise<void> {
+    if (!this.showModal()) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.fingerprintMessage.set('Preparando captura de 4 huellas...');
+    this.isFingerprintCapturing.set(true);
+    this.fingerprintProgress.set(0);
+    this.editingUser.fingerprintSamples = [];
+
+    try {
+      const samples: string[] = [];
+
+      for (let i = 0; i < this.MAX_SAMPLES; i++) {
+        this.fingerprintMessage.set(`Coloca la huella ${i + 1} de ${this.MAX_SAMPLES}`);
+        const sample = await this.fingerprintService.captureOnePng();
+
+        samples.push(sample);
+        this.fingerprintProgress.set(i + 1);
+        this.fingerprintMessage.set(`Huella ${i + 1} capturada correctamente`);
+      }
+
+      this.editingUser.fingerprintSamples = samples;
+      this.fingerprintMessage.set('Las 4 huellas fueron capturadas correctamente.');
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : String(error ?? 'No se pudo iniciar la captura de huella.');
+
+      this.errorMessage = message;
+      this.fingerprintMessage.set('');
+      this.editingUser.fingerprintSamples = [];
+    } finally {
+      this.isFingerprintCapturing.set(false);
+      await this.fingerprintService.stopCapture();
+    }
   }
 
   private createEmptyUser(): EditableUser {
@@ -186,8 +274,42 @@ export class UsersComponent implements OnInit {
       name: '',
       email: '',
       password: '',
+      fingerprintSamples: [],
       role: { id: '', name: '', code: '' },
       store: { id: '', name: '' } as Store,
       isActive: true};
+  }
+
+  private resetFingerprintCaptureState(): void {
+    this.isFingerprintCapturing.set(false);
+    this.fingerprintMessage.set('');
+  }
+
+  private subscribeToFingerprintEvents(): void {
+    this.fingerprintSubscriptions.add(
+      this.fingerprintService.onDeviceStatus().subscribe((status) => {
+        this.readerConnected.set(status === 'connected');
+
+        if (!this.showModal()) {
+          return;
+        }
+
+        if(this.isFingerprintCapturing()) {
+          return;
+        }
+
+        if (status === 'connected' && !this.isFingerprintCapturing()) {
+          this.fingerprintMessage.set(
+            this.isFingerprintCapturing()
+              ? 'Lector conectado. Mantén el dedo en el escáner.'
+              : 'Lector conectado y listo para capturar.');
+
+          return;
+        }
+
+        this.isFingerprintCapturing.set(false);
+        this.fingerprintMessage.set('El lector de huellas se desconectó. Vuelve a conectarlo e intenta de nuevo.');
+      })
+    );
   }
 }

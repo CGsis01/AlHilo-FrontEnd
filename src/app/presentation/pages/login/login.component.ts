@@ -1,9 +1,10 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { UserRoleCode } from '@core/models/user.model';
+import { UserRoleCode } from '../../../core/models/user.model';
+import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
 
 @Component({
   selector: 'app-login',
@@ -13,7 +14,9 @@ import { UserRoleCode } from '@core/models/user.model';
   styleUrls: ['./login.component.scss']
 })
 
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
+  readonly fingerprintBusy = signal(false);
+
   loginForm!: FormGroup;
   isLoading = signal(false);
   showPassword = signal(false);
@@ -22,7 +25,8 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private fingerprintService: FingerprintService
   ) {}
 
   ngOnInit(): void {
@@ -34,6 +38,12 @@ export class LoginComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+
+    this.waitFingerprintLogin();
+  }
+
+  ngOnDestroy(): void {
+    this.fingerprintService.stopCapture().catch(console.error);
   }
 
   onSubmit(): void {
@@ -68,5 +78,28 @@ export class LoginComponent implements OnInit {
 
   togglePasswordVisibility(): void {
     this.showPassword.set(!this.showPassword());
+  }
+
+  private async waitFingerprintLogin() {
+    while (!this.authService.isAuthenticated()) {
+      try {
+        const sample = await this.fingerprintService.captureOnePng();
+
+        this.authService.fingerprintLogin(sample).subscribe({
+        next: response => {
+          if (response.user.role.code === UserRoleCode.SEAMSTRESS || response.user.role.code === UserRoleCode.HEADSEWING) {
+            this.router.navigate(['/repairs']);
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
+        },
+        error: () => {
+          this.errorMessage = 'Huella no reconocida';
+          this.fingerprintBusy.set(false);
+        }});
+      } catch {
+        // continuar escuchando
+      }
+    }
   }
 }

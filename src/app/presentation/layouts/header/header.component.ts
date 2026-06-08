@@ -82,6 +82,7 @@ export class HeaderComponent implements OnChanges {
     },
     { label: 'Composturas', route: '/repairs', icon: '🧵', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST, UserRoleCode.SEAMSTRESS, UserRoleCode.HEADSEWING] },
     { label: 'Nuevo Servicio', route: '/repairs/new', icon: '➕', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
+    { label: 'Reloj Checador', route: '/attendance', icon: '⏰', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] },
     { label: 'Reportes', route: '/reports', icon: '📈', roles: [UserRoleCode.ADMIN, UserRoleCode.RECEPTIONIST] }
   ];
 
