@@ -28,6 +28,7 @@ export class UserRepository implements Repository<User> {
       name: user.name!,
       email: user.email!,
       password: user.password!, // Should be provided by the form
+      fingerprint_samples: user.fingerprintSamples,
       role_id: user.role!.id!,
       store_id: user.store ? user.store.id : undefined,
       created_by: getStoredUserId()};
@@ -36,12 +37,15 @@ export class UserRepository implements Repository<User> {
   }
 
   update(id: string, user: Partial<User>): Observable<User> {
+    const fingerprintSamples = user.fingerprintSamples?.map(sample => sample.trim());
+
     // Map User model to UpdateUserRequest
     const updateRequest = {
       name: user.name,
       email: user.email,
       role_id: user.role!.id,
       store_id: user.store ? user.store.id : undefined,
+      fingerprint_samples: fingerprintSamples || undefined,
       is_active: user.isActive,
       updated_by: getStoredUserId()};
     

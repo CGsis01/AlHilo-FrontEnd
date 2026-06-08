@@ -1,9 +1,11 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
-import { UserRoleCode } from '@core/models/user.model';
+import { UserRoleCode } from '../../../core/models/user.model';
+import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
 
 @Component({
   selector: 'app-login',
@@ -13,7 +15,9 @@ import { UserRoleCode } from '@core/models/user.model';
   styleUrls: ['./login.component.scss']
 })
 
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
+  readonly fingerprintBusy = signal(false);
+
   loginForm!: FormGroup;
   isLoading = signal(false);
   showPassword = signal(false);
@@ -22,7 +26,9 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private injector: Injector,
+    // private fingerprintService: FingerprintService
   ) {}
 
   ngOnInit(): void {
@@ -34,6 +40,13 @@ export class LoginComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+
+    this.waitFingerprintLogin();
+  }
+
+  ngOnDestroy(): void {
+    const fingerprintService = this.injector.get(FingerprintService);
+    fingerprintService.stopCapture().catch(console.error);
   }
 
   onSubmit(): void {
@@ -68,5 +81,33 @@ export class LoginComponent implements OnInit {
 
   togglePasswordVisibility(): void {
     this.showPassword.set(!this.showPassword());
+  }
+
+  private async waitFingerprintLogin() {
+    const fingerprintService = this.injector.get(FingerprintService);
+
+    while (!this.authService.isAuthenticated()) {
+      try {
+        const sample = await fingerprintService.captureOnePng();
+
+        const response = await firstValueFrom(this.authService.fingerprintLogin(sample));
+
+        if (response.user.role.code === UserRoleCode.SEAMSTRESS || response.user.role.code === UserRoleCode.HEADSEWING) 
+        {
+          await this.router.navigate(['/repairs']);
+        } else {
+          await this.router.navigate(['/dashboard']);
+        }
+
+        break;
+      } catch (error) {
+        // continuar escuchando
+        console.error('Fingerprint login error', error);
+
+        await new Promise(resolve =>
+          setTimeout(resolve, 1000)
+        );
+      }
+    }
   }
 }

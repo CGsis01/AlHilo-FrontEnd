@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { User, AuthResponse, UserRole, AuthToken } from '../../core/models/user.model';
+import { FingerprintLoginRequest } from '../../core/models/attendance.model';
 import { environment } from '../../../environments/environment';
 
 // DTOs for authentication requests
@@ -87,6 +88,13 @@ export class AuthApiService {
 
     return this.apiService
       .post<ApiAuthResponse>(`${this.endpoint}/login`, loginData)
+      .pipe(map(response => this.mapAuthResponse(response)));
+  }
+
+  fingerprintLogin(fingerprintData: string): Observable<AuthResponse> {
+    const loginData: FingerprintLoginRequest = { fingerprint_data: fingerprintData };
+
+    return this.apiService.post<ApiAuthResponse>(`${this.endpoint}/fingerprint-login`, loginData)
       .pipe(map(response => this.mapAuthResponse(response)));
   }
 

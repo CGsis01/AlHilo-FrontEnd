@@ -185,7 +185,6 @@ export class RepairTypesComponent implements OnInit {
           console.error('Error updating repair type:', error);
           this.errorMessage = 'Error al actualizar el tipo de compostura';}});
     } else {
-      console.log('Creating repair type with data:', this.editingRepairType);
       this.repairTypeUseCases.createRepairType(this.editingRepairType).subscribe({
         next: () => {
           this.loadRepairTypes();

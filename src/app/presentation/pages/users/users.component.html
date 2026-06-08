@@ -28,6 +28,7 @@
           <th>Nombre</th>
           <th>Email</th>
           <th>Rol</th>
+          <th>Huella</th>
           <th>Sucursal</th>
           <th>Estado</th>
           <th>Creado</th>
@@ -41,6 +42,11 @@
           <td>
             <span class="role-badge" [ngClass]="getRoleClass(user.role.code)">
               {{ user.role.name }}
+            </span>
+          </td>
+          <td>
+            <span class="fingerprint-badge" [class.enrolled]="user.hasFingerprintEnrolled" [class.not-enrolled]="!user.hasFingerprintEnrolled">
+              {{ user.hasFingerprintEnrolled ? 'Enrolada' : 'Sin huella' }}
             </span>
           </td>
           <td class="user-store">{{ user.store ? user.store.name : 'N/A' }}</td>
@@ -107,6 +113,62 @@
           [(ngModel)]="editingUser.password" 
           placeholder="Ingresa una contraseña segura" 
           class="form-input"/>
+      </div>
+
+      <div class="form-group" *ngIf="!isEditing()">
+        <label for="userFingerprint">
+          Huella *
+          <span class="reader-status">{{ readerConnected() ? '🟢' : '🔴' }}</span>
+        </label>
+        <div class="fingerprint-inline-row">
+          <input id="userFingerprint"
+            type="text"            
+            [value]="editingUser.fingerprintSamples?.length
+              ? editingUser.fingerprintSamples?.length + ' muestras capturadas ✓'
+              : ''"
+            placeholder="Captura la huella desde el lector"
+            class="form-input fingerprint-input"
+            readonly/>
+          <button type="button"
+            class="btn-secondary fingerprint-scan-btn"
+            (click)="captureFingerprintFromDevice()"
+            [class.is-loading]="isFingerprintCapturing()"
+            [disabled]="isFingerprintCapturing()"
+            [attr.aria-busy]="isFingerprintCapturing()">
+            <span class="fingerprint-icon" [class.is-loading]="isFingerprintCapturing()" aria-hidden="true">
+              <span class="fingerprint-emoji">🫆</span>
+            </span>
+          </button>
+        </div>
+        <small *ngIf="fingerprintMessage()">{{ fingerprintMessage() }}</small>
+      </div>
+
+      <div class="form-group" *ngIf="isEditing()">
+        <label for="userFingerprintEnroll">
+          Enrolar/Reemplazar Huella
+          <span class="reader-status">{{ readerConnected() ? '🟢' : '🔴' }}</span>
+        </label>
+        <div class="fingerprint-inline-row">
+          <input id="userFingerprintEnroll"
+            type="text"
+            [value]="editingUser.fingerprintSamples?.length
+              ? editingUser.fingerprintSamples?.length + ' muestras capturadas ✓'
+              : ''"
+            placeholder="Captura la huella desde el lector para actualizar"
+            class="form-input fingerprint-input"
+            readonly/>
+          <button type="button"
+            class="btn-secondary fingerprint-scan-btn"
+            (click)="captureFingerprintFromDevice()"
+            [class.is-loading]="isFingerprintCapturing()"
+            [disabled]="isFingerprintCapturing()"
+            [attr.aria-busy]="isFingerprintCapturing()">
+            <span class="fingerprint-icon" [class.is-loading]="isFingerprintCapturing()" aria-hidden="true">
+              <span class="fingerprint-emoji">🫆</span>
+            </span>
+          </button>
+        </div>
+        <small *ngIf="fingerprintMessage()">{{ fingerprintMessage() }}</small>
       </div>
 
       <div class="form-group">
