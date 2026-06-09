@@ -7,7 +7,8 @@ import { User } from '../../../core/models/user.model';
 import { UserApiService } from '../../../core/services/user-api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
-import { interval, Subscription } from 'rxjs';
+import { BiometricService } from '../../../core/services/biometric.service';
+import { firstValueFrom, interval, Subscription } from 'rxjs';
 import * as XLSX from 'xlsx';
 
 interface AttendanceExportSummaryRow {
@@ -49,12 +50,14 @@ export class ClockComponent implements OnInit, OnDestroy {
 
   private timeSubscription?: Subscription;
   private attendanceSubscription?: Subscription;
+  private isListening = true;
 
   constructor(
     private attendanceService: AttendanceService,
     private userApiService: UserApiService,
     private authService: AuthService,
-    private fingerprintService: FingerprintService
+    private fingerprintService: FingerprintService,
+    private biometricService: BiometricService
   ) {}
 
   ngOnInit(): void {
@@ -76,114 +79,16 @@ export class ClockComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.timeSubscription?.unsubscribe();
     this.attendanceSubscription?.unsubscribe();
-  }
+    this.isListening = false;
 
-  handleClockAction(): void {
-    if (!this.selectedUserId) {
-      this.errorMessage = 'Selecciona un usuario antes de registrar asistencia.';
-      
-      return;
-    }
-
-    if (!this.fingerprintData.trim()) {
-      this.errorMessage = 'Ingresa o captura la huella para continuar.';
-      
-      return;
-    }
-
-    this.errorMessage = '';
-    this.infoMessage = '';
-    this.isFingerprintScanning.set(true);
-
-    this.authService.fingerprintLogin(this.fingerprintData.trim()).subscribe({
-      next: (authResponse) => {
-        this.isFingerprintScanning.set(false);
-
-        this.infoMessage = `Huella verificada para ${authResponse.user.name}.`;
-
-        if (this.currentAttendance) {
-          this.clockOut();
-        } else {
-          this.clockIn();
-        }
-      },
-      error: (error) => {
-        this.isFingerprintScanning.set(false);
-        console.error('Fingerprint login error:', error);
-        this.errorMessage = error.message || 'No se pudo validar la huella.';
-      }
-    });
-  }
-
-  onUserSelectionChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    
-    this.selectedUserId = target.value;
-    this.errorMessage = '';
-    this.infoMessage = '';
-
-    this.loadRecentSessions(this.selectedUserId);
-  }
-
-  onFingerprintDataChange(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    
-    this.fingerprintData = target.value;
-    this.errorMessage = '';
-  }
-
-  getSelectedUserName(): string {
-    return this.users.find(user => user.id === this.selectedUserId)?.name || 'Sin usuario';
+    this.fingerprintService.stopCapture().catch(console.error);    
+    this.fingerprintService.release('attendance');
   }
 
   private loadUsers(): void {
     this.userApiService.getAll({ is_active: true }).subscribe({
       next: (users) => { this.users = users; },
       error: () => { this.errorMessage = 'No se pudo cargar la lista de usuarios.'; }});
-  }
-
-  private clockIn(): void {
-    this.isLoading.set(true);
-
-    const attendanceData = {
-      user_id: this.selectedUserId,
-      clock_in: new Date().toISOString(),
-      ip_address: '', // You can implement a method to get the user's IP if needed
-      device_info: navigator.userAgent
-    };
-
-    this.attendanceService.clockIn(attendanceData).subscribe({
-      next: (attendance) => {
-        this.currentAttendance = attendance;
-        
-        // Refresh the list to show the new session
-        this.loadRecentSessions(); },
-      error: (error) => { console.error('Clock in error:', error); }
-    });
-
-    this.isLoading.set(false);
-  }
-
-  private clockOut(): void {
-    if (!this.currentAttendance) return;
-
-    this.isLoading.set(true);
-
-    const attendanceClockOutData = {
-      user_id: this.selectedUserId,
-      attendance_id: this.currentAttendance.id,
-    };
-
-    this.attendanceService.clockOut(attendanceClockOutData).subscribe({
-      next: () => {
-        this.currentAttendance = null;
-        
-        // Refresh the list to show the updated session
-        this.loadRecentSessions(); },
-      error: (error) => { console.error('Clock out error:', error); }
-    });
-
-    this.isLoading.set(false);
   }
 
   loadCurrentAttendance(): void {
@@ -405,17 +310,6 @@ export class ClockComponent implements OnInit, OnDestroy {
       return `asistencias_${this.startDate}_a_${this.endDate}.xlsx`;
     }
 
-    if (this.selectedUserId) {
-      const userName = this.getSelectedUserName()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_+|_+$/g, '') || 'usuario';
-
-      return `asistencias_${userName}_${dateStamp}.xlsx`;
-    }
-
     return `asistencias_${dateStamp}.xlsx`;
   }
 
@@ -598,19 +492,34 @@ export class ClockComponent implements OnInit, OnDestroy {
   }
 
   private async waitForFingerprint(): Promise<void> {
-    while (true) {
+    while (this.isListening) {
+      if (!this.fingerprintService.acquire('attendance')) {
+        return;
+      }
+
       try {
         this.waitingFingerprint.set(true);
 
         const sample = await this.fingerprintService.captureOnePng();
+
+        if (!this.isListening) {
+          return;
+        }
         
         this.waitingFingerprint.set(false);
 
         await this.processFingerprint(sample);
 
       } catch (error) {
+        if (error instanceof Error && error.message === 'Capture cancelled') {
+          break;
+        }
+
         console.error(error);
         await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      finally {
+        this.fingerprintService.release('attendance');
       }
     }
   }
@@ -622,7 +531,15 @@ export class ClockComponent implements OnInit, OnDestroy {
 
     this.isFingerprintScanning.set(true);
 
-    this.authService.fingerprintLogin(sample).subscribe({
+    const identifyResult = await firstValueFrom(this.biometricService.identify(sample));
+    
+    if (!identifyResult.matchFound) {
+      this.errorMessage = 'Huella no reconocida';
+      this.isFingerprintScanning.set(false);
+      return;
+    }
+
+    this.authService.biometricLogin(identifyResult.userId!).subscribe({
         next: authResponse => {
           const user = authResponse.user;
 

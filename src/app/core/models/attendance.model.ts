@@ -31,6 +31,6 @@ export interface AttendanceResponse {
   deviceInfo?: string;
 }
 
-export interface FingerprintLoginRequest {
-  fingerprint_data: string;
+export interface BiometricLoginRequest {
+  user_id: string;
 }

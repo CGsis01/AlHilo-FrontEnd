@@ -33,13 +33,13 @@ export class AuthService {
         throw error;}));
   }
 
-  fingerprintLogin(fingerprintData: string): Observable<AuthResponse> {
-    const loginObservable = this.authApiService.fingerprintLogin(fingerprintData);
+  biometricLogin(userId: string): Observable<AuthResponse> {
+    const loginObservable = this.authApiService.biometricLogin(userId);
 
     return loginObservable.pipe(
       tap(response => this.handleAuthSuccess(response)),
       catchError(error => {
-        console.error('Fingerprint login error:', error);
+        console.error('Biometric login error:', error);
         throw error;}));
   }
 

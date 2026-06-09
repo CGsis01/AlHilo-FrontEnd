@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRoleCode } from '../../../core/models/user.model';
 import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
+import { BiometricService } from '../../../core/services/biometric.service';
 
 @Component({
   selector: 'app-login',
@@ -28,7 +29,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private injector: Injector,
-    // private fingerprintService: FingerprintService
+    private biometricService: BiometricService
   ) {}
 
   ngOnInit(): void {
@@ -47,6 +48,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     const fingerprintService = this.injector.get(FingerprintService);
     fingerprintService.stopCapture().catch(console.error);
+    fingerprintService.release('login');
   }
 
   onSubmit(): void {
@@ -87,10 +89,21 @@ export class LoginComponent implements OnInit, OnDestroy {
     const fingerprintService = this.injector.get(FingerprintService);
 
     while (!this.authService.isAuthenticated()) {
+      if (!fingerprintService.acquire('login')) {
+        return;
+      }
+
       try {
         const sample = await fingerprintService.captureOnePng();
 
-        const response = await firstValueFrom(this.authService.fingerprintLogin(sample));
+        const identifyResult = await firstValueFrom(this.biometricService.identify(sample));
+
+        if (!identifyResult.matchFound) {
+          this.errorMessage = 'Huella no reconocida';
+          continue;
+        }
+
+        const response = await firstValueFrom(this.authService.biometricLogin(identifyResult.userId!));
 
         if (response.user.role.code === UserRoleCode.SEAMSTRESS || response.user.role.code === UserRoleCode.HEADSEWING) 
         {
@@ -102,11 +115,15 @@ export class LoginComponent implements OnInit, OnDestroy {
         break;
       } catch (error) {
         // continuar escuchando
+        this.errorMessage = 'Huella no reconocida';
         console.error('Fingerprint login error', error);
 
         await new Promise(resolve =>
           setTimeout(resolve, 1000)
         );
+      }
+      finally {
+        fingerprintService.release('login');
       }
     }
   }

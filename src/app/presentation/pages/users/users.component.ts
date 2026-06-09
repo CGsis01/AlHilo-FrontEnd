@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, Injector, signal, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, forkJoin, of, Subscription } from 'rxjs';
+import { catchError, firstValueFrom, of, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreUseCases } from '../../../domain/usecases/store.usecases';
@@ -9,7 +9,7 @@ import { RoleUseCases } from '../../../domain/usecases/role.usecases';
 import { User, UserRole } from '../../../core/models/user.model';
 import { Store } from '../../../core/models/store.model';
 import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
-// import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
+import { BiometricService } from '../../../core/services/biometric.service';
 
 type EditableUser =
   Partial<Omit<User, 'role'>> & {
@@ -76,6 +76,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     private userUseCases: UserUseCases,
     private roleUseCases: RoleUseCases,
     private storeUseCases: StoreUseCases,
+    private biometricService: BiometricService,
     private injector: Injector
   ) {}
 
@@ -171,17 +172,37 @@ export class UsersComponent implements OnInit, OnDestroy {
 
     if (this.isEditing() && this.editingUser.id) {
       this.userUseCases.updateUser(this.editingUser.id, payload).subscribe({
-        next: () => {
-          this.loadUsers();
-          this.closeModal();},
+        next: async (response) => {
+          try {
+            if (this.editingUser.fingerprintSamples && this.editingUser.fingerprintSamples.length === 4) {
+              await this.enrollFingerprints(response.id, this.editingUser.fingerprintSamples);
+            }
+
+            this.loadUsers();
+            this.closeModal();
+          } catch (error) {
+            console.error('Error updating user:', error);
+            this.errorMessage = 'Usuario actualizado pero falló el enrolamiento biométrico';
+          }
+        },
         error: (error) => {
           console.error('Error updating user:', error);
           this.errorMessage = 'Error al actualizar el usuario';}});
     } else {
       this.userUseCases.createUser(payload).subscribe({
-        next: () => {
-          this.loadUsers();
-          this.closeModal();},
+        next: async (response) => {
+          try {
+            if (this.editingUser.fingerprintSamples && this.editingUser.fingerprintSamples.length === 4) {
+              await this.enrollFingerprints(response.id, this.editingUser.fingerprintSamples);
+            }
+
+            this.loadUsers();
+            this.closeModal();
+          } catch (error) {
+            console.error('Error creating user:', error);
+            this.errorMessage = 'Usuario creado pero falló el enrolamiento biométrico';
+          }
+        },
         error: (error) => {
           console.error('Error creating user:', error);
           this.errorMessage = 'Error al crear el usuario';}});
@@ -230,6 +251,10 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.loadUsers();
 
     this.isLoading.set(false);
+  }
+
+  private async enrollFingerprints(userId: string, samples: string[]): Promise<void> {
+    await firstValueFrom(this.biometricService.enroll(userId, samples));
   }
 
   async captureFingerprintFromDevice(): Promise<void> {
