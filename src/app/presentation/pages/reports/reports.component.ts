@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -11,6 +11,12 @@ import { UserRepository } from '../../../data/repositories/user.repository';
 import { RepairRealtimeService } from '../../../core/services/repair-realtime.service';
 import { DateFormatDirective } from '../../../shared/directives/date-format.directive';
 import { getAggregateRepairStatus } from '../../../shared/utils/repair-status-aggregation.utils';
+import { CashCutService } from '../../../core/services/cashcut.service';
+import { CashCutResponse } from '../../../core/models/cashcut.model';
+import { AuthService } from '../../../core/services/auth.service';
+import { PdfService } from '../../../core/services/pdf.service';
+import { CashCutTicketComponent } from '../../../shared/tickets/cash-cut-ticket/cash-cut-ticket.component';
+import { repairImpressionTicket } from '../../../shared/utils/repairImpressionTicket.utils';
 
 Chart.register(...registerables);
 
@@ -41,12 +47,13 @@ interface IncomeDetail {
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, DateFormatDirective],
+  imports: [CommonModule, FormsModule, DateFormatDirective, CashCutTicketComponent],
   templateUrl: './reports.component.html',
   styleUrls: ['./reports.component.scss']
 })
 
 export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
+  currentUser: User | null = null;
   repairs: Repair[] = [];
   filteredRepairs: Repair[] = [];
   stats: ReportStats = {
@@ -56,7 +63,7 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
     completionRate: 0};
 
   // Tabs
-  activeTab: 'graphics' | 'income' = 'graphics';
+  activeTab: 'graphics' | 'income' | 'cashcut' = 'graphics';
 
   // Date filters for graphics tab
   startDate: string = '';
@@ -75,6 +82,12 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   // Seamstress sales data
   seamstressSales: SeamstressSales[] = [];
 
+  // Cash cut tab filters
+  isLoadingCashCut = signal(false);
+  cashCutDate = signal('');
+  cashCutErrorMessage = signal('');
+  cashCutDetails: CashCutResponse | null = null;
+
   private statusChart: Chart | null = null;
   private typeChart: Chart | null = null;
   private revenueChart: Chart | null = null;
@@ -83,7 +96,11 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private repairRepository: RepairRepository,
     private userRepository: UserRepository,
-    private repairRealtimeService: RepairRealtimeService
+    private repairRealtimeService: RepairRealtimeService,
+    private cashCutService: CashCutService,
+    private pdfService: PdfService,
+    private authService: AuthService,
+    private repairImpressionTicket: repairImpressionTicket,
   ) {
     // Set default date range (last 30 days)
     const today = new Date();
@@ -97,20 +114,19 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.loadData();
     this.loadSeamstresses();
+    this.currentUser = this.authService.currentUser;
 
-    this.repairRealtimeService.events$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(event => {
+    this.repairRealtimeService.events$.pipe(takeUntil(this.destroy$)).subscribe(event => {
         if (!event.repair) {
           this.loadData();
+          
           return;
         }
 
         this.repairs = this.upsertRepair(event.repair);
         this.applyDateFilters();
         this.prepareIncomeDetails();
-        this.applyIncomeFilters();
-      });
+        this.applyIncomeFilters();});
   }
 
   ngAfterViewInit(): void {
@@ -129,6 +145,7 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   private loadData(): void {
     this.repairRepository.getAll().subscribe((repairs: Repair[]) => {
       this.repairs = repairs;
+      
       this.applyDateFilters();
       this.prepareIncomeDetails();
       this.applyIncomeFilters();});
@@ -137,11 +154,10 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
   private loadSeamstresses(): void {
     this.userRepository.getAll().subscribe((users: User[]) => {
       this.seamstresses = users.filter(u => u.role.name.includes('Costurera'));
-      this.headSewing = users.filter(u => u.role.name.includes('Jefa de Costura'));});
-      
+      this.headSewing = users.filter(u => u.role.name.includes('Jefa de Costura'));});   
   }
 
-  switchTab(tab: 'graphics' | 'income'): void {
+  switchTab(tab: 'graphics' | 'income' | 'cashcut'): void {
     this.activeTab = tab;
 
     if (tab === 'graphics') {
@@ -181,6 +197,19 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.endDate = this.toInputDate(today);
     this.startDate = this.toInputDate(thirtyDaysAgo);
     this.applyDateFilters();
+  }
+
+  getRepairTypeLabel(repair: Repair): string {
+    const items = repair.items ?? [];
+    const typeNames = items
+      .flatMap(item => (item.repairTypes ?? []).map(type => type.name))
+      .filter((name): name is string => !!name);
+
+    if (typeNames.length === 0) {
+      return 'Sin tipo';
+    }
+
+    return Array.from(new Set(typeNames)).join(', ');
   }
 
   // Income tab methods
@@ -252,6 +281,86 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selectedSeamstress = 'all';
 
     this.applyIncomeFilters();
+  }
+
+  // Cash cut tab methods
+  clearCashCutFilters(): void {
+    this.cashCutDate.set(''); 
+    this.cashCutErrorMessage.set('');
+    this.cashCutDetails = null;
+  }
+
+  generateCashCut(): void {
+    if (!this.cashCutDate) {
+      this.cashCutErrorMessage.set('Por favor, selecciona una fecha para generar el corte de caja.');
+      
+      return;
+    }
+
+    this.isLoadingCashCut.set(true);
+
+    this.cashCutService.getCashCut(this.cashCutDate()).subscribe({
+      next: (response) => {
+        // Handle the response here
+        if(!response) {
+          this.cashCutErrorMessage.set('No se encontraron transacciones para la fecha seleccionada.');
+          this.cashCutDetails = null;
+          this.isLoadingCashCut.set(false);
+          return;
+        }
+
+        this.cashCutDetails = response;
+      },
+      error: (error) => {
+        // Handle the error here
+        console.error('Error generating cash cut:', error);
+      }
+    });
+
+    this.isLoadingCashCut.set(false);
+  }
+
+  exportPdf() {
+    if (!this.cashCutDetails) {
+      return;
+    }
+
+    this.pdfService.generateCashCut(this.cashCutDetails, this.currentUser?.name || 'Caja');
+  }
+
+  showTicket = signal(false);
+
+  openTicket(): void {
+    this.showTicket.set(true);
+  }
+
+  closeTicket(): void {
+    this.showTicket.set(false);
+  }
+
+  async printCashCutTicket(): Promise<void> {
+    if (!this.cashCutDetails) {
+      return;
+    }
+
+    this.openTicket();
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.repairImpressionTicket.simplePrint();
+        this.closeTicket();
+      });
+    });
+
+    return;
+  }
+
+  private waitForTicketRender(): Promise<void> {
+    return new Promise(resolve => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
   }
 
   private calculateStats(): void {
@@ -533,19 +642,6 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
       return revenue;
     }, {} as { [key: string]: number });
-  }
-
-  getRepairTypeLabel(repair: Repair): string {
-    const items = repair.items ?? [];
-    const typeNames = items
-      .flatMap(item => (item.repairTypes ?? []).map(type => type.name))
-      .filter((name): name is string => !!name);
-
-    if (typeNames.length === 0) {
-      return 'Sin tipo';
-    }
-
-    return Array.from(new Set(typeNames)).join(', ');
   }
 
   private getRepairRevenue(repair: Repair): number {

@@ -76,7 +76,7 @@
 }
 
 .stat-card {
-  background: var(--card-bg);
+  background: var(--surface);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -124,7 +124,7 @@
 }
 
 .chart-card {
-  background: var(--card-bg);
+  background: var(--surface);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -141,8 +141,9 @@
   }
 }
 
+// Income styles
 .filters-section {
-  background: var(--card-bg);
+  background: var(--surface);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -231,7 +232,7 @@
 }
 
 .seamstress-sales-section {
-  background: var(--card-bg);
+  background: var(--surface);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -325,7 +326,7 @@
   margin-bottom: 2rem;
 
   .summary-card {
-    background: var(--card-bg);
+    background: var(--surface);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -363,7 +364,7 @@
 }
 
 .income-details-section {
-  background: var(--card-bg);
+  background: var(--surface);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -376,6 +377,9 @@
   }
 
   .income-table-container {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
     overflow-x: auto;
   }
 
@@ -385,24 +389,26 @@
     font-size: 0.95rem;
 
     thead {
-      background: var(--table-header-bg);
+      background: var(--hover);
       
-      th {
-        padding: 1rem;
+      tr th {
+        padding: 1rem 1.5rem;
         text-align: left;
         font-weight: 600;
-        color: var(--text-primary);
-        border-bottom: 2px solid var(--border-color);
+        color: var(--text);
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
       }
     }
 
     tbody {
       tr {
-        border-bottom: 1px solid var(--border-color);
-        transition: background-color 0.2s;
+        border-bottom: 1px solid var(--border);
+        transition: background 0.2s ease;
 
         &:hover {
-          background: var(--hover-bg);
+          background: var(--hover);
         }
 
         td {
@@ -449,7 +455,7 @@
     .status-badge {
       display: inline-block;
       padding: 0.25rem 0.75rem;
-      border-radius: 12px;
+      border-radius: 8px;
       font-weight: 500;
       font-size: 0.875rem;
 
@@ -464,6 +470,269 @@
       }
     }
   }
+}
+
+// Cash cut styles
+.cashcut-filters-section {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+  }
+
+  .date-filters,
+  .cashcut-filters {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+
+    .date-input,
+    .select-input {
+      padding: 0.625rem 1rem;
+      border: 1px solid var(--border-color, #ddd);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      min-width: 160px;
+
+      &:focus {
+        outline: none;
+        border-color: #42A5F5;
+        box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.1);
+      }
+    }
+
+    .select-input {
+      cursor: pointer;
+      min-width: 200px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+
+      option {
+        background: var(--background);
+        color: var(--text);
+      }
+
+      option:hover,
+      option:focus,
+      option:checked {
+        background: var(--background);
+        color: var(--text);
+      }
+    }
+  }
+
+  .btn-filter {
+    padding: 0.75rem 1.5rem;
+    background: #42A5F5;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+
+    &:hover {
+      background: #1E88E5;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(66, 165, 245, 0.3);
+    }
+  }
+}
+
+.cash-cut-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+
+  .summary-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .summary-icon {
+      font-size: 3rem;
+      flex-shrink: 0;
+    }
+
+    .summary-content {
+      flex: 1;
+
+      h3 {
+        font-size: 1.75rem;
+        font-weight: bold;
+        margin-bottom: 0.25rem;
+        color: #66BB6A;
+      }
+
+      p {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+
+.cashcut-details-section {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1.5rem 0;
+  }
+
+  .cashcut-table-container {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .cashcut-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+
+    thead {
+      background: var(--hover);
+      
+      tr th {
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text);
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+
+        &.text-centered {
+          text-align: center;
+        }
+      }      
+    }
+
+    tbody {
+      tr {
+        border-bottom: 1px solid var(--border);
+        transition: background 0.2s ease;
+
+        &:hover {
+          background: var(--hover);
+        }
+
+        td {
+          padding: 1rem;
+          color: var(--text-primary);
+
+          &.text-right {
+            text-align: right;
+          }
+
+          &.income-amount {
+            font-weight: 600;
+            color: #66BB6A;
+          }
+
+          &.no-data {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-style: italic;
+          }
+        }
+      }
+    }
+
+    tfoot {
+      background: var(--table-header-bg);
+      border-top: 2px solid var(--border-color);
+
+      .total-row {
+        td {
+          padding: 1rem;
+          font-size: 1.1rem;
+          color: var(--text-primary);
+
+          &.income-amount {
+            color: #66BB6A;
+            font-size: 1.25rem;
+          }
+        }
+      }
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
+
+      &.Efectivo {
+        background: rgba(76, 175, 80, 0.2);
+        color: #2E7D32;
+      }
+
+      &.Tarjeta {
+        background: rgba(33, 150, 243, 0.2);
+        color: #4290e9;
+      }
+
+      &.isAdvance {
+        background: rgba(76, 175, 80, 0.2);
+        color: #abbe3e;
+      }
+
+      &.isSettlement {
+        background: rgba(33, 150, 243, 0.2);
+        color: #1565C0;
+      }
+    }
+  }
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
 }
 
 @media (max-width: 768px) {
@@ -587,6 +856,17 @@
   .seamstress-sales-section h2,
   .income-details-section h2 {
     font-size: 1.125rem;
+  }
+}
+
+@media print {
+  @page {
+    size: 78mm auto;
+    margin: 0;
+  }
+
+  .reports-container {
+    display: none !important;
   }
 }
 

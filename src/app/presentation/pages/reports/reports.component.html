@@ -16,6 +16,11 @@
       (click)="switchTab('income')">
       Ingresos Detallados
     </button>
+    <button class="tab-button" 
+      [class.active]="activeTab === 'cashcut'"
+      (click)="switchTab('cashcut')">
+      Corte de Caja
+    </button>
   </div>
 
   <!-- Tab Content: Graphics -->
@@ -188,4 +193,151 @@
       </div>
     </div>
   </div>
+
+  <!-- Tab Content: Cash Cut -->
+  <div *ngIf="activeTab === 'cashcut'">
+    <!-- Cash Cut Filters -->
+    <div class="cashcut-filters-section">
+      <h2>Filtros de Corte de Caja</h2>
+      <div class="cashcut-filters">
+        <div class="filter-group">
+          <label for="cashcutDate">Fecha de Corte</label>
+          <input appDateFormat
+            id="cashcutDate" 
+            [ngModel]="cashCutDate()"
+            (ngModelChange)="cashCutDate.set($event)"
+            class="date-input">
+        </div>
+
+        <button class="btn-filter" (click)="clearCashCutFilters()">
+          Limpiar Filtros
+        </button>
+
+        <button class="btn-primary" (click)="generateCashCut()" [disabled]="!cashCutDate()">
+          Generar Corte de Caja
+        </button>
+
+        <button class="btn btn-success" (click)="exportPdf()" title="Exportar corte de caja a PDF" [disabled]="!cashCutDetails">
+          📊
+        </button>
+
+        <button class="btn btn-success" (click)="printCashCutTicket()" title="Imprimir corte de caja" [disabled]="!cashCutDetails">
+          🖨️
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div class="loading-state" *ngIf="isLoadingCashCut()">
+      <div class="spinner"></div>
+      <p>Generando corte de caja...</p>
+    </div>
+
+    <!-- Cash Cut Summary Cards -->
+    <div class="cash-cut-summary" *ngIf="cashCutDetails">
+      <div class="summary-card total">
+        <div class="summary-icon">💵</div>
+        <div class="summary-content">
+          <h3>${{ cashCutDetails.cash.amount.toFixed(2) }}</h3>
+          <p>Efectivo ({{ cashCutDetails.cash.transactions }})</p>
+        </div>
+      </div>
+
+      <div class="summary-card total">
+        <div class="summary-icon">💳</div>
+        <div class="summary-content">
+          <h3>${{ cashCutDetails.card.amount.toFixed(2) }}</h3>
+          <p>Tarjeta ({{ cashCutDetails.card.transactions }})</p>
+        </div>
+      </div>
+
+      <div class="summary-card total">
+        <div class="summary-icon">💸</div>
+        <div class="summary-content">
+          <h3>${{ cashCutDetails.advances.amount.toFixed(2) }}</h3>
+          <p>Anticipos ({{ cashCutDetails.advances.transactions }})</p>
+        </div>
+      </div>
+
+      <div class="summary-card total">
+        <div class="summary-icon">🤝</div>
+        <div class="summary-content">
+          <h3>${{ cashCutDetails.settlements.amount.toFixed(2) }}</h3>
+          <p>Liquidaciones ({{ cashCutDetails.settlements.transactions }})</p>
+        </div>
+      </div>
+
+      <div class="summary-card total">
+        <div class="summary-icon">💰</div>
+        <div class="summary-content">
+          <h3>${{ cashCutDetails.grand_total.toFixed(2) }}</h3>
+          <p>Total ({{ cashCutDetails.total_transactions }})</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cash Cut Details Table -->
+    <div class="cashcut-details-section" *ngIf="cashCutDetails">
+      <h2>Detalle de Corte de Caja</h2>
+      <div class="cashcut-table-container">
+        <table class="cashcut-table">
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Cliente</th>
+              <th>Tipo de Pago</th>              
+              <th>Concepto</th>
+              <th>Voucher</th>
+              <th class="text-centered">Monto</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let movement of cashCutDetails.movements">
+              <td>{{ movement.created_at | date:'h:mm:ss a' }}</td>
+              <td>{{ movement.customer_name }}</td>
+              <td>
+                <!-- {{ movement.payment_type }} -->
+                <span class="status-badge" [class]="movement.payment_type">                
+                  {{ movement.payment_type }}
+                </span>
+              </td>
+              <td>
+                <!-- {{ movement.is_advance ? 'Anticipo' : 'Liquidación' }} -->
+                <span class="status-badge" [class]="movement.is_advance ? 'isAdvance' : 'isSettlement'">
+                  {{ movement.is_advance ? 'Anticipo' : 'Liquidación' }}
+                </span>
+              </td>
+              <td>{{ movement.voucher_id }}</td>
+              <td class="text-right income-amount">${{ movement.amount.toFixed(2) }}</td>
+            </tr>
+            
+            <tr *ngIf="cashCutDetails.movements.length === 0">
+              <td colspan="6" class="no-data">
+                No hay movimientos para mostrar
+              </td>
+            </tr>
+          </tbody>
+
+          <tfoot *ngIf="cashCutDetails">
+            <tr class="total-row">
+              <td colspan="5" class="text-right"><strong>TOTAL:</strong></td>
+              <td class="text-right income-amount"><strong>${{ cashCutDetails.grand_total.toFixed(2) }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="cashcut-error" *ngIf="cashCutErrorMessage()">
+      <div class="empty-state">No se encontraron transacciones para la fecha seleccionada.</div>
+    </div>
+  </div>
 </div>
+
+<app-cash-cut-ticket
+  *ngIf="showTicket()"
+  [cashCut]="cashCutDetails"
+  [currentUser]="currentUser"
+  (close)="closeTicket()">
+</app-cash-cut-ticket>

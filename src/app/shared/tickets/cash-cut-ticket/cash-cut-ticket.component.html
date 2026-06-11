@@ -1,0 +1,132 @@
+<div class="receipt-overlay" (click)="closeCashCutTicket()">
+    <div class="receipt-wrapper" (click)="$event.stopPropagation()">
+        <div class="receipt-topbar no-print">
+            <span class="receipt-topbar-title">Corte de Caja</span>
+            <div class="receipt-topbar-actions">
+                <button class="btn-primary" (click)="printCashCutTicket()">🖨️ Imprimir</button>
+                <button class="btn-secondary" (click)="closeCashCutTicket()">Cerrar</button>
+            </div>
+        </div>
+    
+        <div class="receipt-doc">
+            <!-- Header -->
+            <div class="receipt-brand">
+                <div class="receipt-brand-headline">
+                    <h1 class="receipt-brand-name">
+                        Al Hilo
+                    </h1>
+                </div>
+
+                <p class="receipt-brand-sub">
+                    Taller de Costura Profesional
+                </p>
+            </div>
+
+            <div class="receipt-divider-thick"></div>
+
+            <div class="receipt-title-block">
+                <h2 class="receipt-title">
+                    CORTE DE CAJA
+                </h2>
+
+                <p class="receipt-subtitle">
+                    Resumen Diario
+                </p>
+            </div>
+
+            <!-- Meta row -->
+            <div class="receipt-meta">
+                <div class="receipt-meta-item">
+                    <span class="receipt-meta-label">Fecha</span>
+                    <span class="receipt-meta-value">{{ cashCut?.cash_cut_date | date:'dd/MM/yyyy' }}</span>
+                </div>
+
+                <div class="receipt-meta-item">
+                    <span class="receipt-meta-label">Hora</span>
+                    <span class="receipt-meta-value">{{ currentDate | date:'h:mm:ss a' }}</span>
+                </div>
+
+                <div class="receipt-meta-item">
+                    <span class="receipt-meta-label">Movimientos</span>
+                    <span class="receipt-meta-value">{{ cashCut?.total_transactions }}</span>
+                </div>
+
+                <div class="receipt-meta-item">
+                    <span class="receipt-meta-label">Usuario</span>
+                    <span class="receipt-meta-value">{{ currentUser?.name }}</span>
+                </div>
+            </div>
+
+            <div class="receipt-divider"></div>
+
+            <!-- Totals -->
+            <div class="receipt-totals">
+                <div class="receipt-total-row">
+                    <span>Efectivo</span>
+                    <span>${{ cashCut?.cash?.amount | number:'1.2-2': 'en-US' }}</span>
+                </div>
+
+                <div class="receipt-total-row">
+                    <span>Tarjeta</span>
+                    <span>${{ cashCut?.card?.amount | number:'1.2-2': 'en-US' }}</span>
+                </div>
+
+                <div class="receipt-total-row">
+                    <span>Anticipos</span>
+                    <span>${{ cashCut?.advances?.amount | number:'1.2-2': 'en-US' }}</span>
+                </div>
+
+                <div class="receipt-total-row">
+                    <span>Liquidaciones</span>
+                    <span>${{ cashCut?.settlements?.amount | number:'1.2-2': 'en-US' }}</span>
+                </div>
+
+                <div class="receipt-total-final">
+                    <div class="receipt-total-final-row main-total">
+                        <span class="receipt-total-final-label">TOTAL DEL DÍA</span>
+                        <span class="receipt-total-final-value">${{ cashCut?.grand_total | number:'1.2-2': 'en-US' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="receipt-divider"></div>
+
+            <!-- Operations summary -->
+            <div class="receipt-section">
+                <h3 class="receipt-section-title">RESUMEN DE OPERACIONES</h3>
+
+                <div class="receipt-row">
+                    <span class="receipt-row-label">Efectivo</span>
+                    <span class="receipt-row-value">{{ cashCut?.cash?.transactions }}</span>
+                </div>
+
+                <div class="receipt-row">
+                    <span class="receipt-row-label">Tarjeta</span>
+                    <span class="receipt-row-value">{{ cashCut?.card?.transactions }}</span>
+                </div>
+
+                <div class="receipt-row">
+                    <span class="receipt-row-label">Anticipos</span>
+                    <span class="receipt-row-value">{{ cashCut?.advances?.transactions }}</span>
+                </div>
+
+                <div class="receipt-row">
+                    <span class="receipt-row-label">Liquidaciones</span>
+                    <span class="receipt-row-value">{{ cashCut?.settlements?.transactions }}</span>
+                </div>
+            </div>
+
+            <div class="receipt-divider-thick"></div>
+
+            <div class="receipt-footer">
+                <p class="receipt-footer-note">Corte generado desde el sistema</p>
+                <!-- <br>
+                <br>
+                <p>___________________________</p>
+                <p class="receipt-footer-note">Responsable de Caja</p> -->
+            </div>
+        </div>
+    </div>
+</div>
+
+        
