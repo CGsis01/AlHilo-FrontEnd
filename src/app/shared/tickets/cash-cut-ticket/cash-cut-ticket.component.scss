@@ -1,58 +1,3 @@
-@media (max-width: 768px) {
-  .form-container {
-    padding: 1.25rem 1rem;
-    max-width: 100%;
-  }
-  
-  .form-header h1 {
-    font-size: 1.5rem;
-  }
-  
-  .repair-form {
-    padding: 1.5rem;
-  }
-  
-  .form-actions {
-    flex-direction: column-reverse;
-    
-    button {
-      width: 100%;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .form-container {
-    padding: 1rem 0.75rem;
-  }
-  
-  .form-header h1 {
-    font-size: 1.25rem;
-  }
-  
-  .repair-form {
-    padding: 1rem;
-    border-radius: 8px;
-  }
-  
-  .form-section h2 {
-    font-size: 1rem;
-  }
-  
-  .form-group {
-    label {
-      font-size: 0.85rem;
-    }
-    
-    input,
-    select,
-    textarea {
-      font-size: 0.9rem;
-      padding: 0.75rem;
-    }
-  }
-}
-
 // Cash cut receipt styles
 .receipt-overlay {
   position: fixed;
@@ -478,8 +423,8 @@
   .receipt-brand-sub      { font-size: 0.58rem !important; margin-top: 0.1rem !important; font-weight: 700; color: #000; }
 
   .receipt-title-block    { margin: 0.4rem 0 0.6rem !important; }
-  .receipt-title          { font-size: 0.85rem !important; color:#000; }
-  .receipt-subtitle       { font-size: 0.6rem !important; color:#000; }
+  .receipt-title          { font-size: 0.85rem !important; color: #000; }
+  .receipt-subtitle       { font-size: 0.6rem !important; color: #000; }
 
   .receipt-divider-thick  { border-top: 1px solid #000 !important; margin: 0.4rem 0 !important; }
   .receipt-divider        { border-top: 1px dashed #000 !important; margin: 0.6rem 0 !important; }
@@ -528,10 +473,10 @@
   .receipt-total-final        { border-top: 1px solid #000 !important; padding-top: 0.3rem !important; margin-top: 0.25rem !important; }
   .receipt-total-final-row    { gap: 0.6rem !important; }
   .receipt-total-final-row.main-total { padding-bottom: 0.2rem !important; margin-bottom: 0.1rem !important; }
-  .receipt-total-final-label  { font-size: 0.78rem !important; font-weight: 700; color: #000; }
-  .receipt-total-final-value  { font-size: 1.1rem !important; font-weight: 600; color: #000; }
-  .receipt-total-sub-label    { font-size: 0.66rem !important; font-weight: 700; color: #000; }
-  .receipt-total-sub-value    { font-size: 0.8rem !important; font-weight: 600; color: #000; }
+  .receipt-total-final-label  { font-size: 0.78rem !important; color: #000; }
+  .receipt-total-final-value  { font-size: 1.1rem !important; color: #000; }
+  .receipt-total-sub-label    { font-size: 0.66rem !important; color: #000; }
+  .receipt-total-sub-value    { font-size: 0.8rem !important; color: #000; }
 
   .receipt-payment-method {
     background: white !important;
