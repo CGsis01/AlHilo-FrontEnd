@@ -769,7 +769,7 @@
   justify-content: space-between;
   padding: 0.3rem 0;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: black;
 }
 
 .receipt-total-final {
@@ -790,7 +790,6 @@
 
 .receipt-total-final-row.main-total {
   padding-bottom: 0.25rem;
-  border-bottom: 1px dashed #d1d5db;
 }
 
 .receipt-total-final-label {
@@ -1158,7 +1157,7 @@
   .receipt-total-value        { font-size: 0.7rem !important; padding: 0.1rem 0 !important; font-weight: 600; color: #000; }
   .receipt-total-final        { border-top: 1px solid #000 !important; padding-top: 0.3rem !important; margin-top: 0.25rem !important; }
   .receipt-total-final-row    { gap: 0.6rem !important; }
-  .receipt-total-final-row.main-total { padding-bottom: 0.2rem !important; margin-bottom: 0.1rem !important; border-bottom: 1px dashed #000 !important; }
+  .receipt-total-final-row.main-total { padding-bottom: 0.2rem !important; margin-bottom: 0.1rem !important; }
   .receipt-total-final-label  { font-size: 0.78rem !important; font-weight: 700; color: #000; }
   .receipt-total-final-value  { font-size: 1.1rem !important; font-weight: 600; color: #000; }
   .receipt-total-sub-label    { font-size: 0.66rem !important; font-weight: 700; color: #000; }

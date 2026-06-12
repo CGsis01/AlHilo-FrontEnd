@@ -860,11 +860,6 @@
 }
 
 @media print {
-  @page {
-    size: 78mm auto;
-    margin: 0;
-  }
-
   .reports-container {
     display: none !important;
   }

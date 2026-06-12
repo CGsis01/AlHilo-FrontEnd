@@ -345,12 +345,17 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.openTicket();
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        this.repairImpressionTicket.simplePrint();
-        this.closeTicket();
-      });
-    });
+    await this.waitForTicketRender();
+
+    try {
+      await this.repairImpressionTicket.simplePrint();
+    }
+    catch (error) {
+      console.error('Error printing cash cut tickets:', error);
+      this.closeTicket();
+      
+      return;
+    }
 
     return;
   }
