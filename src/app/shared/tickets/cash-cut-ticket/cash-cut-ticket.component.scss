@@ -44,7 +44,6 @@
   color: #1f2937;
   border-radius: 0 0 12px 12px;
   padding: 2.5rem 2rem 2rem;
-  // font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
   font-family: Arial, Helvetica, sans-serif;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
 }
@@ -372,16 +371,6 @@
     margin: 0;
   }
 
-  html {
-    border-left: 2px solid blue !important;
-    border-right: 2px solid green !important;
-  }
-
-  body {
-    border-left: 2px solid orange !important;
-    border-right: 2px solid purple !important;
-  }
-
   .no-print {
     display: none !important;
   }
@@ -396,8 +385,6 @@
     width: auto !important;
     max-width: none !important;
     inset: auto !important;
-    border-left: 2px solid cyan !important;
-    border-right: 2px solid cyan !important;
   }
 
   .receipt-wrapper {
@@ -406,8 +393,6 @@
     margin: 0 !important;
     padding: 0 !important;
     transform: none !important;
-    border-left: 2px solid yellow !important;
-    border-right: 2px solid yellow !important;
   }
 
   .receipt-topbar { display: none !important; }
@@ -428,7 +413,6 @@
     margin: 0 !important;
     padding: 0 6mm 0 0 !important;
     border-radius: 0 !important;
-    border: 1px solid red !important;
   }
 
   .receipt-brand          { gap: 0.25rem !important; margin-bottom: 0.5rem !important; }
