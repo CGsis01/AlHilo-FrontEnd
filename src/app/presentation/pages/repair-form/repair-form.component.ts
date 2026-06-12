@@ -154,7 +154,6 @@ export class RepairFormComponent implements OnInit {
       advancePayment: ['', [
         Validators.pattern(/^\d+(\.\d+)?$/),
         Validators.min(0),
-        this.advancePaymentMinValidator(),
         this.advancePaymentMaxValidator()
       ]],
       advancePaymentCash: ['', [Validators.pattern(/^\d+(\.\d+)?$/), Validators.min(0)]],
@@ -198,8 +197,6 @@ export class RepairFormComponent implements OnInit {
     if (this.repairForm.invalid || !this.selectedClient || !itemsValid) {
       if (!itemsValid) {
         this.errorMessage = 'Agrega al menos una prenda con todos sus datos.';
-      } else if (advanceControl?.hasError('minAdvance')) {
-        this.errorMessage = 'El anticipo debe ser al menos el 50% del total estimado.';
       } else if (advanceControl?.hasError('maxAdvance')) {
         this.errorMessage = 'El anticipo no puede ser mayor al total estimado.';
       }
@@ -447,7 +444,7 @@ export class RepairFormComponent implements OnInit {
   // ─── Repair Items ─────────────────────────────────────────────
   onItemsChange(items: RepairItem[]): void {
     this.repairItems = items;
-    this.advancePaymentMinimum = this.calculateAdvancePaymentMinimum(items);
+    this.advancePaymentMinimum = 0;
     this.advancePaymentMaximum = this.calculateAdvancePaymentMaximum(items);
 
     // Calculate total estimated time from repair items
