@@ -373,6 +373,16 @@
     margin: 0;
   }
 
+  html {
+    border-left: 2px solid blue !important;
+    border-right: 2px solid green !important;
+  }
+
+  body {
+    border-left: 2px solid orange !important;
+    border-right: 2px solid purple !important;
+  }
+
   // html,
   // body {
   //   // width: auto !important;
@@ -398,6 +408,8 @@
     width: auto !important;
     max-width: none !important;
     inset: auto !important;
+    border-left: 2px solid cyan !important;
+    border-right: 2px solid cyan !important;
   }
 
   .receipt-wrapper {
@@ -406,6 +418,8 @@
     margin: 0 !important;
     padding: 0 !important;
     transform: none !important;
+    border-left: 2px solid yellow !important;
+    border-right: 2px solid yellow !important;
   }
 
   .receipt-topbar { display: none !important; }
