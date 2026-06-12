@@ -242,7 +242,8 @@
   .ticket-content {
     width: 40%;
     margin: 0 auto;
-    padding: 0.35rem;
+    // padding: 0.35rem;
+    padding: 0.35rem !important;
     color: #000;
     page-break-inside: avoid;
     width: 100%;
