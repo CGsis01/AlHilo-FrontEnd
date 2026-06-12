@@ -368,7 +368,6 @@
 // Print: payment receipt
 @media print {
   @page {
-    // size: 80mm auto;
     size: auto;
     margin: 0;
   }
@@ -382,17 +381,6 @@
     border-left: 2px solid orange !important;
     border-right: 2px solid purple !important;
   }
-
-  // html,
-  // body {
-  //   // width: auto !important;
-  //   margin: 0 !important;
-  //   padding: 0 !important;
-  // }
-
-  // body * {
-  //   box-sizing: border-box !important;
-  // }
 
   .no-print {
     display: none !important;
@@ -438,7 +426,7 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     margin: 0 !important;
-    padding: 0 4mm 0 0 !important;
+    padding: 0 6mm 0 0 !important;
     border-radius: 0 !important;
     border: 1px solid red !important;
   }
