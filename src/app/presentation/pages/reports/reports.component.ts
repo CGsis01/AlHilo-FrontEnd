@@ -349,6 +349,7 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
     try {
       await this.repairImpressionTicket.simplePrint();
+      this.closeTicket();
     }
     catch (error) {
       console.error('Error printing cash cut tickets:', error);
