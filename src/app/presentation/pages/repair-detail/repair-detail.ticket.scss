@@ -179,7 +179,7 @@
 // Print styles — work order ticket (3" thermal)
 @media print {
   @page {
-    size: 3in auto;
+    size: auto;
     margin: 0;
   }
 
@@ -214,8 +214,8 @@
   }
 
   .ticket-container {
-    width: 3in;
-    max-width: 3in;
+    width: auto;
+    max-width: none;
     margin: 0 !important;
     max-height: none;
     overflow: visible;
@@ -240,9 +240,9 @@
   }
 
   .ticket-content {
-    width: 40%;
+    width: auto;
+    max-width: none;
     margin: 0 auto;
-    // padding: 0.35rem;
     padding: 0.35rem !important;
     color: #000;
     page-break-inside: avoid;
