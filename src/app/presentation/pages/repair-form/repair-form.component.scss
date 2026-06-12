@@ -895,14 +895,8 @@
 // Print styles
 @media print {
   @page {
-    size: 3in auto;
+    size: auto;
     margin: 0;
-  }
-
-  html,
-  body {
-    margin: 0 !important;
-    padding: 0 !important;
   }
 
   .no-print {
@@ -930,8 +924,8 @@
   }
 
   .ticket-container {
-    width: 3in;
-    max-width: 3in;
+    width: auto;
+    max-width: none;
     margin: 0 !important;
     max-height: none;
     overflow: visible;
@@ -955,12 +949,12 @@
   }
 
   .ticket-content {
-    width: 40%;
+    width: auto;
+    max-width: none;
     margin: 0 auto;
-    padding: 0.35rem;
+    padding: 0 6mm 0 0 !important;
     color: #000;
     page-break-inside: avoid;
-    width: 100%;
     box-sizing: border-box;
   }
 
@@ -1064,7 +1058,7 @@
 // Print: payment receipt
 @media print {
   @page {
-    size: 80mm auto;
+    size: auto;
     margin: 0;
   }
 
@@ -1076,13 +1070,14 @@
     background: white !important;
     padding: 0 !important;
     overflow: visible !important;
-    width: 100% !important;
+    width: auto !important;
+    max-width: none !important;
     inset: auto !important;
   }
 
   .receipt-wrapper {
-    width: 80mm !important;
-    max-width: 80mm !important;
+    width: auto !important;
+    max-width: none !important;
     margin: 0 !important;
   }
 
@@ -1091,8 +1086,9 @@
   .receipt-doc {
     border-radius: 0 !important;
     box-shadow: none !important;
-    padding: 0.35rem !important;
-    width: 100% !important;
+    padding: 0 6mm 0 0 !important;
+    width: auto !important;
+    max-width: none !important;
     box-sizing: border-box !important;
     page-break-inside: avoid;
     font-family: Arial, Helvetica, sans-serif;
