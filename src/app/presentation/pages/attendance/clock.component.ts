@@ -2,22 +2,15 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AttendanceService } from '../../../core/services/attendance.service';
-import { AttendanceResponse } from '../../../core/models/attendance.model';
+import { AttendanceResponse, AttendanceExportSummaryRow } from '../../../core/models/attendance.model';
 import { User } from '../../../core/models/user.model';
 import { UserApiService } from '../../../core/services/user-api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
 import { BiometricService } from '../../../core/services/biometric.service';
 import { firstValueFrom, interval, Subscription } from 'rxjs';
+import { PdfService } from '../../../core/services/pdf.service';
 import * as XLSX from 'xlsx';
-
-interface AttendanceExportSummaryRow {
-  userId: string;
-  userName: string;
-  dayKey: string;
-  dayLabel: string;
-  totalMs: number;
-}
 
 @Component({
   selector: 'app-clock',
@@ -57,7 +50,8 @@ export class ClockComponent implements OnInit, OnDestroy {
     private userApiService: UserApiService,
     private authService: AuthService,
     private fingerprintService: FingerprintService,
-    private biometricService: BiometricService
+    private biometricService: BiometricService,
+    private pdfService: PdfService
   ) {}
 
   ngOnInit(): void {
@@ -136,7 +130,9 @@ export class ClockComponent implements OnInit, OnDestroy {
   loadRange(): void {
     if (!this.startDate || !this.endDate) return;
 
-    this.attendanceService.getAttendanceHistory(null, null, this.startDate, this.endDate, 0, 100).subscribe({
+    var userId = this.selectedUserId || null;
+
+    this.attendanceService.getAttendanceHistory(userId, null, this.startDate, this.endDate, 0, 100).subscribe({
       next: (sessions) => {
         this.recentSessions = sessions.map(session => this.normalizeAttendance(session));
       },
@@ -146,33 +142,15 @@ export class ClockComponent implements OnInit, OnDestroy {
     });    
   }
 
-  exportAttendanceToExcel(): void {
+  exportPdf() {
     if (!this.recentSessions.length) {
       return;
     }
 
-    const workbook = this.buildWorkbook(this.recentSessions);
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: 'xlsx',
-      type: 'array',
-    });
+    const summaryRows = this.buildAttendanceSummaryRows(this.recentSessions);
+    const detailRows = this.sortAttendanceSessionsForExport(this.recentSessions);
 
-    const blob = new Blob([excelBuffer], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8'
-    });
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-
-    link.href = url;
-    link.download = this.getExportFileName();
-    link.style.display = 'none';
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    this.pdfService.generateAttendanceReport(summaryRows, detailRows, this.authService.currentUser?.name || 'Caja');
   }
 
   private normalizeAttendance(session: AttendanceResponse | any): AttendanceResponse {
@@ -190,57 +168,6 @@ export class ClockComponent implements OnInit, OnDestroy {
     const matchedUser = this.users.find(user => user.id === session.userId);
 
     return matchedUser?.name || 'Usuario no disponible';
-  }
-
-  private buildWorkbook(sessions: AttendanceResponse[]): XLSX.WorkBook {
-    const generatedAt = new Date().toLocaleString('es-ES');
-    const summaryRows = this.buildAttendanceSummaryRows(sessions);
-    const detailRows = this.sortAttendanceSessionsForExport(sessions);
-
-    const worksheetData: (string | number)[][] = [
-      ['Asistencias'],
-      [`Generado: ${generatedAt}`],
-      [],
-      ['Concentrado de horas por empleado y día'],
-      ['Empleado', 'Día', 'Horas'],
-    ];
-
-    summaryRows.forEach(row => {
-      worksheetData.push([
-        row.userName,
-        row.dayLabel,
-        this.formatDuration(row.totalMs),
-      ]);
-    });
-
-    worksheetData.push([]);
-    worksheetData.push(['Detalle por día']);
-    worksheetData.push(['Empleado', 'Fecha', 'Entrada', 'Salida', 'Horas']);
-
-    detailRows.forEach(session => {
-      worksheetData.push([
-        this.getSessionUserName(session),
-        this.formatDate(session.clockIn),
-        this.formatTime(session.clockIn),
-        session.clockOut ? this.formatTime(session.clockOut) : '—',
-        this.getSessionDuration(session),
-      ]);
-    });
-
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    worksheet['!cols'] = [
-      { wch: 28 },
-      { wch: 18 },
-      { wch: 14 },
-      { wch: 14 },
-      { wch: 12 },
-      { wch: 16 },
-    ];
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Asistencias');
-
-    return workbook;
   }
 
   private buildAttendanceSummaryRows(sessions: AttendanceResponse[]): AttendanceExportSummaryRow[] {
@@ -300,17 +227,6 @@ export class ClockComponent implements OnInit, OnDestroy {
     const day = String(date.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
-  }
-
-  private getExportFileName(): string {
-    const now = new Date();
-    const dateStamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-    if (this.startDate && this.endDate) {
-      return `asistencias_${this.startDate}_a_${this.endDate}.xlsx`;
-    }
-
-    return `asistencias_${dateStamp}.xlsx`;
   }
 
   private updateCurrentTime(): void {
@@ -423,6 +339,12 @@ export class ClockComponent implements OnInit, OnDestroy {
     const seconds = totalSeconds % 60;
 
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  setTodayToFilters(): void {
+    const today = new Date();
+    this.startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    this.endDate = this.startDate;
   }
 
   getTodaysHours(): string {

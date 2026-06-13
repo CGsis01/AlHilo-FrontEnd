@@ -14,6 +14,13 @@
 
       <div class="date-filters">
         <div class="filter-group">
+          <label for="userSelect">Empleado</label>
+          <select id="userSelect" [(ngModel)]="selectedUserId" class="user-select">
+            <option value="">Todos</option>
+            <option *ngFor="let u of users" [value]="u.id">{{ u.name }}</option>
+          </select>
+        </div>
+        <div class="filter-group">
           <label for="startDate">Desde</label>
           <input id="startDate" type="date" [(ngModel)]="startDate" class="date-input">
         </div>
@@ -26,10 +33,12 @@
         <button type="button" class="btn-filter" (click)="loadRange()">
           Buscar
         </button>
-        <button type="button" class="btn-secondary" (click)="loadCurrentAttendance()">
+
+        <button type="button" class="btn-secondary" (click)="setTodayToFilters()">
           Hoy
         </button>
-        <button type="button" class="btn-secondary" (click)="exportAttendanceToExcel()" [disabled]="recentSessions.length === 0" title="Exportar asistencias a Excel">
+
+        <button type="button" class="btn-secondary" (click)="exportPdf()" [disabled]="recentSessions.length === 0" title="Exportar asistencias a PDF">
           📊
         </button>
       </div>

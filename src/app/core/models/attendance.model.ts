@@ -22,6 +22,14 @@ export interface AttendanceClockOut {
   attendance_id: string;
 }
 
+export interface AttendanceExportSummaryRow {
+  userId: string;
+  userName: string;
+  dayKey: string;
+  dayLabel: string;
+  totalMs: number;
+}
+
 export interface AttendanceResponse {
   id: string;
   userId: string;

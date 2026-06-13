@@ -209,19 +209,23 @@
             class="date-input">
         </div>
 
-        <button class="btn-filter" (click)="clearCashCutFilters()">
+        <button type="button" class="btn-secondary" (click)="clearCashCutFilters()">
           Limpiar Filtros
         </button>
 
-        <button class="btn-primary" (click)="generateCashCut()" [disabled]="!cashCutDate()">
+        <button type="button" class="btn-secondary" (click)="setTodayToFilters()">
+          Hoy
+        </button>
+
+        <button type="button" class="btn-primary" (click)="generateCashCut()" [disabled]="!cashCutDate()">
           Generar Corte de Caja
         </button>
 
-        <button class="btn btn-success" (click)="exportPdf()" title="Exportar corte de caja a PDF" [disabled]="!cashCutDetails">
+        <button type="button" class="btn-secondary" (click)="exportPdf()" title="Exportar corte de caja a PDF" [disabled]="!cashCutDetails">
           📊
         </button>
 
-        <button class="btn btn-success" (click)="printCashCutTicket()" title="Imprimir corte de caja" [disabled]="!cashCutDetails">
+        <button type="button" class="btn-secondary" (click)="printCashCutTicket()" title="Imprimir corte de caja" [disabled]="!cashCutDetails">
           🖨️
         </button>
       </div>

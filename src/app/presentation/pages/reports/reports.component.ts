@@ -84,6 +84,7 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Cash cut tab filters
   isLoadingCashCut = signal(false);
+  showTicket = signal(false);
   cashCutDate = signal('');
   cashCutErrorMessage = signal('');
   cashCutDetails: CashCutResponse | null = null;
@@ -290,8 +291,13 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.cashCutDetails = null;
   }
 
+  setTodayToFilters(): void {
+    const today = new Date();
+    this.cashCutDate.set(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
+  }
+
   generateCashCut(): void {
-    if (!this.cashCutDate) {
+    if (!this.cashCutDate()) {
       this.cashCutErrorMessage.set('Por favor, selecciona una fecha para generar el corte de caja.');
       
       return;
@@ -327,8 +333,6 @@ export class ReportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.pdfService.generateCashCut(this.cashCutDetails, this.currentUser?.name || 'Caja');
   }
-
-  showTicket = signal(false);
 
   openTicket(): void {
     this.showTicket.set(true);
