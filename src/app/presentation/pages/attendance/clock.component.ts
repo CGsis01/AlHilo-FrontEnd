@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AttendanceService } from '../../../core/services/attendance.service';
 import { AttendanceResponse, AttendanceExportSummaryRow } from '../../../core/models/attendance.model';
 import { User } from '../../../core/models/user.model';
-import { UserApiService } from '../../../core/services/user-api.service';
+import { UserUseCases } from '../../../domain/usecases/user.usecases';
 import { AuthService } from '../../../core/services/auth.service';
 import { FingerprintService } from '../../../core/services/fingerprint-reader.service';
 import { BiometricService } from '../../../core/services/biometric.service';
@@ -47,7 +47,7 @@ export class ClockComponent implements OnInit, OnDestroy {
 
   constructor(
     private attendanceService: AttendanceService,
-    private userApiService: UserApiService,
+    private userUseCases: UserUseCases,
     private authService: AuthService,
     private fingerprintService: FingerprintService,
     private biometricService: BiometricService,
@@ -80,8 +80,8 @@ export class ClockComponent implements OnInit, OnDestroy {
   }
 
   private loadUsers(): void {
-    this.userApiService.getAll({ is_active: true }).subscribe({
-      next: (users) => { this.users = users; },
+    this.userUseCases.getAllUsers().subscribe({
+      next: (users) => { this.users = users.filter(user => user.isActive); },
       error: () => { this.errorMessage = 'No se pudo cargar la lista de usuarios.'; }});
   }
 
@@ -458,12 +458,27 @@ export class ClockComponent implements OnInit, OnDestroy {
     if (!identifyResult.matchFound) {
       this.errorMessage = 'Huella no reconocida';
       this.isFingerprintScanning.set(false);
+      
       return;
     }
 
-    this.authService.biometricLogin(identifyResult.userId!).subscribe({
-        next: authResponse => {
-          const user = authResponse.user;
+    this.userUseCases.getUserById(identifyResult.userId!).subscribe({
+        next: userResponse => {
+          const user = userResponse;
+
+          if(!user) {
+            this.errorMessage = 'Usuario no encontrado';
+            this.isFingerprintScanning.set(false);
+            
+            return;
+          }
+
+          if(identifyResult.userId! !== user.id) {
+            this.errorMessage = 'Huella no coincide con el usuario identificado';
+            this.isFingerprintScanning.set(false);
+            
+            return;
+          }
 
           this.infoMessage = `Huella reconocida: ${user.name}`;
 
