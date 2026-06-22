@@ -112,6 +112,10 @@
               <span>Tarjeta</span>
             </label>
             <label class="radio-option">
+              <input type="radio" formControlName="advancePaymentType" value="transfer">
+              <span>Transferencia</span>
+            </label>
+            <label class="radio-option">
               <input type="radio" formControlName="advancePaymentType" value="mixed">
               <span>Mixto</span>
             </label>
@@ -129,6 +133,19 @@
             inputmode="decimal"
             (input)="onAdvancePaymentCashInput($event)"
             (blur)="onAdvancePaymentBlur('advancePaymentCash')">
+        </div>
+
+        <div class="form-group" *ngIf="repairForm.get('advancePaymentType')?.value === 'mixed'">
+          <label for="advancePaymentTransferAmount">Anticipo por transferencia</label>
+          <input id="advancePaymentTransferAmount"
+            type="text"
+            formControlName="advancePaymentTransfer"
+            placeholder="0.00"
+            min="0"
+            pattern="^\d*\.?\d*$"
+            inputmode="decimal"
+            (input)="onAdvancePaymentTransferInput($event)"
+            (blur)="onAdvancePaymentBlur('advancePaymentTransfer')">
         </div>
 
         <div class="form-group" *ngIf="repairForm.get('advancePaymentType')?.value === 'mixed'">
@@ -395,13 +412,16 @@
                 ? 'Efectivo'
                 : (advancePaymentType === 'card'
                   ? (advanceCardType === 'debit' ? 'Tarjeta (Débito)' : 'Tarjeta (Crédito)')
-                  : 'Pago mixto') }}
+                  : (advancePaymentType === 'transfer' ? 'Transferencia' : 'Pago mixto')) }}
             </span>
             <ng-container *ngIf="advancePaymentType === 'mixed'">
               <span class="receipt-payment-voucher">
                 Efectivo: ${{ advancePaymentCashAmount | number:'1.2-2':'en-US' }}
               </span>
-              <span class="receipt-payment-voucher">
+              <span class="receipt-payment-voucher" *ngIf="advancePaymentTransferAmount > 0">
+                Transferencia: ${{ advancePaymentTransferAmount | number:'1.2-2':'en-US' }}
+              </span>
+              <span class="receipt-payment-voucher" *ngIf="advancePaymentCardAmount > 0">
                 Tarjeta ({{ advanceCardType === 'debit' ? 'Débito' : 'Crédito' }}):
                 ${{ advancePaymentCardAmount | number:'1.2-2':'en-US' }}
               </span>

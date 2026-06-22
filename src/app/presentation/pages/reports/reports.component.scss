@@ -564,7 +564,8 @@
 
 .cash-cut-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto auto;
   gap: 1.5rem;
   margin-bottom: 2rem;
 
@@ -575,6 +576,8 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
+    text-align: center;
+    justify-content: center;
     gap: 1rem;
     transition: transform 0.2s;
 
@@ -589,8 +592,6 @@
     }
 
     .summary-content {
-      flex: 1;
-
       h3 {
         font-size: 1.75rem;
         font-weight: bold;
@@ -714,6 +715,11 @@
       &.Tarjeta {
         background: rgba(33, 150, 243, 0.2);
         color: #4290e9;
+      }
+
+      &.Transferencia {
+        background: rgba(76, 175, 80, 0.2);
+        color: #abbe3e;
       }
 
       &.isAdvance {

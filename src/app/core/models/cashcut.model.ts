@@ -25,6 +25,7 @@ export interface CashCutResponse {
   cash_cut_date: string;
   cash: CashCutSection;
   card: CashCutSection;
+  transfer: CashCutSection;
   advances: CashCutSection;
   settlements: CashCutSection;
   total_transactions: number;

@@ -67,6 +67,11 @@
                 </div>
 
                 <div class="receipt-total-row">
+                    <span>Transferencia</span>
+                    <span>${{ cashCut?.transfer?.amount | number:'1.2-2': 'en-US' }}</span>
+                </div>
+
+                <div class="receipt-total-row">
                     <span>Tarjeta</span>
                     <span>${{ cashCut?.card?.amount | number:'1.2-2': 'en-US' }}</span>
                 </div>
@@ -98,6 +103,11 @@
                 <div class="receipt-row">
                     <span class="receipt-row-label">Efectivo</span>
                     <span class="receipt-row-value">{{ cashCut?.cash?.transactions }}</span>
+                </div>
+
+                <div class="receipt-row">
+                    <span class="receipt-row-label">Transferencia</span>
+                    <span class="receipt-row-value">{{ cashCut?.transfer?.transactions }}</span>
                 </div>
 
                 <div class="receipt-row">

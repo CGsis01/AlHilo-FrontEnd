@@ -87,11 +87,12 @@ export class RepairFormComponent implements OnInit {
   advancePaymentAmount = 0;
   advancePaymentCashAmount = 0;
   advancePaymentCardAmount = 0;
+  advancePaymentTransferAmount = 0;
   advancePaymentMinimum = 0;
   advancePaymentMaximum = 0;
   advancePaymentDate: Date = new Date();
   
-  advancePaymentType: 'cash' | 'card' | 'mixed' = 'cash';
+  advancePaymentType: 'cash' | 'card' | 'transfer' | 'mixed' = 'cash';
   advanceCardType: 'debit' | 'credit' = 'debit';
   
   garments = toSignal(
@@ -158,6 +159,7 @@ export class RepairFormComponent implements OnInit {
       ]],
       advancePaymentCash: ['', [Validators.pattern(/^\d+(\.\d+)?$/), Validators.min(0)]],
       advancePaymentCard: ['', [Validators.pattern(/^\d+(\.\d+)?$/), Validators.min(0)]],
+      advancePaymentTransfer: ['', [Validators.pattern(/^\d+(\.\d+)?$/), Validators.min(0)]],
       advancePaymentType: ['cash'],
       advanceVoucherId: [''],
       advanceCardType: ['debit'],
@@ -183,7 +185,7 @@ export class RepairFormComponent implements OnInit {
       }});
 
     this.repairForm.get('advancePaymentType')?.valueChanges.subscribe(type => {
-      this.syncAdvancePaymentByType(type as 'cash' | 'card' | 'mixed');
+      this.syncAdvancePaymentByType(type as 'cash' | 'card' | 'transfer' | 'mixed');
     });
   }
 
@@ -208,11 +210,12 @@ export class RepairFormComponent implements OnInit {
     this.errorMessage = '';
 
     const formValue = this.repairForm.value;
-    const selectedAdvancePaymentType = (formValue.advancePaymentType || 'cash') as 'cash' | 'card' | 'mixed';
+    const selectedAdvancePaymentType = (formValue.advancePaymentType || 'cash') as 'cash' | 'card' | 'transfer' | 'mixed';
     const cashAdvance = this.getAdvanceNumericValue(formValue.advancePaymentCash);
     const cardAdvance = this.getAdvanceNumericValue(formValue.advancePaymentCard);
+    const transferAdvance = this.getAdvanceNumericValue(formValue.advancePaymentTransfer);
     const rawAdvance = selectedAdvancePaymentType === 'mixed'
-      ? Math.round((cashAdvance + cardAdvance) * 100) / 100
+      ? Math.round((cashAdvance + cardAdvance + transferAdvance) * 100) / 100
       : this.getAdvanceNumericValue(formValue.advancePayment);
     const totalPrice = this.repairItems.reduce((s, i) => s + (i.isPatternSource ? 0 : i.estimatedPrice), 0);
     const advanceVoucherId = (formValue.advanceVoucherId || '').trim();
@@ -223,7 +226,9 @@ export class RepairFormComponent implements OnInit {
       const existingErrors = advanceControl?.errors ?? {};
       advanceControl?.setErrors({ ...existingErrors, minAdvance: { min: minimumAdvance, actual: rawAdvance } });
       advanceControl?.markAsTouched();
+      
       this.errorMessage = 'El anticipo debe ser al menos el 50% del total estimado.';
+      
       this.isLoading.set(false);
 
       return;
@@ -280,18 +285,25 @@ export class RepairFormComponent implements OnInit {
           const advanceCardAmount = selectedAdvancePaymentType === 'mixed'
             ? cardAdvance
             : selectedAdvancePaymentType === 'card' ? rawAdvance : 0;
+          const advanceTransferAmount = selectedAdvancePaymentType === 'mixed'
+            ? transferAdvance
+            : selectedAdvancePaymentType === 'transfer' ? rawAdvance : 0;
           const needsCash = advanceCashAmount > 0;
           const needsCard = advanceCardAmount > 0;
+          const needsTransfer = advanceTransferAmount > 0;
           const paymentTypeCash = needsCash ? this.resolveSelectedAdvancePaymentType('cash') : undefined;
           const paymentTypeCard = needsCard ? this.resolveSelectedAdvancePaymentType('card') : undefined;
+          const paymentTypeTransfer = needsTransfer ? this.resolveSelectedAdvancePaymentType('transfer') : undefined;
 
-          if ((needsCash && !paymentTypeCash) || (needsCard && !paymentTypeCard)) {
-            if (needsCash && !paymentTypeCash && needsCard && !paymentTypeCard) {
+          if ((needsCash && !paymentTypeCash) || (needsCard && !paymentTypeCard) || (needsTransfer && !paymentTypeTransfer)) {
+            if (needsCash && !paymentTypeCash && needsCard && !paymentTypeCard && needsTransfer && !paymentTypeTransfer) {
               this.toastService.show('La reparación se creó, pero no se pudieron mapear los tipos de pago del anticipo.', 'error');
             } else if (needsCash && !paymentTypeCash) {
               this.toastService.show('La reparación se creó, pero no se pudo mapear el tipo de pago del anticipo en efectivo.', 'error');
-            } else {
+            } else if (needsCard && !paymentTypeCard) {
               this.toastService.show('La reparación se creó, pero no se pudo mapear el tipo de pago del anticipo con tarjeta.', 'error');
+            } else if (needsTransfer && !paymentTypeTransfer) {
+              this.toastService.show('La reparación se creó, pero no se pudo mapear el tipo de pago del anticipo con transferencia.', 'error');
             }
             
             this.handleRepairCreated(repair);
@@ -326,6 +338,18 @@ export class RepairFormComponent implements OnInit {
             }));
           }
 
+          if(needsTransfer && paymentTypeTransfer) {
+            paymentRequests.push(this.paymentUseCases.createPayment({
+              repair: repair,
+              paymentType: paymentTypeTransfer,
+              amount: advanceTransferAmount,
+              isDebit: false,
+              isAdvance: true,
+              createdBy: repair.createdBy,
+              paymentDate: repair.createdAt
+            }));
+          }
+
           forkJoin(paymentRequests).subscribe({
             next: () => {
               this.prepareAdvancePaymentTicket(
@@ -335,8 +359,8 @@ export class RepairFormComponent implements OnInit {
                 selectedAdvanceCardType,
                 advanceVoucherId,
                 advanceCashAmount,
-                advanceCardAmount
-              );
+                advanceCardAmount, 
+                advanceTransferAmount);
 
               this.handleRepairCreated(repair);
             },
@@ -539,7 +563,14 @@ export class RepairFormComponent implements OnInit {
     this.updateMixedAdvanceTotal();
   }
 
-  onAdvancePaymentBlur(controlName: 'advancePayment' | 'advancePaymentCash' | 'advancePaymentCard'): void {
+  onAdvancePaymentTransferInput(event: Event): void {
+    const sanitizedValue = this.onDecimalInput(event);
+    
+    this.repairForm.get('advancePaymentTransfer')?.setValue(sanitizedValue);
+    this.updateMixedAdvanceTotal();
+  }
+
+  onAdvancePaymentBlur(controlName: 'advancePayment' | 'advancePaymentCash' | 'advancePaymentCard' | 'advancePaymentTransfer'): void {
     const control = this.repairForm.get(controlName);
     
     if (!control) {
@@ -606,7 +637,8 @@ export class RepairFormComponent implements OnInit {
   }
 
   get hasAdvancePayment(): boolean {
-    const paymentType = this.repairForm?.get('advancePaymentType')?.value as 'cash' | 'card' | 'mixed';
+    const paymentType = this.repairForm?.get('advancePaymentType')?.value as 'cash' | 'card' | 'transfer' | 'mixed';
+    
     const amount = paymentType === 'mixed'
       ? this.getMixedAdvanceTotal()
       : Number(this.repairForm?.get('advancePayment')?.value);
@@ -615,13 +647,28 @@ export class RepairFormComponent implements OnInit {
   }
 
   get hasCardAdvancePayment(): boolean {
-    const paymentType = this.repairForm?.get('advancePaymentType')?.value as 'cash' | 'card' | 'mixed';
+    const paymentType = this.repairForm?.get('advancePaymentType')?.value as 'cash' | 'card' | 'transfer' | 'mixed';
     if (paymentType === 'card') {
       return this.hasAdvancePayment;
     }
+
     if (paymentType === 'mixed') {
       return this.getAdvanceNumericValue(this.repairForm?.get('advancePaymentCard')?.value) > 0;
     }
+
+    return false;
+  }
+
+  get hasTransferAdvancePayment(): boolean {
+    const paymentType = this.repairForm?.get('advancePaymentType')?.value as 'cash' | 'card' | 'transfer' | 'mixed';
+    if (paymentType === 'transfer') {
+      return this.hasTransferAdvancePayment;
+    }
+
+    if (paymentType === 'mixed') {
+      return this.getAdvanceNumericValue(this.repairForm?.get('advancePaymentTransfer')?.value) > 0;
+    }
+
     return false;
   }
 
@@ -646,31 +693,40 @@ export class RepairFormComponent implements OnInit {
   private getMixedAdvanceTotal(): number {
     const cash = this.getAdvanceNumericValue(this.repairForm?.get('advancePaymentCash')?.value);
     const card = this.getAdvanceNumericValue(this.repairForm?.get('advancePaymentCard')?.value);
-    return Math.round((cash + card) * 100) / 100;
+    const transfer = this.getAdvanceNumericValue(this.repairForm?.get('advancePaymentTransfer')?.value);
+
+    return Math.round((cash + card + transfer) * 100) / 100;
   }
 
   private updateMixedAdvanceTotal(): void {
     const total = this.getMixedAdvanceTotal();
     const formattedTotal = this.formatToTwoDecimals(total);
+
     this.repairForm.get('advancePayment')?.setValue(formattedTotal, { emitEvent: false });
     this.repairForm.get('advancePayment')?.updateValueAndValidity({ emitEvent: false });
   }
 
-  private syncAdvancePaymentByType(paymentType: 'cash' | 'card' | 'mixed'): void {
+  private syncAdvancePaymentByType(paymentType: 'cash' | 'card' | 'transfer' | 'mixed'): void {
     if (paymentType === 'mixed') {
       const cashControl = this.repairForm.get('advancePaymentCash');
       const cardControl = this.repairForm.get('advancePaymentCard');
+      const transferControl = this.repairForm.get('advancePaymentTransfer');
       const cashValue = cashControl?.value;
       const cardValue = cardControl?.value;
+      const transferValue = transferControl?.value;
 
       if ((cashValue === null || cashValue === undefined || cashValue === '') &&
-          (cardValue === null || cardValue === undefined || cardValue === '')) {
+          (cardValue === null || cardValue === undefined || cardValue === '') &&
+          (transferValue === null || transferValue === undefined || transferValue === '')) {
         const currentTotal = this.getAdvanceNumericValue(this.repairForm.get('advancePayment')?.value);
+        
         cashControl?.setValue(this.formatToTwoDecimals(currentTotal), { emitEvent: false });
         cardControl?.setValue(this.formatToTwoDecimals(0), { emitEvent: false });
+        transferControl?.setValue(this.formatToTwoDecimals(0), { emitEvent: false });
       }
 
       this.updateMixedAdvanceTotal();
+
       return;
     }
 
@@ -685,6 +741,13 @@ export class RepairFormComponent implements OnInit {
       const cardAmount = this.getAdvanceNumericValue(this.repairForm.get('advancePaymentCard')?.value);
       if (cardAmount > 0) {
         this.repairForm.get('advancePayment')?.setValue(this.formatToTwoDecimals(cardAmount), { emitEvent: false });
+      }
+    }
+
+    if (paymentType === 'transfer') {
+      const transferAmount = this.getAdvanceNumericValue(this.repairForm.get('advancePaymentTransfer')?.value);
+      if (transferAmount > 0) {
+        this.repairForm.get('advancePayment')?.setValue(this.formatToTwoDecimals(transferAmount), { emitEvent: false });
       }
     }
 
@@ -830,10 +893,12 @@ export class RepairFormComponent implements OnInit {
     };
   }
 
-  private resolveSelectedAdvancePaymentType(paymentType: 'cash' | 'card'): PaymentType | undefined {
+  private resolveSelectedAdvancePaymentType(paymentType: 'cash' | 'card' | 'transfer'): PaymentType | undefined {
     const aliases = paymentType === 'cash'
       ? ['cash', 'efectivo']
-      : ['card', 'tarjeta'];
+      : paymentType === 'card'
+        ? ['card', 'tarjeta']
+        : ['transfer', 'transferencia'];
 
     return this.paymentTypes().find(type => {
       const code = type.code?.toLowerCase() || '';
@@ -916,11 +981,12 @@ export class RepairFormComponent implements OnInit {
   private prepareAdvancePaymentTicket(
     repair: Repair,
     amount: number,
-    paymentType: 'cash' | 'card' | 'mixed',
+    paymentType: 'cash' | 'card' | 'transfer' | 'mixed',
     cardType: 'debit' | 'credit',
     voucherId: string,
     cashAmount = 0,
-    cardAmount = 0
+    cardAmount = 0,
+    transferAmount = 0
   ): void {
     this.advancePaymentAmount = repair.advancePayment ?? amount;
     this.advancePaymentType = paymentType;
@@ -928,6 +994,7 @@ export class RepairFormComponent implements OnInit {
     this.advanceVoucherId = voucherId;
     this.advancePaymentCashAmount = cashAmount;
     this.advancePaymentCardAmount = cardAmount;
+    this.advancePaymentTransferAmount = transferAmount;
 
     const createdAt = repair.createdAt ? new Date(repair.createdAt) : new Date();
     this.advancePaymentDate = Number.isFinite(createdAt.getTime()) ? createdAt : new Date();

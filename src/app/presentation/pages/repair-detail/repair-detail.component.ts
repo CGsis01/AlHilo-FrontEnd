@@ -89,21 +89,25 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
 
   // ─── Payment Modal ────────────────────────────────────────────
   showPaymentModal = signal(false);
-  paymentType: 'cash' | 'card' | 'mixed' = 'cash';
+  paymentType: 'cash' | 'card' | 'transfer' | 'mixed' = 'cash';
   cardType: 'debit' | 'credit' = 'debit';
   voucherId = '';
   cashAmount: string | null = null;
+  transferAmount: string | null = null;
   mixedCashAmount: string | null = null;
   mixedCardAmount: string | null = null;
+  mixedTransferAmount: string | null = null;
 
   // ─── Payment Ticket ───────────────────────────────────────────
   showPaymentTicket = signal(false);
   paymentDate: Date = new Date();
-  paidPaymentType: 'cash' | 'card' | 'mixed' = 'cash';
+  paidPaymentType: 'cash' | 'card' | 'transfer' | 'mixed' = 'cash';
   paidCardType: 'debit' | 'credit' = 'debit';
   paidCashAmount: string | null = null;
+  paidTransferAmount: string | null = null;
   paidMixedCashAmount: string | null = null;
   paidMixedCardAmount: string | null = null;
+  paidMixedTransferAmount: string | null = null;
   paidVoucherId = '';
 
   repairStatuses = toSignal(
@@ -727,16 +731,19 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
       next: (updatedRepair) => {
         const remaining = this.getRemainingBalance();
         const cashPaid = this.getNumericAmount(this.cashAmount);
+        const transferPaid = this.getNumericAmount(this.transferAmount);
         const mixedCashPaid = this.getNumericAmount(this.mixedCashAmount);
         const mixedCardPaid = this.getNumericAmount(this.mixedCardAmount);
-        const mixedTotal = this.roundToTwo(mixedCashPaid + mixedCardPaid);
+        const mixedTransferPaid = this.getNumericAmount(this.mixedTransferAmount);
+        const mixedTotal = this.roundToTwo(mixedCashPaid + mixedCardPaid + mixedTransferPaid);
 
         this.paidPaymentType = this.paymentType;
         this.paidCardType = this.cardType;
         this.paidVoucherId = this.voucherId;
-        this.paidCashAmount = this.cashAmount;
-        this.paidMixedCashAmount = this.mixedCashAmount;
-        this.paidMixedCardAmount = this.mixedCardAmount;
+        this.paidCashAmount = this.cashAmount ?? "0";
+        this.paidMixedCashAmount = this.mixedCashAmount ?? "0";
+        this.paidMixedCardAmount = this.mixedCardAmount ?? "0";
+        this.paidMixedTransferAmount = this.mixedTransferAmount ?? "0";
         this.paymentDate = new Date();
 
         if (this.paymentType === 'mixed') {
@@ -774,6 +781,11 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
           : this.paymentType === 'cash'
             ? (cashPaid > 0 ? cashPaid : remaining)
             : 0;
+        const transferPaymentAmount = this.paymentType === 'mixed'
+          ? mixedTransferPaid
+          : this.paymentType === 'transfer'
+            ? (transferPaid > 0 ? transferPaid : remaining)
+            : 0;
         const cardPaymentAmount = this.paymentType === 'mixed'
           ? mixedCardPaid
           : this.paymentType === 'card'
@@ -781,16 +793,20 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
             : 0;
         const needsCash = cashPaymentAmount > 0;
         const needsCard = cardPaymentAmount > 0;
+        const needsTransfer = transferPaymentAmount > 0;
         const paymentTypeCash = needsCash ? this.resolveSelectedAdvancePaymentType('cash') : undefined;
         const paymentTypeCard = needsCard ? this.resolveSelectedAdvancePaymentType('card') : undefined;
+        const paymentTypeTransfer = needsTransfer ? this.resolveSelectedAdvancePaymentType('transfer') : undefined;
 
-        if ((needsCash && !paymentTypeCash) || (needsCard && !paymentTypeCard)) {
-          if (needsCash && !paymentTypeCash && needsCard && !paymentTypeCard) {
+        if ((needsCash && !paymentTypeCash) || (needsCard && !paymentTypeCard) || (needsTransfer && !paymentTypeTransfer)) {
+          if (needsCash && !paymentTypeCash && needsCard && !paymentTypeCard && needsTransfer && !paymentTypeTransfer) {
             this.toastService.show('La reparación se actualizó, pero no se pudieron mapear los tipos de pago de la reparación.', 'error');
           } else if (needsCash && !paymentTypeCash) {
             this.toastService.show('La reparación se actualizó, pero no se pudo mapear el tipo de pago en efectivo.', 'error');
-          } else {
+          } else if (needsCard && !paymentTypeCard) {
             this.toastService.show('La reparación se actualizó, pero no se pudo mapear el tipo de pago con tarjeta.', 'error');
+          } else if (needsTransfer && !paymentTypeTransfer) {
+            this.toastService.show('La reparación se actualizó, pero no se pudo mapear el tipo de pago con transferencia.', 'error');
           }
           
           this.handleRepairUpdated(updatedRepair);
@@ -811,6 +827,17 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
             paymentDate: new Date() }));
         }
 
+        if (needsTransfer && paymentTypeTransfer) {
+          paymentRequests.push(this.paymentUseCases.createPayment({
+            repair: updatedRepair,
+            paymentType: paymentTypeTransfer,
+            amount: transferPaymentAmount,
+            isDebit: false,
+            isAdvance: false,
+            createdBy: this.authService.currentUser!,
+            paymentDate: new Date() }));
+        }
+
         if (needsCard && paymentTypeCard) {
           paymentRequests.push(this.paymentUseCases.createPayment({
             repair: updatedRepair,
@@ -824,10 +851,16 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
         }
 
         if (paymentRequests.length === 0) {
+          this.showPaymentTicket.set(true);
+
+          setTimeout(() => {
+            this.printPaymentTicket();
+            this.closePaymentTicket();
+            this.goBack();
+          }, 100);
+
           this.handleRepairUpdated(updatedRepair);
           this.closePaymentModal();
-          
-          this.showPaymentTicket.set(true);
           
           return;
         }
@@ -851,32 +884,46 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
       error: (error) => { this.errorMessage = error.message || 'Error al actualizar el estado';}});
   }
 
-  onPaymentTypeChange(selectedType: 'cash' | 'card' | 'mixed'): void {
+  onPaymentTypeChange(selectedType: 'cash' | 'card' | 'transfer' | 'mixed'): void {
     if (selectedType === 'card') {
       this.cashAmount = null;
       this.mixedCashAmount = null;
       this.mixedCardAmount = null;
+      this.mixedTransferAmount = null;
       
       return;
     }
 
     if (selectedType === 'cash') {
+      this.transferAmount = null;
       this.mixedCashAmount = null;
       this.mixedCardAmount = null;
-      
+      this.mixedTransferAmount = null;
+
       return;
     }
 
     this.cashAmount = null;
+    this.transferAmount = null;
   }
 
   isEnabledConfirmPayment(): boolean {
     const remaining = this.getRemainingBalance();
 
+    if(remaining <= 0) {
+      return false;
+    }
+
     if (this.paymentType === 'cash') {
       const cashPaid = this.getNumericAmount(this.cashAmount);
       
       return !this.cashAmount?.trim() || cashPaid < remaining;
+    }
+
+    if (this.paymentType === 'transfer') {
+      const transferPaid = this.getNumericAmount(this.transferAmount);
+      
+      return !this.transferAmount?.trim() || transferPaid < remaining;
     }
 
     if (this.paymentType === 'card') {
@@ -885,7 +932,8 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
 
     const mixedCash = this.getNumericAmount(this.mixedCashAmount);
     const mixedCard = this.getNumericAmount(this.mixedCardAmount);
-    const mixedTotal = this.roundToTwo(mixedCash + mixedCard);
+    const mixedTransfer = this.getNumericAmount(this.mixedTransferAmount);
+    const mixedTotal = this.roundToTwo(mixedCash + mixedCard + mixedTransfer);
 
     if (mixedCard > remaining) {
       return true;
@@ -910,8 +958,16 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
     this.cashAmount = this.sanitizeDecimalInput(event);
   }
 
+  onTransferAmountInput(event: Event): void {
+    this.transferAmount = this.sanitizeDecimalInput(event);
+  }
+
   onMixedCashAmountInput(event: Event): void {
     this.mixedCashAmount = this.sanitizeDecimalInput(event);
+  }
+
+  onMixedTransferAmountInput(event: Event): void {
+    this.mixedTransferAmount = this.sanitizeDecimalInput(event);
   }
 
   onMixedCardAmountInput(event: Event): void {
@@ -931,7 +987,8 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
     if (this.paidPaymentType === 'mixed') {
       const cashPaid = this.getNumericAmount(this.paidMixedCashAmount);
       const cardPaid = this.getNumericAmount(this.paidMixedCardAmount);
-      const change = cashPaid - Math.max(0, remaining - cardPaid);
+      const transferPaid = this.getNumericAmount(this.paidMixedTransferAmount);
+      const change = cashPaid - Math.max(0, remaining - cardPaid - transferPaid);
       
       return this.roundToTwo(Math.max(0, change));
     }
@@ -946,6 +1003,29 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   }
 
   // ─── Payment Ticket ───────────────────────────────────────────
+  getPaymentTypeLabel(): string {
+    if(this.getRemainingBalance() <= 0)
+      return "Sin pago pendiente";
+
+    if(this.paidPaymentType === "cash")
+      return "Efectivo";
+
+    if(this.paidPaymentType === "card") {
+      if(this.paidCardType === "debit")
+        return "Tarjeta (Débito)";
+
+      return "Tarjeta (Crédito)";
+    }
+
+    if(this.paidPaymentType === "transfer")
+      return "Transferencia";
+
+    if(this.paidPaymentType === "mixed")
+      return "Pago mixto";
+    
+    return "";
+  }
+
   closePaymentTicket(): void {
     this.showPaymentTicket.set(false);
   }
@@ -1013,10 +1093,12 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
     return Math.round(value * 100) / 100;
   }
 
-  private resolveSelectedAdvancePaymentType(paymentType: 'cash' | 'card'): PaymentType | undefined {
+  private resolveSelectedAdvancePaymentType(paymentType: 'cash' | 'card' | 'transfer'): PaymentType | undefined {
     const aliases = paymentType === 'cash'
       ? ['cash', 'efectivo']
-      : ['card', 'tarjeta'];
+      : paymentType === 'card'
+        ? ['card', 'tarjeta']
+        : ['transfer', 'transferencia'];
 
     return this.paymentTypes().find(type => {
       const code = type.code?.toLowerCase() || '';

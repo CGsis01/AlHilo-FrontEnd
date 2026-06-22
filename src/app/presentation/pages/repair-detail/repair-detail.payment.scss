@@ -150,7 +150,8 @@
 }
 
 .payment-options {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -206,6 +207,38 @@
   }
 
   .cash-input {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.95rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+    }
+
+    &::placeholder { color: var(--text-secondary); }
+  }
+}
+
+.transfer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .transfer-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .transfer-input {
     padding: 0.75rem 1rem;
     border: 1px solid var(--border);
     border-radius: 8px;

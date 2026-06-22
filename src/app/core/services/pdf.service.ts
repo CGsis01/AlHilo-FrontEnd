@@ -46,6 +46,10 @@ export class PdfService {
 
         y += 6;
 
+        doc.text(`Transferencia: $${cashCut.transfer.amount.toFixed(2)}`, 15, y);
+
+        y += 6;
+
         doc.text(`Tarjeta: $${cashCut.card.amount.toFixed(2)}`, 15, y);
 
         y += 6;

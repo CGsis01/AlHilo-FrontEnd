@@ -404,6 +404,15 @@
             <span class="payment-option-icon">💵</span>
             <span class="payment-option-label">Efectivo</span>
           </label>
+          <label class="payment-option" [class.selected]="paymentType === 'transfer'">
+            <input type="radio"
+              name="paymentType"
+              value="transfer"
+              [(ngModel)]="paymentType"
+              (ngModelChange)="onPaymentTypeChange($event)"/>
+            <span class="payment-option-icon">📲</span>
+            <span class="payment-option-label">Transferencia</span>
+          </label>
           <label class="payment-option" [class.selected]="paymentType === 'card'">
             <input type="radio"
               name="paymentType"
@@ -419,7 +428,7 @@
               value="mixed"
               [(ngModel)]="paymentType"
               (ngModelChange)="onPaymentTypeChange($event)"/>
-            <span class="payment-option-icon">💵💳</span>
+            <span class="payment-option-icon">💵📲💳</span>
             <span class="payment-option-label">Pago Mixto</span>
           </label>
         </div>
@@ -437,6 +446,19 @@
             autocomplete="off"/>
         </div>
 
+        <div class="transfer-field" *ngIf="paymentType === 'transfer'">
+          <label class="transfer-label" for="transferQuantity">Pago</label>
+          <input id="transferQuantity"
+            type="text"
+            class="transfer-input"
+            placeholder="Ingresa el monto recibido"
+            [(ngModel)]="transferAmount"
+            pattern="^\d*\.?\d*$"
+            inputmode="decimal"
+            (input)="onTransferAmountInput($event)"
+            autocomplete="off"/>
+        </div>
+
         <div class="cash-field" *ngIf="paymentType === 'mixed'">
           <label class="cash-label" for="mixedCashQuantity">Pago en efectivo</label>
           <input id="mixedCashQuantity"
@@ -447,6 +469,19 @@
             pattern="^\d*\.?\d*$"
             inputmode="decimal"
             (input)="onMixedCashAmountInput($event)"
+            autocomplete="off"/>
+        </div>
+
+        <div class="transfer-field" *ngIf="paymentType === 'mixed'">
+          <label class="transfer-label" for="mixedTransferQuantity">Pago por transferencia</label>
+          <input id="mixedTransferQuantity"
+            type="text"
+            class="transfer-input"
+            placeholder="Monto por transferencia"
+            [(ngModel)]="mixedTransferAmount"
+            pattern="^\d*\.?\d*$"
+            inputmode="decimal"
+            (input)="onMixedTransferAmountInput($event)"
             autocomplete="off"/>
         </div>
 
@@ -603,7 +638,7 @@
 
       <!-- Totals -->
       <div class="receipt-totals">
-        <div class="receipt-total-row" *ngIf="repair?.finalPrice && repair?.finalPrice !== repair?.estimatedPrice">
+        <div class="receipt-total-row">
           <span class="receipt-total-label">Precio estimado</span>
           <span class="receipt-total-value">${{ repair?.estimatedPrice }}</span>
         </div>
@@ -629,6 +664,10 @@
             <span class="receipt-total-sub-value">${{ paidMixedCashAmount }}</span>
           </div>
           <div class="receipt-total-final-row" *ngIf="paidPaymentType === 'mixed'">
+            <span class="receipt-total-sub-label">Recibido transferencia</span>
+            <span class="receipt-total-sub-value">${{ paidMixedTransferAmount }}</span>
+          </div>
+          <div class="receipt-total-final-row" *ngIf="paidPaymentType === 'mixed'">
             <span class="receipt-total-sub-label">Recibido tarjeta</span>
             <span class="receipt-total-sub-value">${{ paidMixedCardAmount }}</span>
           </div>
@@ -647,18 +686,11 @@
         <div class="receipt-payment-method">
           <div class="receipt-payment-info">
             <span class="receipt-payment-name">
-              {{
-                paidPaymentType === "cash"
-                  ? "Efectivo"
-                  : paidPaymentType === "card"
-                    ? paidCardType === "debit"
-                      ? "Tarjeta (Débito)"
-                      : "Tarjeta (Crédito)"
-                    : "Pago mixto"
-              }}
+              {{ getPaymentTypeLabel() }}
             </span>
             <ng-container *ngIf="paidPaymentType === 'mixed'">
               <span class="receipt-payment-voucher">Efectivo: ${{ paidMixedCashAmount }}</span>
+              <span class="receipt-payment-voucher">Transferencia: ${{ paidMixedTransferAmount }}</span>
               <span class="receipt-payment-voucher">Tarjeta ({{ paidCardType === "debit" ? "Débito" : "Crédito" }}): ${{ paidMixedCardAmount }}</span>
               <span class="receipt-payment-voucher" *ngIf="hasPaidMixedCardPayment && paidVoucherId">
                 Voucher: {{ paidVoucherId }}
