@@ -13,3 +13,7 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files
+environment.prod.ts
+environment.ts

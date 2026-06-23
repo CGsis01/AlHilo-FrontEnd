@@ -83,7 +83,9 @@ export class RepairFormComponent implements OnInit {
   pendingAdvancePaymentTicket = signal(false);
 
   advanceVoucherId = '';
-  
+  cashPaymentAmount = '';
+  changeAmount = '';
+
   advancePaymentAmount = 0;
   advancePaymentCashAmount = 0;
   advancePaymentCardAmount = 0;
@@ -537,6 +539,25 @@ export class RepairFormComponent implements OnInit {
       : (this.repair?.advancePayment ?? 0);
     
       return Math.max(0, Math.round((total - advance) * 100) / 100);
+  }
+
+  onPaymentAdvanceInput(event: Event): void {
+    const sanitizedValue = this.onDecimalInput(event);
+    
+    this.cashPaymentAmount = sanitizedValue;
+
+    const advanceCashPayment = Number(this.repairForm?.get('advancePayment')?.value);
+    const totalEstimatedPrice = this.repairItems.reduce((s, i) => s + (i.isPatternSource ? 0 : i.estimatedPrice), 0);
+
+    console.log('Cash Payment Amount:', this.cashPaymentAmount);
+    console.log('Advance Cash Payment:', advanceCashPayment);
+    console.log('Total Estimated Price:', totalEstimatedPrice);
+
+    if (Number(this.cashPaymentAmount) > advanceCashPayment) {
+      const sanitizedChangeAmount = this.formatToTwoDecimals(Number(this.cashPaymentAmount) - advanceCashPayment);
+      
+      this.changeAmount = sanitizedChangeAmount;
+    }
   }
 
   onAdvancePaymentInput(event: Event): void {

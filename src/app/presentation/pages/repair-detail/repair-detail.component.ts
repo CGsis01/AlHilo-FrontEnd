@@ -779,7 +779,7 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
         const cashPaymentAmount = this.paymentType === 'mixed'
           ? mixedCashPaid
           : this.paymentType === 'cash'
-            ? (cashPaid > 0 ? cashPaid : remaining)
+            ? (cashPaid > 0  && cashPaid > remaining ? remaining : cashPaid)
             : 0;
         const transferPaymentAmount = this.paymentType === 'mixed'
           ? mixedTransferPaid

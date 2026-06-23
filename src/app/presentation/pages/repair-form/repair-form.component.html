@@ -90,14 +90,6 @@
             [readonly]="repairForm.get('advancePaymentType')?.value === 'mixed'"
             (input)="onAdvancePaymentInput($event)"
             (blur)="onAdvancePaymentBlur('advancePayment')">
-          <div class="field-error"
-            *ngIf="repairForm.get('advancePayment')?.hasError('minAdvance') && (repairForm.get('advancePayment')?.dirty || repairForm.get('advancePayment')?.touched)">
-            El anticipo debe ser al menos ${{ advancePaymentMinimum | number:'1.2-2':'en-US' }} (50% del total estimado).
-          </div>
-          <div class="field-error"
-            *ngIf="repairForm.get('advancePayment')?.hasError('maxAdvance') && (repairForm.get('advancePayment')?.dirty || repairForm.get('advancePayment')?.touched)">
-            El anticipo no puede ser mayor al total estimado (${{ advancePaymentMaximum | number:'1.2-2':'en-US' }}).
-          </div>
         </div>
 
         <div class="form-group" *ngIf="hasAdvancePayment || repairForm.get('advancePaymentType')?.value === 'mixed'">
@@ -120,6 +112,30 @@
               <span>Mixto</span>
             </label>
           </div>
+        </div>
+
+        <div class="form-group" *ngIf="hasAdvancePayment && repairForm.get('advancePaymentType')?.value === 'cash'">
+          <label for="paymentCashPaymentAmount">Pago</label>
+          <input id="paymentCashPaymentAmount"
+            type="text"
+            [value]="cashPaymentAmount"
+            placeholder="0.00"
+            min="0"
+            pattern="^\d*\.?\d*$"
+            inputmode="decimal"
+            (input)="onPaymentAdvanceInput($event)">
+        </div>
+
+        <div class="form-group" *ngIf="hasAdvancePayment && repairForm.get('advancePaymentType')?.value === 'cash'">
+          <label for="changePaymentAmount">Cambio</label>
+          <input id="changePaymentAmount"
+            type="text"
+            [value]="changeAmount"
+            placeholder="0.00"
+            min="0"
+            pattern="^\d*\.?\d*$"
+            inputmode="decimal"
+            [readonly]=true>
         </div>
 
         <div class="form-group" *ngIf="repairForm.get('advancePaymentType')?.value === 'mixed'">
