@@ -3,12 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ClientRepository } from '../../../data/repositories/client.repository';
 import { Client } from '../../../core/models/client.model';
-import { DateFormatDirective } from '../../../shared/directives/date-format.directive';
 
 @Component({
   selector: 'app-client-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DateFormatDirective],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './client-modal.component.html',
   styleUrls: ['./client-modal.component.scss']
 })
@@ -32,13 +31,13 @@ export class ClientModalComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.clientForm = this.fb.group({
       fullName: ['', Validators.required],
-      address: ['', Validators.required],
+      // address: ['', Validators.required],
       personalPhone: [this.phoneNumber, [Validators.required, Validators.pattern(/^\d{10}$/)]],
-      contactPhone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
-      email: ['', [Validators.email]],
-      facebook: [''],
-      instagram: [''],
-      birthDate: ['']
+      // contactPhone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
+      // email: ['', [Validators.email]],
+      // facebook: [''],
+      // instagram: [''],
+      // birthDate: ['']
     });
   }
 
@@ -59,8 +58,9 @@ export class ClientModalComponent implements OnInit, OnChanges {
 
     const clientData = {
       ...this.clientForm.value,
-      email: this.clientForm.value.email?.trim() || null,
-      birthDate: this.clientForm.value.birthDate ? new Date(this.clientForm.value.birthDate) : undefined
+      // contactPhone: this.clientForm.value.contactPhone?.trim() || '',
+      // Backend currently requires address, so we provide a safe default.
+      address: 'No especificada'
     };
 
     this.clientRepository.create(clientData).subscribe({
@@ -86,7 +86,7 @@ export class ClientModalComponent implements OnInit, OnChanges {
   }
 
   private resetForm(): void {
-    this.clientForm.reset({ personalPhone: '' });
+    this.clientForm.reset({ personalPhone: this.phoneNumber, contactPhone: '' });
     this.errorMessage.set('');
   }
 }

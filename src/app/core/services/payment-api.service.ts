@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { HttpParams } from '@angular/common/http';
+import { HttpParams, HttpClient, HttpHeaders } from '@angular/common/http';
 import { ApiService } from '../../core/services/api.service';
+import { ApiResponse } from '../interfaces/api-response.interface';
 import { User } from '@core/models/user.model';
 import { Payment } from '@core/models/payment.model';
+import { environment } from '@environments/environment';
 
 export interface CreatePaymentRequest {
   repair_id: string;
@@ -30,7 +32,7 @@ export interface PaymentFilters {
 export class PaymentApiService {
   private readonly endpoint = '/payments';
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private http: HttpClient) {}
 
   getAll(filters?: PaymentFilters): Observable<Payment[]> {
     let params = this.buildFilterParams(filters);
@@ -42,6 +44,46 @@ export class PaymentApiService {
   create(repairData: CreatePaymentRequest): Observable<Payment> {
     return this.apiService.post<Payment>(this.endpoint, repairData)
     .pipe(map(r => this.mapPayment(r)));
+  }
+
+  uploadAdvancePaymentPdf(repairId: string, pdf: Blob): Observable<string> {
+    const token = localStorage.getItem(environment.tokenKey);
+
+    let headers = new HttpHeaders();
+
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+    
+    const formData = new FormData();
+    formData.append('file', pdf, 'advance-payment.pdf');
+
+    return this.http.post<ApiResponse<string>>(`${environment.apiUrl}${this.endpoint}/${repairId}/AdvancePaymentReceipt`, formData, { headers })
+    .pipe(map(response => response.data));
+  }
+
+  saveAdvancePaymentPdfUrl(repairId: string, pdfUrl: string): Observable<void> {
+    return this.apiService.post<void>(`${this.endpoint}/${repairId}/AdvancePaymentReceipt`, { pdf_url: pdfUrl });
+  }
+
+  uploadFinalPaymentPdf(repairId: string, pdf: Blob): Observable<string> {
+    const token = localStorage.getItem(environment.tokenKey);
+    
+    let headers = new HttpHeaders();
+
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+    
+    const formData = new FormData();
+    formData.append('file', pdf, 'final-payment.pdf');
+
+    return this.http.post<ApiResponse<string>>(`${environment.apiUrl}${this.endpoint}/${repairId}/SettlementPaymentReceipt`, formData, { headers })
+    .pipe(map(response => response.data));
+  }
+
+  saveFinalPaymentPdfUrl(repairId: string, pdfUrl: string): Observable<void> {
+    return this.apiService.post<void>(`${this.endpoint}/${repairId}/SettlementPaymentReceipt`, { pdf_url: pdfUrl });
   }
 
   private buildFilterParams(filters?: PaymentFilters): HttpParams {

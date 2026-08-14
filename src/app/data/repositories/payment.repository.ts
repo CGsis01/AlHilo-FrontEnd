@@ -28,4 +28,20 @@ export class PaymentRepository {
 
     return this.paymentApiService.create(createRequest);
   }
+
+  uploadAdvancePaymentPdf(repairId: string, pdf: Blob): Observable<string> {
+    return this.paymentApiService.uploadAdvancePaymentPdf(repairId, pdf);
+  }
+
+  saveAdvancePaymentPdfUrl(repairId: string, pdfUrl: string): Observable<void> {
+    return this.paymentApiService.saveAdvancePaymentPdfUrl(repairId, pdfUrl);
+  }
+
+  uploadFinalPaymentPdf(repairId: string, pdf: Blob): Observable<string> {
+    return this.paymentApiService.uploadFinalPaymentPdf(repairId, pdf);
+  }
+
+  saveFinalPaymentPdfUrl(repairId: string, pdfUrl: string): Observable<void> {
+    return this.paymentApiService.saveFinalPaymentPdfUrl(repairId, pdfUrl);
+  }
 }
