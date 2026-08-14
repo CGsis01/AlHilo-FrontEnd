@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, of } from 'rxjs';
+import { catchError, firstValueFrom, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -35,6 +35,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DateFormatDirective } from '../../../shared/directives/date-format.directive';
 import { GarmentTicketData } from '../../components/garment-selector-modal/garment-selector-modal.component';
+import { ConvertHtmlToPdf } from '../../../shared/utils/convertHtmlToPdf';
 
 @Component({
   selector: 'app-repair-form',
@@ -143,7 +144,8 @@ export class RepairFormComponent implements OnInit {
     private repairImpressionTicket: repairImpressionTicket,
     private whatsappApiService: WhatsappApiService,
     private toastService: ToastService,
-    private authService: AuthService
+    private authService: AuthService,
+    private convertHtmlToPdfService: ConvertHtmlToPdf
   ) {}
 
   ngOnInit(): void {
@@ -941,18 +943,20 @@ export class RepairFormComponent implements OnInit {
     this.isLoading.set(false);
     void this.openTicketAndPrint();
     
-    this.whatsappApiService.sendNotification({
-      phone: repair.customerPhone,
-      customer_name: repair.customerName,
-      repair_id: repair.id.substring(0, 8),
-      event: 'received'
-    }).subscribe(result => {
-      if (result.success) {
-        this.toastService.show('Notificación WhatsApp enviada al cliente', 'success');
-      } else {
-        this.toastService.show('No se pudo enviar la notificación WhatsApp', 'error');
-      }
-    });
+    setTimeout(() => 
+      this.whatsappApiService.sendNotification({
+        phone: repair.customerPhone,
+        customer_name: repair.customerName,
+        repair_id: repair.id.substring(0, 8),
+        event: this.advancePaymentTicketUrl ? 'received_with_advance' : 'received',
+        url: this.advancePaymentTicketUrl || undefined
+      }).subscribe(result => {
+        if (result.success) {
+          this.toastService.show('Notificación WhatsApp enviada al cliente', 'success');
+        } else {
+          this.toastService.show('No se pudo enviar la notificación WhatsApp', 'error');
+        }
+      }), 5000);    
   }
 
   private async openTicketAndPrint(): Promise<void> {
@@ -962,23 +966,44 @@ export class RepairFormComponent implements OnInit {
     try {
       const ticketData = await this.repairImpressionTicket.generateTicketData(this.repair);
       this.qrCodeDataUrl = ticketData.qrCodeDataUrl;
+      
       await this.triggerWorkOrderPrint(true);
     } catch (error) {
       console.error('Error generating ticket:', error);
     }
   }
+  
+  advancePaymentTicketUrl: string | null = null;
 
-  private openAdvancePaymentTicket(): void {
+  private openAdvancePaymentTicket(): Promise<void> {
     this.pendingAdvancePaymentTicket.set(false);
     this.showAdvancePaymentTicket.set(true);
+
+    return new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(async () => {
+            try {
+              const blob = await this.convertHtmlToPdfService.convertirHtmlToPdf("AdvancePaymentTicket", "AdvancePaymentTicket.pdf");
+              const url = await firstValueFrom(this.paymentUseCases.uploadAdvancePaymentPdf(this.repair!.id, blob));
+              
+              this.advancePaymentTicketUrl = url;
+            } catch (error) {
+              console.error("Error al generar PDF del anticipo:", error);
+            } finally {
+              resolve();
+            }
+          });
+        });
+      });
   }
 
   private async triggerWorkOrderPrint(redirectAfterPrint = false): Promise<void> {
     if (!this.repair) {
       return;
     }
+
     if (this.pendingAdvancePaymentTicket()) {
-      this.openAdvancePaymentTicket();
+      await this.openAdvancePaymentTicket();
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {

@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import { Observable, catchError, of } from 'rxjs';
 import { ApiService } from './api.service';
 
-export type WhatsappEvent = 'received' | 'in_progress' | 'validated';
+export type WhatsappEvent = 'received' | 'received_with_advance' | 'validated' | 'delivered';
 
 export interface WhatsappNotificationRequest {
   phone: string;
   customer_name: string;
   repair_id: string;
   event: WhatsappEvent;
+  url?: string; // Optional URL for the notification, e.g., for advance payment receipt
 }
 
 export interface WhatsappNotificationResponse {

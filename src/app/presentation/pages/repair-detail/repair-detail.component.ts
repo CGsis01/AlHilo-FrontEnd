@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, of, Subject } from 'rxjs';
+import { catchError, firstValueFrom, of, Subject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -27,6 +27,7 @@ import { RepairItem } from '@core/models/repair-item.model';
 import { SeamstressAssignModalComponent } from './seamstress-assign-modal.component';
 import { UnassignConfirmModalComponent } from './unassign-confirm-modal.component';
 import { JobReviewModalComponent } from './job-review-modal.component';
+import { ConvertHtmlToPdf } from '../../../shared/utils/convertHtmlToPdf';
 
 @Component({
   selector: 'app-repair-detail',
@@ -142,7 +143,8 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
     private repairRealtimeService: RepairRealtimeService,
     private repairImpressionTicket: repairImpressionTicket,
     private whatsappApiService: WhatsappApiService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private convertHtmlToPdfService: ConvertHtmlToPdf
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -456,6 +458,19 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
         if (openCommentsModal) {
           this.openAssignModalJobReview();
         }
+
+        if (updatedRepair?.repairStatus?.name === RepairStatusEnum.VALIDATED) {
+          this.whatsappApiService.sendNotification({
+            phone: updatedRepair.customerPhone,
+            customer_name: updatedRepair.customerName,
+            repair_id: updatedRepair.id.substring(0, 8), // Shorten ID for message
+            event: 'validated'
+          }).subscribe(result => {
+            if (result.success) {
+              this.toastService.show('Notificación WhatsApp enviada: reparación lista', 'success');
+            } else {
+              this.toastService.show('No se pudo enviar la notificación WhatsApp', 'error');
+            }});}
       },
       error: (error) => {
         this.toastService.show('Error al actualizar el estado de la prenda', 'error', 'bottom-right');
@@ -469,30 +484,6 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
       const statusName = this.getItemStatusName(item);
       return statusName === RepairStatusEnum.PENDING || statusName === RepairStatusEnum.IN_PROGRESS;
     });
-  }
-
-  updateStatus(newStatus: RepairStatus): void {
-    if (!this.repair) 
-      return;
-    
-    this.repairUseCases.updateRepairStatus(this.repair.id, newStatus).subscribe({
-      next: (updatedRepair) => {
-        this.repair = updatedRepair;
-        
-        if (updatedRepair?.repairStatus?.name === RepairStatusEnum.VALIDATED) {
-          this.whatsappApiService.sendNotification({
-            phone: updatedRepair.customerPhone,
-            customer_name: updatedRepair.customerName,
-            repair_id: updatedRepair.id.substring(0, 8), // Shorten ID for message
-            event: 'validated'
-          }).subscribe(result => {
-            if (result.success) {
-              this.toastService.show('Notificación WhatsApp enviada: reparación lista', 'success');
-            } else {
-              this.toastService.show('No se pudo enviar la notificación WhatsApp', 'error');
-            }});}},
-      error: (error) => {
-        this.errorMessage = error.message || 'Error al actualizar el estado';}});
   }
 
   // ─── Seamstresses ─────────────────────────────────────────────
@@ -721,6 +712,8 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
     this.initializePaymentModal();
   }
 
+  settlementPaymentTicketUrl: string | null = null;
+
   confirmPayment(): void {
     if (!this.repair) 
       return;
@@ -869,17 +862,46 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
           next: () => { this.handleRepairUpdated(updatedRepair); },
           error: () => {
             this.toastService.show('La reparación se actualizó, pero no se pudo registrar el pago.', 'error');
-            this.handleRepairUpdated(updatedRepair);}});        
+            this.handleRepairUpdated(updatedRepair);}});
 
-        this.closePaymentModal();
+        // this.closePaymentModal();        
 
-        this.showPaymentTicket.set(true);
+        setTimeout(async () => {
+          this.showPaymentTicket.set(true);
 
-        setTimeout(() => {
+          await this.waitForTicketRender();          
+          
+          try {
+            const blob = await this.convertHtmlToPdfService.convertirHtmlToPdf("SettlementPaymentTicketPdf", "SettlementPaymentTicket.pdf");
+            const url = await firstValueFrom(this.paymentUseCases.uploadFinalPaymentPdf(this.repair?.id!, blob));
+            
+            this.settlementPaymentTicketUrl = url;
+          } catch (uploadError) {
+            console.warn('Upload falló, pero la descarga continúa: ', uploadError);
+            
+            this.toastService.show('No se pudo subir el PDF del ticket de pago.', 'error');
+          }
+          
           this.printPaymentTicket();
           this.closePaymentTicket();
           this.goBack();
         }, 100);
+
+        // setTimeout(() => 
+          this.whatsappApiService.sendNotification({
+            phone: updatedRepair.customerPhone,
+            customer_name: updatedRepair.customerName,
+            repair_id: updatedRepair.id.substring(0, 8),
+            event: 'delivered',
+            url: this.settlementPaymentTicketUrl || undefined
+          }).subscribe(result => {
+            if (result.success) {
+              this.toastService.show('Notificación WhatsApp enviada al cliente', 'success');
+            } else {
+              this.toastService.show('No se pudo enviar la notificación WhatsApp', 'error');
+            }
+          })
+          // , 5000);
       },
       error: (error) => { this.errorMessage = error.message || 'Error al actualizar el estado';}});
   }

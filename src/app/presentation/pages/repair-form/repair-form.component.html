@@ -1,4 +1,4 @@
-<div class="form-container">
+<div class="form-container" *ngIf="repairForm">
   <div class="form-header">
     <h1>Nueva Orden de Reparación</h1>
     <p class="subtitle">Crear una nueva orden de reparación para un cliente</p>
@@ -295,7 +295,7 @@
     </div>
 
     <!-- Receipt document -->
-    <div class="receipt-doc">
+    <div class="receipt-doc" id="AdvancePaymentTicket">
       <!-- Header -->
       <div class="receipt-brand">
         <div class="receipt-brand-headline">

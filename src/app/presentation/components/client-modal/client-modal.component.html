@@ -24,11 +24,12 @@
             </div>
           </div>
 
+          <!--
           <div class="form-group">
             <label for="address">Dirección *</label>
-            <input id="address" 
-              type="text" 
-              formControlName="address" 
+            <input id="address"
+              type="text"
+              formControlName="address"
               placeholder="Calle, número, colonia"
               class="form-control">
             <div class="error-message" *ngIf="clientForm.get('address')?.invalid && clientForm.get('address')?.touched">
@@ -39,10 +40,11 @@
           <div class="form-group">
             <label for="birthDate">Fecha de Nacimiento</label>
             <input appDateFormat
-              id="birthDate"              
+              id="birthDate"
               formControlName="birthDate"
               class="form-control">
           </div>
+          -->
         </div>
 
         <div class="form-section">
@@ -65,11 +67,11 @@
             </div>
 
             <div class="form-group">
-              <label for="contactPhone">Teléfono de Contacto *</label>
+              <label for="contactPhone">Teléfono de Contacto (opcional)</label>
               <input id="contactPhone" 
                 type="text" 
                 formControlName="contactPhone" 
-                placeholder="10 dígitos"
+                placeholder="10 dígitos (opcional)"
                 maxlength="10"
                 pattern="\d{10}"
                 oninput="this.value = this.value.replace(/[^0-9]/g, '');"
@@ -80,42 +82,46 @@
             </div>
           </div>
 
+          <!--
           <div class="form-group">
             <label for="email">Email</label>
-            <input id="email" 
-              type="email" 
-              formControlName="email" 
+            <input id="email"
+              type="email"
+              formControlName="email"
               placeholder="correo@ejemplo.com"
               class="form-control">
             <div class="error-message" *ngIf="clientForm.get('email')?.invalid && clientForm.get('email')?.touched">
               Ingrese un email válido
             </div>
           </div>
+          -->
         </div>
 
+        <!--
         <div class="form-section">
           <h3>Redes Sociales</h3>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label for="facebook">Facebook</label>
-              <input id="facebook" 
-                type="text" 
-                formControlName="facebook" 
+              <input id="facebook"
+                type="text"
+                formControlName="facebook"
                 placeholder="Usuario de Facebook"
                 class="form-control">
             </div>
 
             <div class="form-group">
               <label for="instagram">Instagram</label>
-              <input id="instagram" 
-                type="text" 
-                formControlName="instagram" 
+              <input id="instagram"
+                type="text"
+                formControlName="instagram"
                 placeholder="@usuario"
                 class="form-control">
             </div>
           </div>
         </div>
+        -->
 
         <div class="error-alert" *ngIf="errorMessage()">
           {{ errorMessage() }}
