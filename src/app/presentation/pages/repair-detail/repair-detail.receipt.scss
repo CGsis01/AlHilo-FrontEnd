@@ -380,41 +380,54 @@
 // ─── Print: payment receipt ───────────────────────────────────────────────────
 @media print {
   @page {
-    size: auto;
+    size: 80mm auto;
     margin: 0;
+  }
+
+   .payment-modal-overlay {
+    display: none !important;
   }
 
   .receipt-overlay {
     display: flex !important;
     position: static !important;
     align-items: flex-start !important;
-    justify-content: flex-start !important;
-    background: white !important;
+    justify-content: center !important;
+
+    width: 100% !important;
+    margin: 0 !important;
     padding: 0 !important;
+
+    background: white !important;
     overflow: visible !important;
-    width: auto !important;
-    max-width: none !important;
     inset: auto !important;
   }
 
   .receipt-wrapper {
-    width: auto !important;
-    max-width: none !important;
-    margin: 0 !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
   }
 
   .receipt-topbar { display: none !important; }
 
-  .receipt-doc {
+    .receipt-doc {
+    width: 100% !important;
+    margin: 0 auto !important;
+
+    padding: 2mm 3mm !important;
+
+    box-sizing: border-box !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    padding: 0 6mm 0 0 !important;
-    width: auto !important;
-    box-sizing: border-box !important;
+
     page-break-inside: avoid;
+
     font-family: Arial, Helvetica, sans-serif;
-    background: white;
-    color: #000;
+    background: white !important;
+    color: #000 !important;
+
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

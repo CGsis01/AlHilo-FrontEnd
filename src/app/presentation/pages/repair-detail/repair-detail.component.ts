@@ -864,7 +864,7 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
             this.toastService.show('La reparación se actualizó, pero no se pudo registrar el pago.', 'error');
             this.handleRepairUpdated(updatedRepair);}});
 
-        // this.closePaymentModal();        
+        this.closePaymentModal();        
 
         setTimeout(async () => {
           this.showPaymentTicket.set(true);

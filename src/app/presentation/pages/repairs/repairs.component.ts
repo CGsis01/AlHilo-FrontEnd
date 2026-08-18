@@ -182,7 +182,7 @@ export class RepairsComponent implements OnInit, OnDestroy {
       : sourceByStatus;
 
     this.filteredRepairs = source.slice().sort(
-      (a, b) => new Date(a.receivedDate).getTime() - new Date(b.receivedDate).getTime());
+      (a, b) => new Date(b.receivedDate).getTime() - new Date(a.receivedDate).getTime());
   }
 
   onCustomerSearchChange(searchTerm: string): void {
