@@ -149,6 +149,9 @@ a {
 }
 
 @media print {
+   app-toast {
+    display: none !important;
+  }
   @page {
     size: auto;
     margin: 8mm;
