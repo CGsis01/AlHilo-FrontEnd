@@ -88,7 +88,7 @@ export class RepairRepository implements Repository<Repair> {
         assigned_to_id: item.assignedToId}))
     };
     
-    return this.repairApiService.patch(id, updateRequest);
+    return this.repairApiService.update(id, updateRequest);
   }
 
   delete(id: string): Observable<boolean> {

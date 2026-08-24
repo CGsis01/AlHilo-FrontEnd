@@ -389,6 +389,40 @@ export class RepairApiService {
       customerPhone: repair.customer_phone,
       customerEmail: repair.customer_email,
       customerId: repair.client_id,
+      client: repair.client
+  ? {
+      id: repair.client.id,
+      fullName: repair.client.full_name,
+      address: repair.client.address,
+      personalPhone: repair.client.personal_phone,
+      contactPhone: repair.client.contact_phone,
+      email: repair.client.email,
+      facebook: repair.client.facebook,
+      instagram: repair.client.instagram,
+      birthDate: repair.client.birth_date
+        ? new Date(repair.client.birth_date)
+        : undefined,
+
+      store: repair.client.store
+        ? {
+            id: repair.client.store.id,
+            name: repair.client.store.name,
+            address: repair.client.store.address,
+            phone: repair.client.store.phone,
+            email: repair.client.store.email,
+            rfc: repair.client.store.rfc,
+            url: repair.client.store.url,
+            logo: repair.client.store.logo,
+            isActive: repair.client.store.is_active,
+            createdAt: new Date(repair.client.store.created_at),
+            updatedAt: new Date(repair.client.store.updated_at),
+          }
+        : undefined,
+
+      createdAt: new Date(repair.client.created_at),
+      updatedAt: new Date(repair.client.updated_at),
+    }
+  : undefined,
       repairStatus: {
         id: repair.repair_status.repair_status_id,
         name: repair.repair_status.name

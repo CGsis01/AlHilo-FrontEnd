@@ -1,4 +1,5 @@
 import { RepairStatus } from "./repair-status.model";
+import { Client } from "./client.model";
 import { RepairItem } from "./repair-item.model";
 import { User } from "./user.model";
 
@@ -29,4 +30,5 @@ export interface Repair {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+  client?: Client;
 }
