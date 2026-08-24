@@ -28,6 +28,7 @@ import { SeamstressAssignModalComponent } from './seamstress-assign-modal.compon
 import { UnassignConfirmModalComponent } from './unassign-confirm-modal.component';
 import { JobReviewModalComponent } from './job-review-modal.component';
 import { ConvertHtmlToPdf } from '../../../shared/utils/convertHtmlToPdf';
+import { ClientUseCases } from '../../../domain/usecases/client.usecases';
 
 @Component({
   selector: 'app-repair-detail',
@@ -111,6 +112,14 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   paidMixedTransferAmount: string | null = null;
   paidVoucherId = '';
 
+  showClientEditModal = signal(false);
+
+  editingClientName = '';
+  editingClientPhone = '';
+  editingClientEmail = '';
+  clientEditError = '';
+  
+
   repairStatuses = toSignal(
     this.repairStatusUseCases.getAllRepairStatuses().pipe(
       catchError(err => {
@@ -144,7 +153,8 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
     private repairImpressionTicket: repairImpressionTicket,
     private whatsappApiService: WhatsappApiService,
     private toastService: ToastService,
-    private convertHtmlToPdfService: ConvertHtmlToPdf
+    private convertHtmlToPdfService: ConvertHtmlToPdf,
+    private clientUseCases: ClientUseCases,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -905,6 +915,86 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
       },
       error: (error) => { this.errorMessage = error.message || 'Error al actualizar el estado';}});
   }
+
+  openClientEditModal(): void {
+  if (!this.repair?.client) {
+    this.toastService.show('No se encontró la información del cliente', 'error');
+    return;
+  }
+
+  this.editingClientName = this.repair.client.fullName;
+  this.editingClientPhone = this.repair.client.personalPhone;
+  this.editingClientEmail = this.repair.client.email ?? '';
+  this.clientEditError = '';
+
+  this.showClientEditModal.set(true);
+}
+
+closeClientEditModal(): void {
+  this.showClientEditModal.set(false);
+  this.clientEditError = '';
+}
+
+onClientPhoneInput(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  const sanitized = input.value.replace(/\D/g, '').slice(0, 10);
+
+  input.value = sanitized;
+  this.editingClientPhone = sanitized;
+}
+
+saveClientChanges(): void {
+  if (!this.repair?.client || !this.repair.client.store) {
+    this.clientEditError = 'No se encontró la información completa del cliente';
+    return;
+  }
+
+  if (!this.editingClientName.trim()) {
+    this.clientEditError = 'El nombre es requerido';
+    return;
+  }
+
+  if (!/^\d{10}$/.test(this.editingClientPhone)) {
+    this.clientEditError = 'El teléfono debe tener 10 dígitos';
+    return;
+  }
+
+  const email = this.editingClientEmail.trim();
+
+  this.clientUseCases.updateClient(this.repair.client.id, {
+    fullName: this.editingClientName.trim(),
+    personalPhone: this.editingClientPhone,
+    email: email || undefined,
+    store: this.repair.client.store
+  }).subscribe({
+    next: () => {
+      if (!this.repair) return;
+
+      this.repairUseCases.updateRepair(this.repair.id, {
+        customerName: this.editingClientName.trim(),
+        customerPhone: this.editingClientPhone,
+        customerEmail: email || undefined
+      }).subscribe({
+        next: (updatedRepair) => {
+          this.repair = updatedRepair;
+          this.closeClientEditModal();
+
+          this.toastService.show(
+            'Cliente actualizado correctamente',
+            'success'
+          );
+        },
+        error: () => {
+          this.clientEditError =
+            'El cliente se actualizó, pero no se pudo actualizar la orden';
+        }
+      });
+    },
+    error: () => {
+      this.clientEditError = 'Error al actualizar el cliente';
+    }
+  });
+}
 
   onPaymentTypeChange(selectedType: 'cash' | 'card' | 'transfer' | 'mixed'): void {
     if (selectedType === 'card') {

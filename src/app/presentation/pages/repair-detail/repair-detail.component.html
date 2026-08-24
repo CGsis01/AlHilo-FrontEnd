@@ -128,7 +128,17 @@
       </div>
 
       <div class="detail-card" *ngIf="userRole?.code !== UserRole.SEAMSTRESS && userRole?.code !== UserRole.HEADSEWING">
-        <h2>Información del Cliente</h2>
+        <div class="flex justify-between align-center">
+          <h2>Información del Cliente</h2>
+            <button
+              type="button"
+              class="btn-edit-client"
+              (click)="openClientEditModal()"
+              title="Editar cliente"
+              aria-label="Editar cliente">
+              ✏️
+            </button>
+        </div>
         <div class="info-list">
           <div class="info-item">
             <span class="label">Nombre</span>
@@ -712,5 +722,93 @@
         <p class="receipt-footer-note">Este comprobante es válido como recibo de pago.</p>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Modal Editar Cliente en detalles del cliente -->
+<div
+  class="modal-overlay"
+  *ngIf="showClientEditModal()"
+  (click)="closeClientEditModal()">
+
+  <div
+    class="modal-content client-edit-modal"
+    (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>Editar cliente</h2>
+
+      <button
+        type="button"
+        class="modal-close"
+        (click)="closeClientEditModal()">
+        ×
+      </button>
+    </div>
+
+    <div class="flex flex-col gap-4 p-5 ">
+
+      <div class="flex gap-3 items-center">
+        <label for="clientName">Nombre</label>
+
+        <input
+          id="clientName"
+          class="p-1"
+          type="text"
+          [(ngModel)]="editingClientName"
+          placeholder="Nombre del cliente">
+      </div>
+
+      <div class="flex gap-3 items-center">
+        <label for="clientPhone">Teléfono</label>
+
+        <input
+          id="clientPhone"
+          class="p-1"
+          type="text"
+          inputmode="numeric"
+          maxlength="10"
+          [(ngModel)]="editingClientPhone"
+          (input)="onClientPhoneInput($event)"
+          placeholder="10 dígitos">
+      </div>
+
+      <div class="flex gap-3 items-center">
+        <label for="clientEmail">Email</label>
+
+        <input
+          id="clientEmail"
+          class="p-1"
+          type="email"
+          [(ngModel)]="editingClientEmail"
+          placeholder="correo@ejemplo.com">
+      </div>
+
+      <div
+        class="client-edit-error"
+        *ngIf="clientEditError">
+        {{ clientEditError }}
+      </div>
+
+    </div>
+
+    <div class="flex justify-center gap-2 mt-3 mb-4">
+
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="closeClientEditModal()">
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="saveClientChanges()">
+        Guardar cambios
+      </button>
+
+    </div>
+
   </div>
 </div>
