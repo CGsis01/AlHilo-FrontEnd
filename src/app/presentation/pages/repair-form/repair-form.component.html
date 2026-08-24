@@ -282,7 +282,7 @@
 </div>
 
 <!-- Advance Payment Receipt Ticket -->
-<div class="receipt-overlay" *ngIf="showAdvancePaymentTicket()" (click)="closeAdvancePaymentTicket()">
+<div class="receipt-overlay" *ngIf="showCreateRepairTicket() || showAdvancePaymentTicket()" (click)="closeAdvancePaymentTicket()">
   <div class="receipt-wrapper" (click)="$event.stopPropagation()">
 
     <!-- Screen-only actions bar -->

@@ -82,6 +82,7 @@ export class RepairFormComponent implements OnInit {
   // ─── Advance Ticket ───────────────────────────────────────────
   showAdvancePaymentTicket = signal(false);
   pendingAdvancePaymentTicket = signal(false);
+  showCreateRepairTicket = signal(false);
 
   advanceVoucherId = '';
   cashPaymentAmount = '';
@@ -368,7 +369,8 @@ export class RepairFormComponent implements OnInit {
 
               this.handleRepairCreated(repair);
             },
-            error: () => {
+            error: (error) => {
+               console.error('Error registrando anticipo:', error);
               this.toastService.show('La reparación se creó, pero no se pudo registrar el anticipo.', 'error');
               this.handleRepairCreated(repair);
             }
@@ -997,32 +999,57 @@ export class RepairFormComponent implements OnInit {
       });
   }
 
-  private async triggerWorkOrderPrint(redirectAfterPrint = false): Promise<void> {
-    if (!this.repair) {
-      return;
-    }
+ private async triggerWorkOrderPrint(
+  redirectAfterPrint = false
+): Promise<void> {
 
-    if (this.pendingAdvancePaymentTicket()) {
-      await this.openAdvancePaymentTicket();
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          this.printAdvancePaymentTicket();
-          this.closeAdvancePaymentTicket();
-
-          if (redirectAfterPrint) {
-            void this.router.navigate(['/repairs']);
-          }
-        });
-      });
-
-      return;
-    }
-
-    if (redirectAfterPrint) {
-      void this.router.navigate(['/repairs']);
-    }
+  if (!this.repair) {
+    return;
   }
+
+  const hadAdvancePayment = this.pendingAdvancePaymentTicket();
+
+  // El Ticket de Crear Reparación debe mostrarse SIEMPRE
+  this.showCreateRepairTicket.set(true);
+
+  // Si hubo anticipo, generamos también su PDF/URL
+  if (hadAdvancePayment) {
+    await this.openAdvancePaymentTicket();
+  }
+
+  await this.waitForTicketRender();
+
+  try {
+    // Imprimimos UNA sola vez el Ticket de Crear Reparación
+    await this.repairImpressionTicket.simplePrintAndWait();
+  } catch (error) {
+    console.error(
+      'Error printing create repair ticket:',
+      error
+    );
+
+    this.toastService.show(
+      'No se pudo imprimir el ticket de la reparación',
+      'error'
+    );
+  }
+
+  this.showCreateRepairTicket.set(false);
+  this.showAdvancePaymentTicket.set(false);
+  this.pendingAdvancePaymentTicket.set(false);
+
+  if (redirectAfterPrint) {
+    void this.router.navigate(['/repairs']);
+  }
+}
+
+private waitForTicketRender(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
 
   private prepareAdvancePaymentTicket(
     repair: Repair,
