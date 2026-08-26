@@ -1,0 +1,14 @@
+@media print {
+  @page repair-ticket {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  .repair-ticket-print {
+    page: repair-ticket;
+
+    width: 73mm !important;
+    max-width: 73mm !important;
+    margin: 0 auto !important;
+  }
+}

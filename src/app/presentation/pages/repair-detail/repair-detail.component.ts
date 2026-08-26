@@ -29,6 +29,10 @@ import { UnassignConfirmModalComponent } from './unassign-confirm-modal.componen
 import { JobReviewModalComponent } from './job-review-modal.component';
 import { ConvertHtmlToPdf } from '../../../shared/utils/convertHtmlToPdf';
 import { ClientUseCases } from '../../../domain/usecases/client.usecases';
+import {
+  RepairTicketComponent,
+  RepairTicketPaymentData
+} from '../../../shared/tickets/repair-ticket/repair-ticket.component';
 
 @Component({
   selector: 'app-repair-detail',
@@ -39,7 +43,8 @@ import { ClientUseCases } from '../../../domain/usecases/client.usecases';
     RouterModule,
     SeamstressAssignModalComponent,
     UnassignConfirmModalComponent,
-    JobReviewModalComponent
+    JobReviewModalComponent,
+    RepairTicketComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './repair-detail.component.html',
@@ -106,7 +111,6 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   paidPaymentType: 'cash' | 'card' | 'transfer' | 'mixed' = 'cash';
   paidCardType: 'debit' | 'credit' = 'debit';
   paidCashAmount: string | null = null;
-  paidTransferAmount: string | null = null;
   paidMixedCashAmount: string | null = null;
   paidMixedCardAmount: string | null = null;
   paidMixedTransferAmount: string | null = null;
@@ -118,6 +122,34 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   editingClientPhone = '';
   editingClientEmail = '';
   clientEditError = '';
+
+  get repairTicketPaymentData(): RepairTicketPaymentData {
+  const amountPaid = this.getRemainingBalance();
+
+  return {
+    amountPaid,
+    cashAmount: this.paidPaymentType === 'mixed'
+      ? this.getNumericAmount(this.paidMixedCashAmount)
+      : this.getNumericAmount(this.paidCashAmount),
+
+    cardAmount: this.paidPaymentType === 'mixed'
+      ? this.getNumericAmount(this.paidMixedCardAmount)
+      : this.paidPaymentType === 'card'
+        ? amountPaid
+        : 0,
+
+    transferAmount: this.paidPaymentType === 'mixed'
+      ? this.getNumericAmount(this.paidMixedTransferAmount)
+      : this.paidPaymentType === 'transfer'
+        ? amountPaid
+        : 0,
+
+    paymentType: this.paidPaymentType,
+    cardType: this.paidCardType,
+    voucherId: this.paidVoucherId,
+    paymentDate: this.paymentDate
+  };
+}
   
 
   repairStatuses = toSignal(
@@ -1093,51 +1125,7 @@ saveClientChanges(): void {
     return Math.round((total - advance) * 100) / 100;
   }
 
-  getPaidChange(): number {
-    const remaining = this.getRemainingBalance();
-
-    if (this.paidPaymentType === 'mixed') {
-      const cashPaid = this.getNumericAmount(this.paidMixedCashAmount);
-      const cardPaid = this.getNumericAmount(this.paidMixedCardAmount);
-      const transferPaid = this.getNumericAmount(this.paidMixedTransferAmount);
-      const change = cashPaid - Math.max(0, remaining - cardPaid - transferPaid);
-      
-      return this.roundToTwo(Math.max(0, change));
-    }
-
-    if (this.paidPaymentType === 'cash') {
-      const paid = this.getNumericAmount(this.paidCashAmount);
-      
-      return this.roundToTwo(paid - remaining);
-    }
-
-    return 0;
-  }
-
   // ─── Payment Ticket ───────────────────────────────────────────
-  getPaymentTypeLabel(): string {
-    if(this.getRemainingBalance() <= 0)
-      return "Sin pago pendiente";
-
-    if(this.paidPaymentType === "cash")
-      return "Efectivo";
-
-    if(this.paidPaymentType === "card") {
-      if(this.paidCardType === "debit")
-        return "Tarjeta (Débito)";
-
-      return "Tarjeta (Crédito)";
-    }
-
-    if(this.paidPaymentType === "transfer")
-      return "Transferencia";
-
-    if(this.paidPaymentType === "mixed")
-      return "Pago mixto";
-    
-    return "";
-  }
-
   closePaymentTicket(): void {
     this.showPaymentTicket.set(false);
   }

@@ -36,11 +36,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { DateFormatDirective } from '../../../shared/directives/date-format.directive';
 import { GarmentTicketData } from '../../components/garment-selector-modal/garment-selector-modal.component';
 import { ConvertHtmlToPdf } from '../../../shared/utils/convertHtmlToPdf';
+import { RepairTicketComponent } from '../../../shared/tickets/repair-ticket/repair-ticket.component';
 
 @Component({
   selector: 'app-repair-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ClientModalComponent, ClientSelectionModalComponent, RepairItemsEditorComponent, DateFormatDirective],
+  imports: [CommonModule, ReactiveFormsModule, ClientModalComponent, ClientSelectionModalComponent, RepairItemsEditorComponent, DateFormatDirective, RepairTicketComponent],
   templateUrl: './repair-form.component.html',
   styleUrls: ['./repair-form.component.scss']
 })
@@ -95,6 +96,20 @@ export class RepairFormComponent implements OnInit {
   advancePaymentMinimum = 0;
   advancePaymentMaximum = 0;
   advancePaymentDate: Date = new Date();
+
+
+  get repairTicketPaymentData() {
+    return {
+      amountPaid: this.advancePaymentAmount,
+      cashAmount: this.advancePaymentCashAmount,
+      cardAmount: this.advancePaymentCardAmount,
+      transferAmount: this.advancePaymentTransferAmount,
+      paymentType: this.advancePaymentType,
+      cardType: this.advanceCardType,
+      voucherId: this.advanceVoucherId,
+      paymentDate: this.advancePaymentDate
+    };
+}
   
   advancePaymentType: 'cash' | 'card' | 'transfer' | 'mixed' = 'cash';
   advanceCardType: 'debit' | 'credit' = 'debit';
@@ -536,14 +551,6 @@ export class RepairFormComponent implements OnInit {
   }
 
   // ─── Advance Ticket ───────────────────────────────────────────
-  getAdvanceRemainingBalance(): number {
-    const total = this.repair?.estimatedPrice ?? 0;
-    const advance = this.advancePaymentAmount > 0
-      ? this.advancePaymentAmount
-      : (this.repair?.advancePayment ?? 0);
-    
-      return Math.max(0, Math.round((total - advance) * 100) / 100);
-  }
 
   onPaymentAdvanceInput(event: Event): void {
     const sanitizedValue = this.onDecimalInput(event);
@@ -614,12 +621,6 @@ export class RepairFormComponent implements OnInit {
       totalControl?.markAsTouched();
       totalControl?.updateValueAndValidity({ emitEvent: false });
     }
-  }
-
-  closeAdvancePaymentTicket(): void {
-    this.showAdvancePaymentTicket.set(false);
-    this.pendingAdvancePaymentTicket.set(false);
-    this.router.navigate(['/repairs']);
   }
 
   printAdvancePaymentTicket(): void {

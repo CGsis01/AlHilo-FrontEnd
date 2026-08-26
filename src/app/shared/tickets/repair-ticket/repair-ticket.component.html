@@ -1,0 +1,236 @@
+<div
+  [id]="mode === 'advance' ? 'AdvancePaymentTicket' : 'SettlementPaymentTicketPdf'"
+  class="repair-ticket-print w-[73mm] bg-white text-black px-3 py-2 font-sans">
+  <div class="text-center">
+    <h1 class="text-lg font-bold">Al Hilo</h1>
+
+    <p class="text-[10px] font-bold uppercase">Taller de Costura Profesional</p>
+  </div>
+
+  <div class="border-t-2 border-black my-2"></div>
+
+  <div class="text-center">
+    <h2 class="text-sm font-bold uppercase">Comprobante de Pago</h2>
+
+    <p class="text-[10px] uppercase">{{ mode === 'advance' ? 'Anticipo de Reparación' : 'Orden de Entrega' }}</p>
+  </div>
+
+  <div
+    class="grid grid-cols-2 gap-x-4 gap-y-2 border border-black rounded-md p-2 mt-2">
+    <div>
+      <p class="text-[9px] font-bold uppercase">N° de orden</p>
+      <p class="text-[10px] font-semibold">
+        #{{ repair?.id | slice: 0 : 8 | uppercase }}
+      </p>
+    </div>
+
+    <div>
+      <p class="text-[9px] font-bold uppercase">Fecha</p>
+      <p class="text-[10px] font-semibold">
+        {{ payment?.paymentDate | date: "dd/MM/yyyy" }}
+      </p>
+    </div>
+
+    <div>
+      <p class="text-[9px] font-bold uppercase">Hora</p>
+      <p class="text-[10px] font-semibold">
+        {{ payment?.paymentDate | date: "HH:mm" }}
+      </p>
+    </div>
+
+    <div *ngIf="mode === 'advance'">
+      <p class="text-[9px] font-bold uppercase">Entrega estimada</p>
+      <p class="text-[10px] font-semibold">
+        {{ repair?.estimatedDeliveryDate | date: "dd/MM/yyyy" }}
+      </p>
+    </div>
+
+    <div [class.col-span-2]="mode === 'advance'">
+      <p class="text-[9px] font-bold uppercase">Atendido por</p>
+      <p class="text-[10px] font-semibold">
+        {{ repair?.createdBy?.name }}
+      </p>
+    </div>
+  </div>
+
+  <div class="border-t border-dashed border-black my-2"></div>
+
+  <!-- SECCION DE DATOS DEL CLIENTE -->
+  <div>
+    <h3 class="text-[9px] uppercase mb-1">Cliente</h3>
+
+    <div class="flex justify-between gap-4">
+      <span class="text-[10px] font-bold">Nombre</span>
+
+      <span class="text-[10px] font-semibold text-right">
+        {{ repair?.customerName }}
+      </span>
+    </div>
+    <div class="flex justify-between gap-4 mt-1">
+      <span class="text-[10px] font-bold">Teléfono</span>
+
+      <span class="text-[10px] font-semibold text-right">
+        {{ repair?.customerPhone }}
+      </span>
+    </div>
+
+    <div class="flex justify-between gap-4 mt-1" *ngIf="repair?.customerEmail">
+      <span class="text-[10px] font-bold">Email</span>
+
+      <span class="text-[10px] font-semibold text-right">
+        {{ repair?.customerEmail }}
+      </span>
+    </div>
+  </div>
+  <div class="border-t border-dashed border-black my-2"></div>
+
+  <!-- SERVICIO REALIZADO -->
+  <div>
+    <h3 class="text-[9px] uppercase mb-1">Prendas en orden</h3>
+
+    <div class="flex justify-between gap-4">
+      <span class="text-[10px] font-bold"> Cantidad de prendas </span>
+
+      <span class="text-[10px] font-semibold">
+        {{ repair?.items?.length ?? 1 }}
+      </span>
+    </div>
+  </div>
+  <div class="border-t border-dashed border-black my-2"></div>
+
+  <!-- SERVICIO REGISTRADO -->
+  <div>
+    <h3 class="text-[9px] uppercase mb-1">Servicio registrado</h3>
+
+    <div class="border border-black rounded-md overflow-hidden">
+      <div
+        class="grid grid-cols-[1fr_auto] gap-2 px-2 py-1 border-b border-black">
+        <span class="text-[9px] font-bold uppercase"> Descripción </span>
+
+        <span class="text-[9px] font-bold uppercase"> Importe </span>
+      </div>
+
+      <div
+        *ngFor="let item of repair?.items"
+        class="grid grid-cols-[1fr_auto] gap-2 px-2 py-1">
+        <div>
+          <p class="text-[10px] font-bold">
+            {{ getRepairTypeNames(item) }}
+          </p>
+
+          <p class="text-[9px]">
+            {{ item.garment.name }} — {{ item.description }}
+          </p>
+        </div>
+
+        <span class="text-[10px] font-semibold">
+          ${{ getItemPrice(item) | number:'1.2-2':'en-US' }}
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-dashed border-black my-2"></div>
+
+  <!-- TOTALES -->
+  <div class="border border-black rounded-md p-2">
+    <div class="flex justify-between text-[10px]">
+      <span class="font-bold"> Total estimado </span>
+
+      <span class="font-semibold">
+        ${{ repair?.estimatedPrice | number: "1.2-2" : "en-US" }}
+      </span>
+    </div>
+
+    <div class="flex justify-between text-[10px] mt-1">
+      <span class="font-bold"> Anticipo pagado </span>
+
+      <span class="font-semibold">
+         ${{ getAdvancePaid() | number:'1.2-2':'en-US' }}
+      </span>
+    </div>
+
+    <div class="border-t border-black mt-2 pt-2">
+      <div class="flex justify-between">
+        <span class="text-[11px] font-bold uppercase"> Total cobrado </span>
+
+        <span class="text-[12px] font-bold">
+          ${{ payment?.amountPaid | number: "1.2-2" : "en-US" }}
+        </span>
+      </div>
+
+      <div class="flex justify-between mt-1">
+        <span class="text-[10px] font-bold"> Saldo pendiente </span>
+
+        <span class="text-[10px] font-semibold">
+          ${{ getRemainingBalance() | number: "1.2-2" : "en-US" }}
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-dashed border-black my-2"></div>
+
+  <!-- FORMA DE PAGO -->
+  <div *ngIf="(payment?.amountPaid ?? 0) > 0">
+    <h3 class="text-[9px] uppercase mb-1">Forma de pago</h3>
+
+    <div class="border border-black rounded-md p-2 flex justify-between gap-2">
+      <div class="flex flex-col">
+        <span class="text-[10px] font-bold">
+          {{
+            payment?.paymentType === "cash"
+              ? "Efectivo"
+              : payment?.paymentType === "card"
+                ? payment?.cardType === "debit"
+                  ? "Tarjeta (Débito)"
+                  : "Tarjeta (Crédito)"
+                : payment?.paymentType === "transfer"
+                  ? "Transferencia"
+                  : "Pago mixto"
+          }}
+        </span>
+
+        <ng-container *ngIf="payment?.paymentType === 'mixed'">
+          <span class="text-[9px]">
+            Efectivo: ${{ payment?.cashAmount | number: "1.2-2" : "en-US" }}
+          </span>
+
+          <span class="text-[9px]" *ngIf="(payment?.transferAmount ?? 0) > 0">
+            Transferencia: ${{
+              payment?.transferAmount | number: "1.2-2" : "en-US"
+            }}
+          </span>
+
+          <span class="text-[9px]" *ngIf="(payment?.cardAmount ?? 0) > 0">
+            Tarjeta ({{
+              payment?.cardType === "debit" ? "Débito" : "Crédito"
+            }}): ${{ payment?.cardAmount | number: "1.2-2" : "en-US" }}
+          </span>
+
+          <span
+            class="text-[9px]"
+            *ngIf="(payment?.cardAmount ?? 0) > 0 && payment?.voucherId">
+            Voucher: {{ payment?.voucherId }}
+          </span>
+        </ng-container>
+
+        <span
+          class="text-[9px]"
+          *ngIf="payment?.paymentType === 'card' && payment?.voucherId">
+          Voucher: {{ payment?.voucherId }}
+        </span>
+      </div>
+
+      <span class="text-[9px] font-bold whitespace-nowrap"> ✓ PAGADO </span>
+    </div>
+  </div>
+
+  <div class="border-t-2 border-black mt-3 pt-2 text-center">
+    <p class="text-[10px] font-bold">¡Gracias por su preferencia!</p>
+
+    <p class="text-[9px] font-semibold mt-1">Tu ropa en manos expertas.</p>
+
+    <p class="text-[8px] mt-1">
+      Este comprobante es válido como recibo de pago.
+    </p>
+  </div>
+</div>
