@@ -34,14 +34,15 @@ import { WhatsappApiService } from '../../../core/services/whatsapp-api.service'
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DateFormatDirective } from '../../../shared/directives/date-format.directive';
-import { GarmentTicketData } from '../../components/garment-selector-modal/garment-selector-modal.component';
+import { GarmentTicketData } from '../../../shared/tickets/repair-service-ticket/repair-service.model';
 import { ConvertHtmlToPdf } from '../../../shared/utils/convertHtmlToPdf';
 import { RepairTicketComponent } from '../../../shared/tickets/repair-ticket/repair-ticket.component';
+import { RepairServiceTicketComponent } from '../../../shared/tickets/repair-service-ticket/repair-service-ticket.component';
 
 @Component({
   selector: 'app-repair-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ClientModalComponent, ClientSelectionModalComponent, RepairItemsEditorComponent, DateFormatDirective, RepairTicketComponent],
+  imports: [CommonModule, ReactiveFormsModule, ClientModalComponent, ClientSelectionModalComponent, RepairItemsEditorComponent, DateFormatDirective, RepairTicketComponent, RepairServiceTicketComponent],
   templateUrl: './repair-form.component.html',
   styleUrls: ['./repair-form.component.scss']
 })

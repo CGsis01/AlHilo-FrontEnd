@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { RepairItem } from '../../../core/models/repair-item.model';
 import { RepairType } from '../../../core/models/repair-type.model';
 import { Garment, GarmentRepairType } from '../../../core/models/garment.model';
-import { GarmentSelection, GarmentSelectorModalComponent, GarmentTicketData } from '../garment-selector-modal/garment-selector-modal.component';
+import { GarmentSelection, GarmentSelectorModalComponent } from '../garment-selector-modal/garment-selector-modal.component';
+import { GarmentTicketData } from '../../../shared/tickets/repair-service-ticket/repair-service.model';
+
 
 /** Partial item used while editing inside the form */
 export interface RepairItemDraft {
