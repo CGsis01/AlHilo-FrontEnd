@@ -1,0 +1,55 @@
+<div class="ticket-page-service" *ngIf="data as ticket">
+  <div class="ticket-content">
+
+    <div class="ticket-title">
+      <h3>Al Hilo - Taller de Costura</h3>
+      <p class="ticket-subtitle">Orden de Trabajo</p>
+    </div>
+
+    <div class="ticket-qr">
+      <img
+        [src]="ticket.qrCodeDataUrl"
+        alt="QR Code"
+        class="qr-code"
+      />
+    </div>
+
+    <div class="ticket-info">
+
+      <div class="ticket-row">
+        <span class="ticket-label">Cliente:</span>
+        <span class="ticket-value">{{ ticket.customerName }}</span>
+      </div>
+
+      <div class="ticket-row">
+        <span class="ticket-label">Prenda:</span>
+        <span class="ticket-value">{{ ticket.garmentName }}</span>
+      </div>
+
+      <div class="ticket-row">
+        <span class="ticket-label">Tipo de reparación:</span>
+        <span class="ticket-value">{{ ticket.repairTypeName }}</span>
+      </div>
+
+      <div class="ticket-block">
+        <span class="ticket-block-label">Descripción:</span>
+        <div class="ticket-block-value">{{ ticket.comment }}</div>
+      </div>
+
+      <div class="ticket-row">
+        <span class="ticket-label">Fecha de recepción:</span>
+        <span class="ticket-value">
+          {{ ticket.receivedDate | date:'short' }}
+        </span>
+      </div>
+
+      <div class="ticket-row">
+        <span class="ticket-label">Entrega estimada:</span>
+        <span class="ticket-value">
+          {{ ticket.estimatedDeliveryDate | date:'short' }}
+        </span>
+      </div>
+
+    </div>
+  </div>
+</div>

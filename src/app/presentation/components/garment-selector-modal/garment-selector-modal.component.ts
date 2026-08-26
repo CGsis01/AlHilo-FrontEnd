@@ -2,23 +2,13 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, signa
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Garment, GarmentRepairType } from '../../../core/models/garment.model';
+import { GarmentTicketData } from '../../../shared/tickets/repair-service-ticket/repair-service.model';
 import * as QRCode from 'qrcode';
 
 export interface GarmentSelection {
   garment: Garment;
   repairTypes: GarmentRepairType[];
   comment: string;
-}
-
-export interface GarmentTicketData {
-  qrCodeDataUrl: string;
-  garmentName: string;
-  repairTypeName: string;
-  comment: string;
-  repairId: string;
-  customerName?: string;
-  receivedDate?: Date;
-  estimatedDeliveryDate?: Date;
 }
 
 @Component({
