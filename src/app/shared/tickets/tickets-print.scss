@@ -7,8 +7,12 @@
   .repair-ticket-print {
     page: repair-ticket;
 
-    width: 73mm !important;
-    max-width: 73mm !important;
+    width: 68mm !important;
+    max-width: 68mm !important;
     margin: 0 auto !important;
+    padding: 2mm !important;
+
+    box-sizing: border-box !important;
+
   }
 }
