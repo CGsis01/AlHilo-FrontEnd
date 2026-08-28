@@ -29,6 +29,10 @@ import { UnassignConfirmModalComponent } from './unassign-confirm-modal.componen
 import { JobReviewModalComponent } from './job-review-modal.component';
 import { ConvertHtmlToPdf } from '../../../shared/utils/convertHtmlToPdf';
 import { ClientUseCases } from '../../../domain/usecases/client.usecases';
+import { GarmentUseCases } from '../../../domain/usecases/garment.usecases';
+import { Garment } from '../../../core/models/garment.model';
+import { RepairTypeUseCases } from '../../../domain/usecases/repair-type.usecases';
+import { RepairType } from '../../../core/models/repair-type.model';
 import {
   RepairTicketComponent,
   RepairTicketPaymentData
@@ -123,6 +127,11 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   editingClientEmail = '';
   clientEditError = '';
 
+  isEditingItems = signal(false);
+  editedGarmentIds: Record<string, string> = {};
+  editedDescriptions: Record<string, string> = {};
+  editedRepairTypeIds: Record<string, string[]> = {};
+
   get repairTicketPaymentData(): RepairTicketPaymentData {
   const amountPaid = this.getRemainingBalance();
 
@@ -150,7 +159,28 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
     paymentDate: this.paymentDate
   };
 }
+
+repairTypes = toSignal(
+  this.repairTypeUseCases.getAllRepairTypes().pipe(
+    catchError(err => {
+      console.error('Error loading repair types:', err);
+      return of([] as RepairType[]);
+    })
+  ),
+  { initialValue: [] as RepairType[] }
+);
   
+garments = toSignal(
+  this.garmentUseCases
+    .getActiveGarments(this.authService.currentUser?.store?.id)
+    .pipe(
+      catchError(err => {
+        console.error('Error loading available garments:', err);
+        return of([] as Garment[]);
+      })
+    ),
+  { initialValue: [] as Garment[] }
+);
 
   repairStatuses = toSignal(
     this.repairStatusUseCases.getAllRepairStatuses().pipe(
@@ -187,7 +217,77 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private convertHtmlToPdfService: ConvertHtmlToPdf,
     private clientUseCases: ClientUseCases,
+    private garmentUseCases: GarmentUseCases,
+    private repairTypeUseCases: RepairTypeUseCases,
   ) {}
+
+ toggleItemsEdit(): void {
+  if (!this.isEditingItems()) {
+    this.editedGarmentIds = {};
+    this.editedDescriptions = {};
+    this.editedRepairTypeIds = {};
+
+    for (const item of this.repair?.items ?? []) {
+      if (item.id) {
+        this.editedGarmentIds[item.id] = item.garment.id;
+        this.editedDescriptions[item.id] = item.description;
+        this.editedRepairTypeIds[item.id] =
+          item.repairTypes.map(type => type.id);
+      }
+    }
+  }
+
+  this.isEditingItems.set(!this.isEditingItems());
+}
+
+saveItemsEdit(): void {
+  if (!this.repair) return;
+
+  const repairId = this.repair.id;
+  const requests = [];
+
+  for (const item of this.repair.items ?? []) {
+    if (!item.id) continue;
+
+    const itemId = item.id;
+
+    const garment = this.garments().find(
+      g => g.id === this.editedGarmentIds[itemId]
+    );
+
+    const repairTypes = this.repairTypes().filter(
+      type => this.editedRepairTypeIds[itemId]?.includes(type.id)
+    );
+
+    if (!garment || repairTypes.length === 0) continue;
+
+    requests.push(
+      this.repairUseCases.updateRepairItem(
+        repairId,
+        itemId,
+        {
+          garment,
+          repairTypes,
+          description: this.editedDescriptions[itemId],
+          estimatedPrice: item.estimatedPrice,
+          isPatternSource: item.isPatternSource
+        }
+      )
+    );
+  }
+
+  if (requests.length === 0) return;
+
+  forkJoin(requests).subscribe({
+    next: () => {
+      this.isEditingItems.set(false);
+      this.loadRepair(repairId);
+    },
+    error: (error) => {
+      console.error('Error updating repair items:', error);
+    }
+  });
+}
 
   async ngOnInit(): Promise<void> {
     this.userRole = this.authService.currentUser?.role;
