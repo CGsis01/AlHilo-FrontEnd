@@ -26,6 +26,7 @@ export interface RepairItemRequest {
   assigned_to_id?: string;
   final_price?: number;
   sort_order?: number;
+  updated_by?: string;
 }
 
 export interface CreateRepairRequest {

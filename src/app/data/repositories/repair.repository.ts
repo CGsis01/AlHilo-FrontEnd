@@ -212,7 +212,9 @@ export class RepairRepository implements Repository<Repair> {
       final_price: item.finalPrice,
       repair_status_id: item.repairStatus?.id,
       assigned_to_id: item.assignedToId,
-      sort_order: item.sortOrder};
+      sort_order: item.sortOrder,
+      updated_by: getStoredUserId()
+    };
 
     return this.repairApiService.updateRepairItem(repairId, itemId, req);
   }

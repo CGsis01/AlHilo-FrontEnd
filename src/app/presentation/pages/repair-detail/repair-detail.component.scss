@@ -110,14 +110,14 @@
     border-radius: 12px; 
     padding: 1.5rem; 
     
-    h2 { 
-      font-size: 1.125rem; 
-      font-weight: 600; 
-      color: var(--text); 
-      margin: 0 0 1rem 0; 
-      padding-bottom: 0.75rem; 
-      border-bottom: 2px solid var(--border); 
-    }
+    // h2 { 
+    //   font-size: 1.125rem; 
+    //   font-weight: 600; 
+    //   color: var(--text); 
+    //   margin: 0 0 1rem 0; 
+    //   padding-bottom: 0.75rem; 
+    //   border-bottom: 2px solid var(--border); 
+    // }
   }
 
   .detail-card.full-width { grid-column: 1 / -1; }
