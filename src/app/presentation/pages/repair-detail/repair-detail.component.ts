@@ -131,6 +131,7 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   editedGarmentIds: Record<string, string> = {};
   editedDescriptions: Record<string, string> = {};
   editedRepairTypeIds: Record<string, string[]> = {};
+  editedEstimatedDeliveryDate = '';
 
   get repairTicketPaymentData(): RepairTicketPaymentData {
   const amountPaid = this.getRemainingBalance();
@@ -223,9 +224,13 @@ garments = toSignal(
 
  toggleItemsEdit(): void {
   if (!this.isEditingItems()) {
-    this.editedGarmentIds = {};
-    this.editedDescriptions = {};
-    this.editedRepairTypeIds = {};
+      this.editedGarmentIds = {};
+      this.editedDescriptions = {};
+      this.editedRepairTypeIds = {};
+
+      this.editedEstimatedDeliveryDate = this.repair?.estimatedDeliveryDate
+      ? new Date(this.repair.estimatedDeliveryDate).toISOString().split('T')[0]
+      : '';
 
     for (const item of this.repair?.items ?? []) {
       if (item.id) {
@@ -276,9 +281,26 @@ saveItemsEdit(): void {
     );
   }
 
-  if (requests.length === 0) return;
+  const [year, month, day] =
+  this.editedEstimatedDeliveryDate.split('-').map(Number);
 
-  forkJoin(requests).subscribe({
+  const estimatedDeliveryDate = new Date(
+    year,
+    month - 1,
+    day,
+    12,
+    0,
+    0
+  );
+
+  const dateRequest = this.repairUseCases.updateRepair(
+    repairId,
+    {
+      estimatedDeliveryDate
+    }
+  );
+
+  forkJoin([...requests, dateRequest]).subscribe({
     next: () => {
       this.isEditingItems.set(false);
       this.loadRepair(repairId);

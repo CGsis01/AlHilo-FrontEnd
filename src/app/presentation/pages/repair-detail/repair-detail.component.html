@@ -351,9 +351,14 @@
           </div>
           <div class="info-item">
             <span class="label">Entrega Estimada</span>
-            <span class="value">{{
-              repair.estimatedDeliveryDate | date: "longDate"
-            }}</span>
+              <span class="value">{{
+                repair.estimatedDeliveryDate | date: "longDate"
+              }}
+            </span>
+            <input
+              *ngIf="isEditingItems()"
+              type="date"
+              [(ngModel)]="editedEstimatedDeliveryDate" />
           </div>
           <div class="info-item" *ngIf="repair.actualDeliveryDate">
             <span class="label">Fecha de Entrega</span>
