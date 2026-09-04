@@ -33,6 +33,7 @@ import { GarmentUseCases } from '../../../domain/usecases/garment.usecases';
 import { Garment } from '../../../core/models/garment.model';
 import { RepairTypeUseCases } from '../../../domain/usecases/repair-type.usecases';
 import { RepairType } from '../../../core/models/repair-type.model';
+import { Payment } from '../../../core/models/payment.model';
 import {
   RepairTicketComponent,
   RepairTicketPaymentData
@@ -100,6 +101,8 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
 
   // ─── Payment Modal ────────────────────────────────────────────
   showPaymentModal = signal(false);
+  isAdvancePaymentMode  = signal(false);
+  advancePaymentAmount: string | null = null;
   paymentType: 'cash' | 'card' | 'transfer' | 'mixed' = 'cash';
   cardType: 'debit' | 'credit' = 'debit';
   voucherId = '';
@@ -866,15 +869,205 @@ saveItemsEdit(): void {
   // ─── Payment Modal ────────────────────────────────────────────
   openPaymentModal(): void {
     this.initializePaymentModal();
-    
+    this.isAdvancePaymentMode.set(false);
     this.showPaymentModal.set(true);
   }
 
   closePaymentModal(): void {
+  this.initializePaymentModal();
+  this.isAdvancePaymentMode.set(false);
+  this.advancePaymentAmount = null;
     this.showPaymentModal.set(false);
 
-    this.initializePaymentModal();
   }
+
+ openAdvancePaymentModal(): void {
+  if (!this.repair) return;
+
+  if ((this.repair.advancePayment ?? 0) > 0) {
+    return;
+  }
+
+  this.initializePaymentModal();
+
+  this.isAdvancePaymentMode.set(true);
+  this.advancePaymentAmount = null;
+
+  this.showPaymentModal.set(true);
+}
+getAdvancePaymentTotal(): number {
+   switch (this.paymentType) {
+    case 'cash':
+      return this.getNumericAmount(this.cashAmount);
+
+    case 'transfer':
+      return this.getNumericAmount(this.transferAmount);
+
+    case 'card':
+      return this.getNumericAmount(this.advancePaymentAmount);
+
+    case 'mixed':
+      return Math.round(
+        (
+          this.getNumericAmount(this.mixedCashAmount) +
+          this.getNumericAmount(this.mixedCardAmount) +
+          this.getNumericAmount(this.mixedTransferAmount)
+        ) * 100
+      ) / 100;
+
+    default:
+      return 0;
+  }
+}
+
+confirmAdvancePayment(): void {
+  if (!this.repair) return;
+
+  if ((this.repair.advancePayment ?? 0) > 0) {
+    this.toastService.show(
+      'La reparación ya tiene un anticipo.',
+      'error'
+    );
+    return;
+  }
+
+  const total = this.getAdvancePaymentTotal();
+
+  if (total <= 0) {
+    this.toastService.show(
+      'Ingresa un anticipo válido.',
+      'error'
+    );
+    return;
+  }
+
+  const repairTotal =
+    this.repair.finalPrice ??
+    this.repair.estimatedPrice ??
+    0;
+
+  if (total > repairTotal) {
+    this.toastService.show(
+      'El anticipo no puede ser mayor al total de la reparación.',
+      'error'
+    );
+    return;
+  }
+
+  const cashAmount =
+    this.paymentType === 'mixed'
+      ? this.getNumericAmount(this.mixedCashAmount)
+      : this.paymentType === 'cash'
+        ? total
+        : 0;
+
+  const cardAmount =
+    this.paymentType === 'mixed'
+      ? this.getNumericAmount(this.mixedCardAmount)
+      : this.paymentType === 'card'
+        ? total
+        : 0;
+
+  const transferAmount =
+    this.paymentType === 'mixed'
+      ? this.getNumericAmount(this.mixedTransferAmount)
+      : this.paymentType === 'transfer'
+        ? total
+        : 0;
+
+  if (cardAmount > 0 && !this.voucherId.trim()) {
+    this.toastService.show(
+      'Ingresa el número de voucher.',
+      'error'
+    );
+    return;
+  }
+
+  const cashType = cashAmount > 0
+    ? this.resolveSelectedAdvancePaymentType('cash')
+    : undefined;
+
+  const cardType = cardAmount > 0
+    ? this.resolveSelectedAdvancePaymentType('card')
+    : undefined;
+
+  const transferType = transferAmount > 0
+    ? this.resolveSelectedAdvancePaymentType('transfer')
+    : undefined;
+
+  if (
+    (cashAmount > 0 && !cashType) ||
+    (cardAmount > 0 && !cardType) ||
+    (transferAmount > 0 && !transferType)
+  ) {
+    this.toastService.show(
+      'No se pudo identificar el tipo de pago.',
+      'error'
+    );
+    return;
+  }
+
+  const payments: Partial<Payment>[] = [];
+
+  if (cashAmount > 0 && cashType) {
+    payments.push({
+      repair: this.repair,
+      paymentType: cashType,
+      amount: cashAmount,
+      isDebit: false,
+      isAdvance: true
+    });
+  }
+
+  if (cardAmount > 0 && cardType) {
+    payments.push({
+      repair: this.repair,
+      paymentType: cardType,
+      amount: cardAmount,
+      isDebit: this.cardType === 'debit',
+      voucherId: this.voucherId.trim(),
+      isAdvance: true
+    });
+  }
+
+  if (transferAmount > 0 && transferType) {
+    payments.push({
+      repair: this.repair,
+      paymentType: transferType,
+      amount: transferAmount,
+      isDebit: false,
+      isAdvance: true
+    });
+  }
+
+  const repairId = this.repair.id;
+
+  this.paymentUseCases
+    .addAdvancePayment(payments)
+    .subscribe({
+      next: () => {
+        this.toastService.show(
+          'Anticipo registrado correctamente.',
+          'success'
+        );
+
+        this.closePaymentModal();
+        this.loadRepair(repairId);
+      },
+
+      error: error => {
+        console.error(
+          'Error adding advance payment:',
+          error
+        );
+
+        this.toastService.show(
+          'No se pudo registrar el anticipo.',
+          'error'
+        );
+      }
+    });
+}
 
   settlementPaymentTicketUrl: string | null = null;
 
@@ -1150,8 +1343,9 @@ saveClientChanges(): void {
   });
 }
 
-  onPaymentTypeChange(selectedType: 'cash' | 'card' | 'transfer' | 'mixed'): void {
+  onPaymentTypeChange( selectedType: 'cash' | 'card' | 'transfer' | 'mixed'): void {
     if (selectedType === 'card') {
+      this.advancePaymentAmount = null;
       this.cashAmount = null;
       this.mixedCashAmount = null;
       this.mixedCardAmount = null;

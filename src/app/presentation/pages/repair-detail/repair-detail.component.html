@@ -303,9 +303,20 @@
           userRole?.code !== UserRole.HEADSEWING
         ">
         <div
-          class="flex justify-between items-center border-b-2 border-zinc-700 text-xl font-bold mb-4 pb-2">
-          <h2>Precios</h2>
-        </div>
+  class="flex justify-between items-center border-b-2 border-zinc-700 text-xl font-bold mb-4 pb-2">
+
+  <h2>Precios</h2>
+
+  <button
+    *ngIf="(repair.advancePayment ?? 0) <= 0"
+    type="button"
+    (click)="openAdvancePaymentModal()"
+    title="Agregar anticipo"
+    aria-label="Agregar anticipo">
+    ✏️
+  </button>
+
+</div>
         <div class="info-list">
           <div class="info-item" *ngIf="repair.finalPrice">
             <span class="label">Precio Final</span>
@@ -576,7 +587,13 @@
   (click)="closePaymentModal()">
   <div class="modal-content payment-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>💳 Cobro de Reparación</h2>
+      <h2>
+        {{
+          isAdvancePaymentMode()
+            ? '💰 Registrar Anticipo'
+            : '💳 Cobro de Reparación'
+        }}
+      </h2>
       <button class="modal-close" (click)="closePaymentModal()">×</button>
     </div>
 
@@ -600,7 +617,12 @@
           <span class="summary-value">- ${{ repair?.advancePayment }}</span>
         </div>
         <div class="summary-row summary-total">
-          <span class="summary-label">Total a Cobrar</span>
+          <span class="summary-label">{{
+            isAdvancePaymentMode()
+              ? 'Total de la Reparación'
+              : 'Total a Cobrar'
+            }}
+        </span>
           <span class="summary-value price"
             >${{ getRemainingBalance() | number: "1.2-2" : "en-US" }}</span
           >
@@ -762,6 +784,7 @@
                 [(ngModel)]="cardType" />
               <span>Crédito</span>
             </label>
+            
           </div>
         </div>
 
@@ -777,6 +800,24 @@
             [(ngModel)]="voucherId"
             autocomplete="off" />
         </div>
+        <div
+        class="cash-field"
+        *ngIf="paymentType === 'card' && isAdvancePaymentMode()">
+
+        <label for="advanceCardAmount">
+          Pago
+        </label>
+
+        <input
+          id="advanceCardAmount"
+          type="text"
+          [(ngModel)]="advancePaymentAmount"
+          placeholder="Ingresa el monto del anticipo"
+          inputmode="decimal"
+          pattern="^\d*\.?\d*$"
+          class="cash-input" />
+
+        </div>
       </div>
     </div>
 
@@ -784,15 +825,28 @@
       <button class="btn-secondary" (click)="closePaymentModal()">
         Cancelar
       </button>
-      <button
-        class="btn-primary btn-confirm-payment"
-        (click)="confirmPayment()"
-        [disabled]="isEnabledConfirmPayment()">
-        ✓ Confirmar Pago y Entregar
-      </button>
+          <button
+          class="btn-primary btn-confirm-payment"
+          (click)="
+            isAdvancePaymentMode()
+              ? confirmAdvancePayment()
+              : confirmPayment()
+          "
+          [disabled]="
+            isAdvancePaymentMode()
+              ? getAdvancePaymentTotal() <= 0
+              : isEnabledConfirmPayment()
+          ">
+
+          {{
+            isAdvancePaymentMode()
+              ? '✓ Registrar Anticipo'
+              : '✓ Confirmar Pago y Entregar'
+          }}
+        </button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
 <!-- Payment Receipt Ticket -->
 <div

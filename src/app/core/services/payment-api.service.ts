@@ -46,6 +46,22 @@ export class PaymentApiService {
     .pipe(map(r => this.mapPayment(r)));
   }
 
+  addAdvancePayment(
+  paymentsData: CreatePaymentRequest[]
+): Observable<Payment[]> {
+
+  return this.apiService
+    .post<Payment[]>(
+      `${this.endpoint}/advance`,
+      paymentsData
+    )
+    .pipe(
+      map(response =>
+        response.map(r => this.mapPayment(r))
+      )
+    );
+}
+
   uploadAdvancePaymentPdf(repairId: string, pdf: Blob): Observable<string> {
     const token = localStorage.getItem(environment.tokenKey);
 

@@ -29,6 +29,25 @@ export class PaymentRepository {
     return this.paymentApiService.create(createRequest);
   }
 
+  addAdvancePayment(
+  payments: Partial<Payment>[]
+): Observable<Payment[]> {
+
+  const createRequest = payments.map(payment => ({
+    repair_id: payment.repair?.id!,
+    payment_type_id: payment.paymentType?.id!,
+    amount: payment.amount!,
+    is_debit: payment.isDebit ?? false,
+    voucher_id: payment.voucherId,
+    is_advance: true,
+    created_by: getStoredUserId()
+  }));
+
+  return this.paymentApiService.addAdvancePayment(
+    createRequest
+  );
+}
+
   uploadAdvancePaymentPdf(repairId: string, pdf: Blob): Observable<string> {
     return this.paymentApiService.uploadAdvancePaymentPdf(repairId, pdf);
   }
