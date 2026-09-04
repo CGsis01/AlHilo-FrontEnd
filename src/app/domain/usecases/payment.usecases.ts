@@ -14,6 +14,14 @@ export class PaymentUseCases {
     return this.paymentRepository.create(payment);
   }
 
+  addAdvancePayment(
+  payments: Partial<Payment>[]
+): Observable<Payment[]> {
+  return this.paymentRepository.addAdvancePayment(
+    payments
+  );
+}
+
   getAllPayments(): Observable<Payment[]> {
     return this.paymentRepository.getAll();
   }
