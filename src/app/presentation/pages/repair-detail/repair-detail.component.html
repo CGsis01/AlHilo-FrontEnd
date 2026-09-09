@@ -194,7 +194,8 @@
                   }}
                 </td>
                 <td class="item-action-cell">
-                  <ng-container
+                  <div class="flex gap-2">
+                    <ng-container
                     *ngIf="
                       !item.isPatternSource &&
                         canManageItemStatus(item) &&
@@ -219,11 +220,16 @@
                         >{{ nextStatus.name }}</span
                       >
                     </div>
-                  </ng-container>
-
+                  </ng-container> 
+                  
                   <ng-template #noItemAction>
                     <span class="no-actions-inline">Sin acción</span>
                   </ng-template>
+                  
+                  <button type="button" (click)="deleteItem(item)" title="Eliminar servicio">
+                   🗑️
+                 </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
