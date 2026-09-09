@@ -37,24 +37,25 @@
         <div
           class="flex justify-between items-center border-b-2 border-zinc-700 text-xl font-bold mb-4 pb-2">
           <h2>Detalles de la(s) Prenda(s)</h2>
-          <ng-container *ngIf="!isEditingItems(); else editingButtons">
-            <button
-              type="button"
-              (click)="toggleItemsEdit()">
-              ✏️
-            </button>
-          </ng-container>
-
-          <ng-template #editingButtons>
-            <div  class="flex gap-2">
-              <button
-                type="button"
-                (click)="toggleItemsEdit()"
-                class="hover:text-red-500">
-                Cancelar
-              </button>
-
-              <button
+            <ng-container *ngIf="userRole?.code === UserRole.ADMIN || userRole?.code === UserRole.RECEPTIONIST">
+              <ng-container *ngIf="!isEditingItems(); else editingButtons">
+                <button
+                  type="button"
+                  (click)="toggleItemsEdit()">
+                  ✏️
+                </button>
+              </ng-container>
+              
+              <ng-template #editingButtons>
+                <div  class="flex gap-2">
+                  <button
+                  type="button"
+                  (click)="toggleItemsEdit()"
+                  class="hover:text-red-500">
+                  Cancelar
+                </button>
+                
+                <button
                 type="button"
                 (click)="saveItemsEdit()"
                 class="hover:text-green-500">
@@ -62,6 +63,7 @@
               </button>
             </div>
           </ng-template>
+        </ng-container>
         </div>
 
         <!-- Multiple items view -->
@@ -225,10 +227,11 @@
                   <ng-template #noItemAction>
                     <span class="no-actions-inline">Sin acción</span>
                   </ng-template>
-                  
-                  <button type="button" (click)="deleteItem(item)" title="Eliminar servicio">
-                   🗑️
-                 </button>
+                  <ng-container *ngIf="userRole?.code === UserRole.ADMIN || userRole?.code === UserRole.RECEPTIONIST">
+                    <button type="button" (click)="deleteItem(item)" title="Eliminar servicio">
+                      🗑️
+                    </button>
+                  </ng-container>
                   </div>
                 </td>
               </tr>
