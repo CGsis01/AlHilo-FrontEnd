@@ -248,6 +248,24 @@ garments = toSignal(
   this.isEditingItems.set(!this.isEditingItems());
 }
 
+deleteItem(item: RepairItem) {
+  
+  if(!this.repair) return;
+  if(!item.id) return;
+
+  const confirmed = window.confirm('¿Estás seguro de que deseas eliminar esta servicio?');
+
+  if(!confirmed) return;
+
+  const repairId = this.repair.id;
+
+  this.repairUseCases.removeRepairItem(repairId, item.id).subscribe({
+    next: () => {this.loadRepair(repairId);
+    },
+    error: () => {console.error('Error deleting repair item')},
+  })
+}
+
 saveItemsEdit(): void {
   if (!this.repair) return;
 
