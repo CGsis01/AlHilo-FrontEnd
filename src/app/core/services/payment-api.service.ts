@@ -152,13 +152,13 @@ export class PaymentApiService {
     return {
       id: payment.id,
       repair: repair,
-      paymentType: payment.paymentType,
+      paymentType: payment.payment_type,
       amount: payment.amount,
-      isDebit: payment.isDebit,
-      voucherId: payment.voucherId,
-      isAdvance: payment.isAdvance,
-      createdBy: payment.createdBy,
-      paymentDate: new Date(payment.paymentDate)
+      isDebit: payment.is_debit,
+      voucherId: payment.voucher_id,
+      isAdvance: payment.is_advance,
+      createdBy: payment.created_by_user,
+      paymentDate: new Date(payment.created_at)
     };
   }
 }

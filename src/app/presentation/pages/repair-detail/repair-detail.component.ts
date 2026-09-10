@@ -671,6 +671,107 @@ saveItemsEdit(): void {
     });
   }
 
+ async reprintTicket(): Promise<void> {
+  const repair = this.repair;
+
+  if (!repair) return;
+
+  // Ticket inicial / servicio
+  if (repair.repairStatus.name !== RepairStatusEnum.DELIVERED) {
+    this.showAdvancePaymentTicket.set(true);
+
+    await this.waitForTicketRender();
+
+    try {
+      await this.repairImpressionTicket.simplePrintAndWait();
+    } finally {
+      this.showAdvancePaymentTicket.set(false);
+    }
+
+    return;
+  }
+
+  // Ticket final / entrega
+  this.paymentUseCases
+    .getPaymentsByRepairId(repair.id)
+    .subscribe({
+      next: async (payments) => {
+
+        const finalPayments = payments.filter(
+          payment => !payment.isAdvance
+        );
+
+        const cashAmount = finalPayments
+          .filter(payment => payment.paymentType.name === 'Efectivo')
+          .reduce((total, payment) => total + Number(payment.amount), 0);
+
+        const cardAmount = finalPayments
+          .filter(payment => payment.paymentType.name === 'Tarjeta')
+          .reduce((total, payment) => total + Number(payment.amount), 0);
+
+        const transferAmount = finalPayments
+          .filter(payment => payment.paymentType.name === 'Transferencia')
+          .reduce((total, payment) => total + Number(payment.amount), 0);
+
+        const usedMethods = [
+          cashAmount > 0,
+          cardAmount > 0,
+          transferAmount > 0
+        ].filter(Boolean).length;
+
+        if (usedMethods > 1) {
+          this.paidPaymentType = 'mixed';
+        } else if (cardAmount > 0) {
+          this.paidPaymentType = 'card';
+        } else if (transferAmount > 0) {
+          this.paidPaymentType = 'transfer';
+        } else {
+          this.paidPaymentType = 'cash';
+        }
+
+        this.paidCashAmount = cashAmount.toString();
+
+        this.paidMixedCashAmount = cashAmount.toString();
+        this.paidMixedCardAmount = cardAmount.toString();
+        this.paidMixedTransferAmount = transferAmount.toString();
+
+        const cardPayment = finalPayments.find(
+          payment => payment.paymentType.name === 'Tarjeta'
+        );
+
+        this.paidCardType = cardPayment?.isDebit
+          ? 'debit'
+          : 'credit';
+
+        this.paidVoucherId = cardPayment?.voucherId ?? '';
+
+        this.paymentDate =
+          finalPayments[0]?.paymentDate ??
+          repair.actualDeliveryDate ??
+          new Date();
+
+        // Renderizamos el ticket solo para poder imprimirlo
+        this.showPaymentTicket.set(true);
+
+        await this.waitForTicketRender();
+
+        try {
+          await this.repairImpressionTicket.simplePrintAndWait();
+        } finally {
+          this.showPaymentTicket.set(false);
+        }
+      },
+
+      error: (error) => {
+        console.error('Error loading payments:', error);
+
+        this.toastService.show(
+          'No se pudieron obtener los pagos de la orden.',
+          'error'
+        );
+      }
+    });
+}
   // ─── Seamstresses ─────────────────────────────────────────────
   openSeamstressAssignModal(item: RepairItem): void {
     if (this.isMuestra(item)) {

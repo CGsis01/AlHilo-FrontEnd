@@ -26,6 +26,10 @@ export class PaymentUseCases {
     return this.paymentRepository.getAll();
   }
 
+  getPaymentsByRepairId(repairId: string): Observable<Payment[]> {
+    return this.paymentRepository.getByRepairId(repairId);
+  }
+
   uploadAdvancePaymentPdf(repairId: string, pdf: Blob): Observable<string> {
     return this.paymentRepository.uploadAdvancePaymentPdf(repairId, pdf);
   }
