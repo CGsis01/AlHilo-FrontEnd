@@ -438,10 +438,12 @@
         </div>
 
         <!-- Re-print Ticket Button - Show for in-progress, completed, or delivered repairs with assigned seamstress -->
-        <div class="ticket-reprint-section" *ngIf="hasItemsInWork()">
-          <button class="btn-reprint-ticket" (click)="generateTicket()">
-            🖨️ Reimprimir Ticket
-          </button>
+        <div class="ticket-reprint-section">
+          <div class="flex justify-around">
+              <button class="btn-reprint-ticket" (click)="reprintTicket()">
+                {{ repair.repairStatus.name === RepairStatus.DELIVERED ? "🖨️Reimprimir ticket de entrega"  : "🖨️ Reimprimir ticket de servicio"}}
+              </button>
+          </div>
         </div>
       </div>
     </div>
@@ -886,6 +888,34 @@
   </div>
 </div>
 
+<!-- Comprobante de orden -->
+<div
+  class="receipt-overlay"
+  *ngIf="showAdvancePaymentTicket()"
+  (click)="closeAdvancePaymentTicket()">
+  <div class="receipt-wrapper" (click)="$event.stopPropagation()">
+    <!-- Screen-only actions bar -->
+    <div class="receipt-topbar no-print">
+      <span class="receipt-topbar-title">Comprobante de Orden</span>
+      <div class="receipt-topbar-actions">
+        <button class="btn-primary" (click)="printPaymentTicket()">
+          🖨️ Imprimir
+        </button>
+        <button class="btn-secondary" (click)="closeAdvancePaymentTicket()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+
+    <!-- Receipt document -->
+    <app-repair-ticket
+      class="block"
+      [mode]="'advance'"
+      [repair]="repair"
+      >
+    </app-repair-ticket>
+  </div>
+</div>
 <!-- Modal Editar Cliente en detalles del cliente -->
 <div
   class="modal-overlay"

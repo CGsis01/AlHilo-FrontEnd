@@ -15,6 +15,10 @@ export class PaymentRepository {
     return this.paymentApiService.getAll();
   }
 
+  getByRepairId(repairId: string): Observable<Payment[]> {
+    return this.paymentApiService.getAll({ repair_id: repairId });
+  }
+
   create(payment: Partial<Payment>): Observable<Payment> {
     // Map Payment model to CreatePaymentRequest
     const createRequest = {
