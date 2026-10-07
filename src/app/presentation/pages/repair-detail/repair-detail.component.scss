@@ -566,7 +566,7 @@
   .detail-container { 
     padding: 1.25rem 1rem;
     max-width: 100%;
-  } 
+  }
   
   .detail-grid { 
     grid-template-columns: 1fr;
@@ -597,5 +597,11 @@
   
   .modal-content { 
     margin: 1rem; 
+  }
+}
+
+@media (max-width: 1024px) {
+  .table-scroll {
+    overflow: auto;
   }
 }
