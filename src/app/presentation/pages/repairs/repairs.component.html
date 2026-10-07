@@ -75,10 +75,9 @@
       </div>
 
       <div class="card-footer">
-        <a [routerLink]="isCardBlocked(repair) ? null : ['/repairs', repair.id]"
+        <a [routerLink]="['/repairs', repair.id]"
            class="btn-view"
-           [class.btn-view-disabled]="isCardBlocked(repair)"
-           [title]="isCardBlocked(repair) ? 'Hay un servicio express pendiente de asignar' : ''">
+           >
           Ver detalles
         </a>
       </div>
@@ -120,10 +119,8 @@
           </div>
 
           <div class="card-footer">
-            <a [routerLink]="isCardBlocked(repair) ? null : ['/repairs', repair.id]"
-               class="btn-view"
-               [class.btn-view-disabled]="isCardBlocked(repair)"
-               [title]="isCardBlocked(repair) ? 'Hay un servicio express pendiente de asignar' : ''">
+            <a [routerLink]="['/repairs', repair.id]"
+               class="btn-view">
               Ver detalles
             </a>
           </div>
