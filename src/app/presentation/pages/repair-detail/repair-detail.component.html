@@ -68,175 +68,180 @@
 
         <!-- Multiple items view -->
         <ng-container *ngIf="repair.items && repair.items.length > 0">
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th
-                  class="assign-column"
-                  *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
-                  Asignar
-                </th>
-                <th>Prenda</th>
-                <th>Tipo</th>
-                <th class="pattern-column">Muestra</th>
-                <th>Descripción</th>
-                <th class="garment-status">Estado</th>
-                <th
-                  class="text-right"
-                  *ngIf="
-                    repair.finalPrice &&
-                    userRole?.code !== UserRole.SEAMSTRESS &&
-                    userRole?.code !== UserRole.HEADSEWING
-                  ">
-                  Precio Final
-                </th>
-                <th class="assigned-seamstress">Costurera Asignada</th>
-                <th class="status-actions-column">Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                *ngFor="let item of repair.items"
-                [class.muestra-row]="item.isPatternSource">
-                <td
-                  class="assign-column assign-cell"
-                  *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
-                  <button
-                    class="btn-assign-seamstress"
+          <div class="table-scroll">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th
+                    class="assign-column"
+                    *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
+                    Asignar
+                  </th>
+                  <th>Prenda</th>
+                  <th>Tipo</th>
+                  <th class="pattern-column">Muestra</th>
+                  <th>Descripción</th>
+                  <th class="garment-status">Estado</th>
+                  <th
+                    class="text-right"
                     *ngIf="
-                      !item.isPatternSource &&
-                      getItemStatusName(item) !== RepairStatus.IN_VALIDATION &&
-                      getItemStatusName(item) !== RepairStatus.VALIDATED &&
-                      repair.repairStatus?.name !== RepairStatus.DELIVERED
-                    "
-                    (click)="openSeamstressAssignModal(item)"
-                    title="Asignar costurera">
-                    👤
-                  </button>
-                </td>
-                <td>
-                  <span *ngIf="!isEditingItems()">
-                    {{ item.garment.name }}
-                  </span>
-
-                  <select
-                    *ngIf="isEditingItems() && item.id"
-                    [(ngModel)]="editedGarmentIds[item.id]"
-                    class="rounded-xl">
-
-                    <option
-                      *ngFor="let garment of garments()"
-                      [value]="garment.id">
-                      {{ garment.name }}
-                    </option>
-              </select>
-                </td>
-                <td>
-                  <span *ngIf="!isEditingItems()">
-                    {{ getRepairTypeNames(item) }}
-                  </span>
-
-                  <select
-                    *ngIf="isEditingItems() && item.id"
-                    multiple
-                    [(ngModel)]="editedRepairTypeIds[item.id]" 
-                    class="rounded-xl">
-
-                    <option
-                      *ngFor="let type of repairTypes()"
-                      [value]="type.id">
-                      {{ type.name }}
-                    </option>
-
-                  </select>
-              </td>
-                <td class="pattern-cell">
-                  <span
-                    class="pattern-badge"
-                    [class.pattern-badge--active]="item.isPatternSource">
-                    {{ item.isPatternSource ? "Sí" : "No" }}
-                  </span>
-                </td>
-                <td>
-                  <span *ngIf="!isEditingItems()">
-                    {{ item.description }}
-                  </span>
-
-                  <input
-                    *ngIf="isEditingItems() && item.id"
-                    type="text"
-                    [(ngModel)]="editedDescriptions[item.id]" 
-                    class="rounded-xl" />
-              </td>
-                <td class="status-cell">
-                  <span
-                    class="status-badge"
-                    [ngClass]="getStatusClass(getItemStatusName(item))">
-                    {{ getItemStatusName(item) }}
-                  </span>
-                </td>
-                <td
-                  class="text-right price-cell"
-                  *ngIf="
-                    repair.finalPrice &&
-                    userRole?.code !== UserRole.SEAMSTRESS &&
-                    userRole?.code !== UserRole.HEADSEWING
-                  ">
-                  {{
-                    item.finalPrice != null
-                      ? "$" + (item.finalPrice | number: "1.2-2" : "en-US")
-                      : "$" + (item.estimatedPrice | number: "1.2-2" : "en-US")
-                  }}
-                </td>
-                <td class="assigned-name">
-                  {{
-                    item.assignedTo?.name ||
-                      item.attendedBy?.name ||
-                      "Sin asignar"
-                  }}
-                </td>
-                <td class="item-action-cell">
-                  <div class="flex gap-2">
-                    <ng-container
-                    *ngIf="
-                      !item.isPatternSource &&
-                        canManageItemStatus(item) &&
-                        getItemStatusName(item);
-                      else noItemAction
+                      repair.finalPrice &&
+                      userRole?.code !== UserRole.SEAMSTRESS &&
+                      userRole?.code !== UserRole.HEADSEWING
                     ">
-                    <div class="item-status-actions">
-                      <span
-                        *ngIf="getItemPrevStatus(item) as prevStatus"
-                        class="status-badge status-badge-btn"
-                        [ngClass]="getStatusClass(prevStatus.name)"
-                        (click)="onStatusBadgeClick(item, prevStatus)"
-                        title="Cambiar a: {{ prevStatus.name }}"
-                        >{{ prevStatus.name }}</span
-                      >
-                      <span
-                        *ngIf="getItemNextStatus(item) as nextStatus"
-                        class="status-badge status-badge-btn"
-                        [ngClass]="getStatusClass(nextStatus.name)"
-                        (click)="onStatusBadgeClick(item, nextStatus)"
-                        title="Cambiar a: {{ nextStatus.name }}"
-                        >{{ nextStatus.name }}</span
-                      >
-                    </div>
-                  </ng-container> 
-                  
-                  <ng-template #noItemAction>
-                    <span class="no-actions-inline">Sin acción</span>
-                  </ng-template>
-                  <ng-container *ngIf="userRole?.code === UserRole.ADMIN || userRole?.code === UserRole.RECEPTIONIST">
-                    <button type="button" (click)="deleteItem(item)" title="Eliminar servicio">
-                      🗑️
+                    Precio Final
+                  </th>
+                  <th class="assigned-seamstress">Costurera Asignada</th>
+                  <th class="status-actions-column">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr 
+                  *ngFor="let item of repair.items; let i = index"
+  [class.muestra-row]="item.isPatternSource">
+                  <td
+                    class="assign-column assign-cell"
+                    *ngIf="userRole?.code !== UserRole.SEAMSTRESS">
+                    <button
+                      class="btn-assign-seamstress"
+                      *ngIf="
+                        !item.isPatternSource &&
+                        getItemStatusName(item) !== RepairStatus.IN_VALIDATION &&
+                        getItemStatusName(item) !== RepairStatus.VALIDATED &&
+                        repair.repairStatus?.name !== RepairStatus.DELIVERED
+                      "
+                      (click)="openSeamstressAssignModal(item)"
+                      title="Asignar costurera">
+                      👤
                     </button>
-                  </ng-container>
-                  </div>
+                  </td>
+                  <td>
+                    <span *ngIf="!isEditingItems()">
+                      {{ item.garment.name }}
+                    </span>
+
+                    <select
+                      *ngIf="isEditingItems() && item.id"
+                      [(ngModel)]="editedGarmentIds[item.id]"
+                      class="rounded-xl">
+
+                      <option
+                        *ngFor="let garment of garments()"
+                        [value]="garment.id">
+                        {{ garment.name }}
+                      </option>
+                </select>
+                  </td>
+                  <td>
+                    <span *ngIf="!isEditingItems()">
+                      {{ getRepairTypeNames(item) }}
+                    </span>
+
+                    <select
+                      *ngIf="isEditingItems() && item.id"
+                      multiple
+                      [(ngModel)]="editedRepairTypeIds[item.id]" 
+                      class="rounded-xl">
+
+                      <option
+                        *ngFor="let type of repairTypes()"
+                        [value]="type.id">
+                        {{ type.name }}
+                      </option>
+
+                    </select>
                 </td>
-              </tr>
-            </tbody>
-          </table>
+                  <td class="pattern-cell">
+                    <span
+                      class="pattern-badge"
+                      [class.pattern-badge--active]="item.isPatternSource">
+                      {{ item.isPatternSource ? "Sí" : "No" }}
+                    </span>
+                  </td>
+                  <td>
+                    <span *ngIf="!isEditingItems()">
+                      {{ item.description }}
+                    </span>
+
+                    <input
+                      *ngIf="isEditingItems() && item.id"
+                      type="text"
+                      [(ngModel)]="editedDescriptions[item.id]" 
+                      class="rounded-xl" />
+                </td>
+                  <td class="status-cell">
+                    <span
+                      class="status-badge"
+                      [ngClass]="getStatusClass(getItemStatusName(item))">
+                      {{ getItemStatusName(item) }}
+                    </span>
+                  </td>
+                  <td
+                    class="text-right price-cell"
+                    *ngIf="
+                      repair.finalPrice &&
+                      userRole?.code !== UserRole.SEAMSTRESS &&
+                      userRole?.code !== UserRole.HEADSEWING
+                    ">
+                    {{
+                      item.finalPrice != null
+                        ? "$" + (item.finalPrice | number: "1.2-2" : "en-US")
+                        : "$" + (item.estimatedPrice | number: "1.2-2" : "en-US")
+                    }}
+                  </td>
+                  <td class="assigned-name">
+                    {{
+                      item.assignedTo?.name ||
+                        item.attendedBy?.name ||
+                        "Sin asignar"
+                    }}
+                  </td>
+                  <td class="item-action-cell">
+                    <div class="flex gap-2">
+                      <ng-container
+                      *ngIf="
+                        !item.isPatternSource &&
+                          canManageItemStatus(item) &&
+                          getItemStatusName(item);
+                        else noItemAction
+                      ">
+                      <div class="item-status-actions">
+                        <span
+                          *ngIf="getItemPrevStatus(item) as prevStatus"
+                          class="status-badge status-badge-btn"
+                          [ngClass]="getStatusClass(prevStatus.name)"
+                          (click)="onStatusBadgeClick(item, prevStatus)"
+                          title="Cambiar a: {{ prevStatus.name }}"
+                          >{{ prevStatus.name }}</span
+                        >
+                        <span
+                          *ngIf="getItemNextStatus(item) as nextStatus"
+                          class="status-badge status-badge-btn"
+                          [ngClass]="getStatusClass(nextStatus.name)"
+                          (click)="onStatusBadgeClick(item, nextStatus)"
+                          title="Cambiar a: {{ nextStatus.name }}"
+                          >{{ nextStatus.name }}</span
+                        >
+                      </div>
+                    </ng-container> 
+                    
+                    <ng-template #noItemAction>
+                      <span class="no-actions-inline">Sin acción</span>
+                    </ng-template>
+                    <ng-container *ngIf="userRole?.code === UserRole.ADMIN || userRole?.code === UserRole.RECEPTIONIST">
+                      <div class="flex gap-5">
+                        <button type="button" (click)="deleteItem(item)" title="Eliminar servicio">
+                          🗑️
+                        </button>
+                          <button type="button" (click)="printItemTicket(item, i)" title="Reimprimir ticket de servicio">🖨️</button>
+                      </div>
+                    </ng-container>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </ng-container>
       </div>
 

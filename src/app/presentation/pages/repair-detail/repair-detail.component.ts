@@ -1705,6 +1705,29 @@ saveClientChanges(): void {
     this.showAdvancePaymentTicket.set(true);
   }
 
+  async printItemTicket(item: RepairItem, index: number): Promise<void> {
+  if (!this.repair) return;
+
+  // 1. Generar el QR
+  const ticketData = await this.repairImpressionTicket.generateTicketData(this.repair);
+  this.qrCodeDataUrl = ticketData.qrCodeDataUrl;
+
+  // 2. Decirle al template qué prenda pintar
+  this.activeTicketItem = item;
+  this.activeTicketIndex = index;
+
+  // 3. Mostrar el ticket y esperar a que se dibuje
+  this.showTicket.set(true);
+  await this.waitForTicketRender();
+
+  // 4. Imprimir y cerrar
+  try {
+    await this.repairImpressionTicket.simplePrintAndWait();
+  } finally {
+    this.closeTicket();
+  }
+}
+
   private async triggerWorkOrderPrint(redirectAfterPrint = false): Promise<void> {
     if (!this.repair) {
       return;
