@@ -230,22 +230,6 @@ export class RepairsComponent implements OnInit, OnDestroy {
     return status;
   }
 
-  /** True when ANY repair in the full list is pending + express (forces priority assignment) */
-  get hasPendingExpress(): boolean {
-    return this.repairs.some(r => r.isExpress && this.getAggregateStatusName(r) === RepairStatusEnum.PENDING);
-  }
-
-  /** A card is blocked when there is a pending+express repair and THIS card is not that repair */
-  isCardBlocked(repair: Repair): boolean {
-    const aggregateStatus = this.getAggregateStatusName(repair);
-
-    return this.hasPendingExpress 
-    && !(repair.isExpress && aggregateStatus === RepairStatusEnum.PENDING)
-    && aggregateStatus !== RepairStatusEnum.IN_PROGRESS 
-    && aggregateStatus !== RepairStatusEnum.IN_VALIDATION
-    && aggregateStatus !== RepairStatusEnum.VALIDATED;
-  }
-
   getAssignedSeamstresses(repair: Repair): string | null {
     const items = repair.items ?? [];
     const seamstresses = items
