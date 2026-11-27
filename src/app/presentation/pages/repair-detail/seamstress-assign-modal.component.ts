@@ -17,12 +17,14 @@ export class SeamstressAssignModalComponent {
   @Input() selectedGarmentItem: RepairItem | null = null;
   @Input() isLoadingSeamstresses = false;
   @Input() seamstresses: User[] = [];
-  @Input() selectedSeamstress: User | null = null;
-  @Input() isSeamstressAlreadyAssigned: (seamstress: User) => boolean = () => false;
+  @Input() selectedPrimarySeamstress: User | null = null;
+  @Input() selectedSecondarySeamstress: User | null = null;
+  @Input() isPrimaryOptionDisabled: (seamstress: User) => boolean = () => false;
+  @Input() isSecondaryOptionDisabled: (seamstress: User) => boolean = () => false;
 
   @Output() close = new EventEmitter<void>();
-  @Output() openUnassign = new EventEmitter<void>();
-  @Output() selectSeamstress = new EventEmitter<User>();
+  @Output() selectPrimarySeamstress = new EventEmitter<User>();
+  @Output() selectSecondarySeamstress = new EventEmitter<User>();
   @Output() assignSeamstress = new EventEmitter<void>();
 
   getRepairTypeNames(item: RepairItem | null): string {

@@ -144,13 +144,16 @@ export class RepairRepository implements Repository<Repair> {
     return this.repairApiService.getRepairItemsBySeamstress(userId);
   }
 
-  assignRepairGarments(repairId: string, assignments: Array<{itemId: string, seamstressId?: string}>): Observable<Repair> {
+  assignRepairGarments(
+    repairId: string,
+    assignments: Array<{itemId: string, seamstressId?: string, secondarySeamstressId?: string}>
+  ): Observable<Repair> {
     const assignRequest = {
       repair_id: repairId,
       assignments: assignments.map(a => ({
         repair_item_id: a.itemId,
         assigned_to_id: a.seamstressId,
-        attended_by_id: a.seamstressId, 
+        attended_by_id: a.secondarySeamstressId,
         updated_by: getStoredUserId()
       })),
       updated_by: getStoredUserId()};

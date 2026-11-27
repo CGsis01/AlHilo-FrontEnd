@@ -466,11 +466,13 @@
   [selectedGarmentItem]="selectedGarmentItem"
   [isLoadingSeamstresses]="isLoadingSeamstresses()"
   [seamstresses]="seamstresses"
-  [selectedSeamstress]="selectedSeamstress"
-  [isSeamstressAlreadyAssigned]="isSeamstressAlreadyAssigned.bind(this)"
+  [selectedPrimarySeamstress]="selectedPrimarySeamstress"
+  [selectedSecondarySeamstress]="selectedSecondarySeamstress"
+  [isPrimaryOptionDisabled]="isPrimaryOptionDisabled.bind(this)"
+  [isSecondaryOptionDisabled]="isSecondaryOptionDisabled.bind(this)"
   (close)="closeSeamstressAssignModal()"
-  (openUnassign)="openUnassignConfirmModal()"
-  (selectSeamstress)="selectSeamstress($event)"
+  (selectPrimarySeamstress)="selectPrimarySeamstress($event)"
+  (selectSecondarySeamstress)="selectSecondarySeamstress($event)"
   (assignSeamstress)="assignSeamstressToGarment()">
 </app-seamstress-assign-modal>
 

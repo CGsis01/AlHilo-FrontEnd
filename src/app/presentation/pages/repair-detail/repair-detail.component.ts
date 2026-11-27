@@ -85,7 +85,8 @@ export class RepairDetailComponent implements OnInit, OnDestroy {
   showUnassignConfirmModal = signal(false);
   isLoadingSeamstresses = signal(false);
   seamstresses: User[] = [];
-  selectedSeamstress: User | null = null;
+  selectedPrimarySeamstress: User | null = null;
+  selectedSecondarySeamstress: User | null = null;
   selectedGarmentItem: RepairItem | null = null;  
 
   // ─── Repair Ticket ────────────────────────────────────────────
@@ -533,33 +534,14 @@ saveItemsEdit(): void {
       return;
 
     if (currentStatusName === RepairStatusEnum.IN_PROGRESS && targetStatus.name === RepairStatusEnum.PENDING) {
-      this.revertToPendingAndUnassign(item, targetStatus);
-      
+      this.updateItemStatus(item, targetStatus);
+
       return;
     }
 
     // Check if transitioning from IN_VALIDATION to IN_PROGRESS
     const isValidationToProgressTransition = currentStatusName === RepairStatusEnum.IN_VALIDATION && targetStatus.name === RepairStatusEnum.IN_PROGRESS;
     this.updateItemStatus(item, targetStatus, isValidationToProgressTransition);    
-  }
-
-  private revertToPendingAndUnassign(item: RepairItem, pendingStatus: RepairStatus): void {
-    if (!this.repair?.id || !item.id) return;
-    const itemId = item.id;
-    const assignments = [{ itemId, seamstressId: undefined }];
-
-    this.repairUseCases.assignRepairGarments(this.repair.id, assignments).subscribe({
-      next: (updatedRepair) => {
-        updatedRepair.items = (updatedRepair.items || []).map(i =>
-          i.id === itemId ? { ...i, assignedToId: undefined, assignedTo: undefined } : i
-        );
-        this.repair = updatedRepair;
-        this.updateItemStatus(item, pendingStatus);
-      },
-      error: () => {
-        this.toastService.show('Error al revertir la prenda', 'error', 'bottom-right');
-      }
-    });
   }
 
   getItemStatusTransitions(item: RepairItem): RepairStatus[] {
@@ -779,7 +761,8 @@ saveItemsEdit(): void {
     }
 
     this.selectedGarmentItem = item;
-    this.selectedSeamstress = item.assignedTo || null;
+    this.selectedPrimarySeamstress = item.assignedTo || null;
+    this.selectedSecondarySeamstress = item.attendedBy || null;
     this.loadSeamstresses();
     this.showSeamstressAssignModal.set(true);
   }
@@ -788,7 +771,8 @@ saveItemsEdit(): void {
     this.showSeamstressAssignModal.set(false);
     this.closeUnassignConfirmModal();
     this.selectedGarmentItem = null;
-    this.selectedSeamstress = null;
+    this.selectedPrimarySeamstress = null;
+    this.selectedSecondarySeamstress = null;
   }
 
   openUnassignConfirmModal(): void {
@@ -824,25 +808,62 @@ saveItemsEdit(): void {
   isSeamstressAlreadyAssigned(seamstress: User): boolean {
     return (this.repair?.items || []).some(item =>
       item.id !== this.selectedGarmentItem?.id &&
-      (item.assignedTo?.id === seamstress.id || item.assignedToId === seamstress.id));
+      (
+        item.assignedTo?.id === seamstress.id ||
+        item.assignedToId === seamstress.id ||
+        item.attendedBy?.id === seamstress.id ||
+        item.attendedById === seamstress.id
+      ));
+  }
+
+  isPrimaryOptionDisabled(seamstress: User): boolean {
+    if (this.selectedSecondarySeamstress?.id === seamstress.id) {
+      return true;
+    }
+
+    return this.isSeamstressAlreadyAssigned(seamstress);
+  }
+
+  isSecondaryOptionDisabled(seamstress: User): boolean {
+    if (!this.selectedPrimarySeamstress) {
+      return true;
+    }
+
+    if (this.selectedPrimarySeamstress.id === seamstress.id) {
+      return true;
+    }
+
+    return this.isSeamstressAlreadyAssigned(seamstress);
+  }
+
+  selectPrimarySeamstress(seamstress: User): void {
+    if (this.isPrimaryOptionDisabled(seamstress)) return;
+    this.selectedPrimarySeamstress = seamstress;
+  }
+
+  selectSecondarySeamstress(seamstress: User): void {
+    if (this.isSecondaryOptionDisabled(seamstress)) return;
+    this.selectedSecondarySeamstress = seamstress;
   }
 
   selectSeamstress(seamstress: User): void {
     if (this.isSeamstressAlreadyAssigned(seamstress)) return;
-    this.selectedSeamstress = seamstress;
+    this.selectedPrimarySeamstress = seamstress;
   }
 
   assignSeamstressToGarment(): void {
-    if (!this.repair?.id || !this.selectedGarmentItem || !this.selectedSeamstress)
+    if (!this.repair?.id || !this.selectedGarmentItem || !this.selectedPrimarySeamstress)
       return;
 
     const selectedGarmentItemId = this.selectedGarmentItem.id;
-    const selectedSeamstress = this.selectedSeamstress;
+    const selectedPrimarySeamstress = this.selectedPrimarySeamstress;
+    const selectedSecondarySeamstress = this.selectedSecondarySeamstress;
     const wasItemPending = this.getItemStatusName(this.selectedGarmentItem) === RepairStatusEnum.PENDING;
 
     const assignments = [{
       itemId: this.selectedGarmentItem.id!,
-      seamstressId: this.selectedSeamstress.id
+      seamstressId: this.selectedPrimarySeamstress.id,
+      secondarySeamstressId: this.selectedSecondarySeamstress?.id
     }];
 
     this.repairUseCases.assignRepairGarments(this.repair.id, assignments)
@@ -853,8 +874,10 @@ saveItemsEdit(): void {
               item.id === selectedGarmentItemId
                 ? {
                     ...item,
-                    assignedToId: selectedSeamstress.id,
-                    assignedTo: item.assignedTo || selectedSeamstress
+                    assignedToId: selectedPrimarySeamstress.id,
+                    assignedTo: selectedPrimarySeamstress,
+                    attendedById: selectedSecondarySeamstress?.id,
+                    attendedBy: selectedSecondarySeamstress || undefined
                   }
                 : item
             );
@@ -893,7 +916,8 @@ saveItemsEdit(): void {
     const selectedGarmentItemId = this.selectedGarmentItem.id;
     const assignments = [{
       itemId: selectedGarmentItemId,
-      seamstressId: undefined
+      seamstressId: undefined,
+      secondarySeamstressId: undefined
     }];
 
     this.repairUseCases.assignRepairGarments(this.repair.id, assignments)
@@ -904,7 +928,9 @@ saveItemsEdit(): void {
               ? {
                   ...item,
                   assignedToId: undefined,
-                  assignedTo: undefined
+                  assignedTo: undefined,
+                  attendedById: undefined,
+                  attendedBy: undefined
                 }
               : item
           );
@@ -934,7 +960,12 @@ saveItemsEdit(): void {
   }
 
   isAssigned(): boolean {
-    return this.repair?.items?.some(item => !!item.assignedToId || !!item.assignedTo) ?? false;
+    return this.repair?.items?.some(item =>
+      !!item.assignedToId ||
+      !!item.assignedTo ||
+      !!item.attendedById ||
+      !!item.attendedBy
+    ) ?? false;
   }
 
   async confirmJobReview(): Promise<void> {
