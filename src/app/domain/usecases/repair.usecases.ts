@@ -87,7 +87,10 @@ export class RepairUseCases {
     return this.repairRepository.getItemsBySeamstress(userId);
   }
 
-  assignRepairGarments(repairId: string, assignments: Array<{itemId: string, seamstressId?: string}>): Observable<Repair> {
+  assignRepairGarments(
+    repairId: string,
+    assignments: Array<{itemId: string, seamstressId?: string, secondarySeamstressId?: string}>
+  ): Observable<Repair> {
     return this.repairRepository.assignRepairGarments(repairId, assignments);
   }
 

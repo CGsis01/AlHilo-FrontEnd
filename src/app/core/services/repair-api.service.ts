@@ -64,6 +64,7 @@ export interface UpdateRepairRequest {
 export interface AssignRepairItem {
   repair_item_id: string;
   assigned_to_id?: string;
+  attended_by_id?: string;
   updated_by: string;
 }
 
